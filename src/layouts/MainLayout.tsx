@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon, LogOut } from 'lucide-react';
 import PanelArbitro from '../pages/PanelArbitro';
 import Puntajes from '../pages/Puntajes';
+import Fixture from '../pages/Fixture';
 
 export default function MainLayout() {
   const [activeTab, setActiveTab] = useState('arbitraje');
