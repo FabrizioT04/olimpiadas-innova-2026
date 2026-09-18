@@ -68,8 +68,8 @@ export default function Puntajes() {
 
     obtenerPuntajes();
     
-    // 1. Sincronización con la base de datos cada 3 segundos
-    const intervaloDatos = setInterval(obtenerPuntajes, 3000);
+    // 1. Sincronización con la base de datos cada 4 segundos
+    const intervaloDatos = setInterval(obtenerPuntajes, 4000);
 
     // 2. ROTACIÓN AUTOMÁTICA: Si todos tienen los mismos puntos, rotamos la lista cada 4 segundos
     const intervaloRotacion = setInterval(() => {
