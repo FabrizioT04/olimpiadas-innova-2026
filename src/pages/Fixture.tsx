@@ -17,7 +17,6 @@ interface Partido {
 export default function Fixture() {
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'proximo' | 'en-vivo' | 'finalizado'>('todos');
 
-  // Datos de ejemplo para el fixture de las olimpiadas
   const partidos: Partido[] = [
     {
       id: 1,
@@ -72,7 +71,6 @@ export default function Fixture() {
 
   return (
     <div className="space-y-6">
-      {/* Encabezado de la sección */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -82,7 +80,6 @@ export default function Fixture() {
           <p className="text-slate-500 text-sm">Consulta los horarios, sedes y estados de todos los encuentros deportivos.</p>
         </div>
 
-        {/* Filtros por estado */}
         <div className="flex items-center gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-200">
           <Filter size={16} className="text-slate-400 ml-2" />
           <button
@@ -120,12 +117,9 @@ export default function Fixture() {
         </div>
       </div>
 
-      {/* Lista de Partidos */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {partidosFiltrados.map((partido) => (
           <div key={partido.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition-shadow relative overflow-hidden">
-            
-            {/* Indicador de Estado lateral */}
             <div className={`absolute top-0 left-0 bottom-0 w-2 ${
               partido.estado === 'en-vivo' ? 'bg-red-500 animate-pulse' :
               partido.estado === 'proximo' ? 'bg-amber-400' : 'bg-slate-400'
@@ -141,7 +135,6 @@ export default function Fixture() {
               </span>
             </div>
 
-            {/* Enfrentamiento */}
             <div className="flex items-center justify-between my-4 pl-2">
               <div className="flex-1 text-right font-bold text-slate-800 text-lg">
                 {partido.equipoA}
@@ -160,7 +153,6 @@ export default function Fixture() {
               </div>
             </div>
 
-            {/* Detalles de hora y lugar */}
             <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100 pl-2">
               <div className="flex items-center gap-1">
                 <Clock size={14} className="text-slate-400" />
@@ -176,7 +168,6 @@ export default function Fixture() {
                 {partido.estado === 'finalizado' && <span className="text-slate-600 font-medium">Finalizado</span>}
               </div>
             </div>
-
           </div>
         ))}
       </div>

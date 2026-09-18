@@ -13,13 +13,7 @@ export default function MainLayout() {
       case 'arbitraje':
         return <PanelArbitro />;
       case 'fixture':
-        return (
-          <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
-            <CalendarDays className="w-24 h-24 text-indigo-200 mb-6 animate-bounce" />
-            <h2 className="text-3xl font-black text-slate-800 mb-2">Fixture y Puntajes</h2>
-            <p className="text-slate-500 font-medium">Módulo en construcción...</p>
-          </div>
-        );
+        return <Fixture />; // <--- Aquí ya usamos tu componente importado correctamente
       case 'medallero':
         return <Puntajes />;
       case 'galeria':
@@ -106,7 +100,7 @@ export default function MainLayout() {
           </button>
         </nav>
 
-        {/* Perfil de Usuario (Corregido para que no se rompa por el traductor) */}
+        {/* Perfil de Usuario */}
         <div className="p-4 border-t border-slate-50">
           <div className="bg-slate-50 rounded-2xl p-4 flex items-center gap-3">
             <div translate="no" className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 text-indigo-600 font-bold">
@@ -124,8 +118,8 @@ export default function MainLayout() {
         
       </aside>
 
-      {/* Área de Contenido Principal (Lo que está a la derecha) */}
-      <main className="flex-1 overflow-y-auto relative">
+      {/* Área de Contenido Principal */}
+      <main className="flex-1 overflow-y-auto relative p-8">
         {renderContent()}
       </main>
     </div>
