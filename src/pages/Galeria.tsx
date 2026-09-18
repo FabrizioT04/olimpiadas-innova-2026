@@ -1,49 +1,48 @@
 import { useState } from 'react';
 import { Heart, Sparkles, Download } from 'lucide-react';
 
-// Solo usamos imágenes locales, sin enlaces de Drive ni videos
 const fotosData = [
   { 
     id: 1, 
     title: 'Asamblea Eco House - Sesión 1', 
     category: 'Eco House', 
-    url: '/galeria/asamblea-1.jpg', 
+    url: '/fotos/asamblea-1.jpg', // <-- Ahora apunta a /fotos/
     likes: 42 
   },
   { 
     id: 2, 
     title: 'Creación de Maraquitas (1ero y 2do)', 
     category: 'Eco House', 
-    url: '/galeria/maraquitas-1.jpg', 
+    url: '/fotos/maraquitas-1.jpg', 
     likes: 35 
   },
   { 
     id: 3, 
     title: 'Elaboración de Carteles (3ero y 4to)', 
     category: 'Eco House', 
-    url: '/galeria/carteles-1.jpg', 
+    url: '/fotos/carteles-1.jpg', 
     likes: 67 
   },
   { 
     id: 4, 
     title: 'Lineamientos Oficiales de Ciencias', 
     category: 'Bases de Áreas', 
-    url: '/galeria/bases-ciencias.jpg', 
+    url: '/fotos/bases-ciencias.jpg', 
     likes: 15 
   },
   { 
     id: 5, 
     title: 'Competencia de Relevos', 
     category: 'Actividades', 
-    url: '/galeria/relevos.jpg', 
+    url: '/fotos/relevos.jpg', 
     likes: 56 
   }
 ];
-
 export default function Galeria() {
   const [filtro, setFiltro] = useState('Todos');
 
-  const categorias = ['Todos', 'Eco House', 'Bases de Áreas', 'Actividades', 'General'];
+  // ELIMINADO: 'General' ya no está en la lista de filtros
+  const categorias = ['Todos', 'Eco House', 'Bases de Áreas', 'Actividades'];
 
   const fotosFiltradas = filtro === 'Todos' 
     ? fotosData 
@@ -80,7 +79,7 @@ export default function Galeria() {
         </div>
       </div>
 
-      {/* Grid de Fotos Limpio (Sin Iframes) */}
+      {/* Grid de Fotos Limpio */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {fotosFiltradas.map(foto => (
           <div 
