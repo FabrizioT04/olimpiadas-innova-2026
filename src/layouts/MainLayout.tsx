@@ -100,26 +100,41 @@ export default function MainLayout() {
           </button>
         </nav>
 
-        {/* Perfil de Usuario */}
+        {/* Widget de Estado de Plataforma (Reemplazo del Perfil de Usuario) */}
         <div className="p-4 border-t border-slate-50">
-          <div className="bg-slate-50 rounded-2xl p-4 flex items-center gap-3">
-            <div translate="no" className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 text-indigo-600 font-bold">
-              P
+          <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group">
+            {/* Efecto decorativo */}
+            <div className="absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-full blur-xl opacity-50 -mr-6 -mt-6 group-hover:opacity-80 transition-opacity"></div>
+            
+            <div className="flex items-center gap-2.5 mb-2.5 relative z-10">
+              <div className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </div>
+              <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest">
+                Sistema Activo
+              </span>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-800 truncate">Prof. Ramirez</p>
-              <p className="text-[10px] text-slate-500 truncate">Comité Deportivo</p>
+            
+            <p className="text-[10px] text-slate-500 font-medium leading-relaxed mb-3 relative z-10">
+              Plataforma oficial de sincronización en tiempo real conectada a la base de datos central.
+            </p>
+            
+            <div className="flex items-center justify-between border-t border-slate-200/60 pt-3 relative z-10">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                Innova SMP © 2026
+              </span>
+              <span className="text-[9px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                v1.0.0
+              </span>
             </div>
-            <button className="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0">
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
         </div>
         
       </aside>
 
       {/* Área de Contenido Principal */}
-      <main className="flex-1 overflow-y-auto relative p-8">
+      <main className="flex-1 overflow-y-auto relative p-4 md:p-8">
         {renderContent()}
       </main>
     </div>
