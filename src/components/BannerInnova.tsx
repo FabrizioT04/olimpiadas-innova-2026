@@ -19,7 +19,7 @@ export default function BannerInnova() {
   }, []);
 
   return (
-    <div className="w-full rounded-3xl py-4 px-6 md:px-8 mb-6 text-white shadow-xl shadow-indigo-950/10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/15">
+    <div className="w-full rounded-2xl py-3 px-5 md:px-6 mb-6 text-white shadow-lg relative overflow-hidden flex items-center justify-between gap-4 border border-white/15">
       
       {/* Capas de fondo con fundido cruzado ultra suave */}
       {brandGradients.map((gradient, index) => (
@@ -31,38 +31,36 @@ export default function BannerInnova() {
         />
       ))}
 
-      {/* Efectos decorativos de fondo */}
-      <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none z-0"></div>
-      <div className="absolute left-1/3 bottom-0 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none z-0"></div>
+      {/* Efecto decorativo sutil de fondo */}
+      <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none z-0"></div>
 
-      {/* Lado izquierdo: Logo más grande y textos más compactos */}
-      <div className="relative z-10 flex items-center gap-6 text-center md:text-left flex-col md:flex-row">
+      {/* Lado izquierdo: Logo equilibrado e información compacta */}
+      <div className="relative z-10 flex items-center gap-4 text-left">
         
-        {/* Logo ampliado */}
         <div className="flex-shrink-0">
           <img 
             src="/logo-innova.png" 
             alt="Logo Innova Schools" 
-            className="w-36 h-36 md:w-44 md:h-44 object-contain drop-shadow-2xl" 
+            className="w-20 h-20 md:w-24 md:h-24 object-contain drop-shadow-md" 
           />
         </div>
 
         <div>
-          <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border border-white/25 inline-block mb-1.5">
+          <span className="bg-white/20 backdrop-blur-md text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest border border-white/25 inline-block mb-1">
             Innova Schools SMP Perú
           </span>
-          <h2 className="text-xl md:text-2xl font-black tracking-tight text-white leading-tight">
+          <h2 className="text-lg md:text-xl font-black tracking-tight text-white leading-tight">
             Olimpiadas 360° 2026
           </h2>
-          <p className="text-xs md:text-sm text-white/90 font-medium mt-1">
+          <p className="text-[11px] md:text-xs text-white/90 font-medium">
             Plataforma oficial de gestión, cronograma y validación de resultados.
           </p>
         </div>
       </div>
 
       {/* Lado derecho: Insignia */}
-      <div className="relative z-10 hidden lg:flex items-center gap-3 bg-white/15 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20 text-xs font-bold text-white shadow-sm">
-        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+      <div className="relative z-10 hidden lg:flex items-center gap-2 bg-white/15 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20 text-xs font-bold text-white shadow-sm">
+        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
         <span>Sistema en Vivo</span>
       </div>
 
