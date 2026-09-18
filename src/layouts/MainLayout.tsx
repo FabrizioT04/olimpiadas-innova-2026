@@ -3,6 +3,7 @@ import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon} from 'lucide-
 import PanelArbitro from '../pages/PanelArbitro';
 import Puntajes from '../pages/Puntajes';
 import Fixture from '../pages/Fixture';
+import BannerInnova from '../components/BannerInnova'
 
 export default function MainLayout() {
   // Detecta la pestaña inicial basándose en la URL actual del navegador
@@ -152,6 +153,7 @@ export default function MainLayout() {
 
       {/* Área de Contenido Principal */}
       <main className="flex-1 overflow-y-auto relative p-4 md:p-8">
+        <BannerInnova />
         {renderContent()}
       </main>
     </div>
