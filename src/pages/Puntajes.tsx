@@ -142,8 +142,8 @@ export default function Puntajes() {
                 </span>
               </div>
 
-              {/* Escudo con tamaño ampliado en móviles y escritorios */}
-              <div className="flex-shrink-0 w-32 h-32 sm:w-36 sm:h-36 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:-translate-y-1">
+              {/* Escudo con tamaño bien grande (w-40 h-40 en móvil / w-44 h-44 en PC) */}
+              <div className="flex-shrink-0 w-40 h-40 sm:w-44 sm:h-44 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:-translate-y-1">
                  <img src={team.house?.img} alt={team.house?.name} className="w-full h-full object-contain drop-shadow-xl" />
               </div>
 

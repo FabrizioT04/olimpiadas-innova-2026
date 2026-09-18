@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Heart, Share2, Sparkles } from 'lucide-react';
 
+// Recuerda cambiar estas rutas ('/galeria/foto1.jpg', etc.) 
+// cuando ya tengas tus fotos reales en la carpeta public/galeria/
 const fotosData = [
   { id: 1, title: 'Ceremonia de Inauguración 2026', category: 'Ceremonia', img: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?w=600&auto=format&fit=crop&q=80', likes: 24 },
   { id: 2, title: 'Final de Fútbol - Categoría Sub-12', category: 'Deportes', img: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&auto=format&fit=crop&q=80', likes: 45 },
@@ -56,23 +58,24 @@ export default function Galeria() {
             key={foto.id} 
             className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col"
           >
-            {/* Altura adaptable en móvil (h-48) y escritorio (h-56) */}
-            <div className="relative h-48 sm:h-56 overflow-hidden bg-slate-100">
+            {/* SOLUCIÓN: relative con w-full, height fijo y la imagen en absolute */}
+            <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-slate-100 flex-shrink-0">
               <img 
                 src={foto.img} 
                 alt={foto.title} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                // text-transparent oculta el texto feo si la imagen no carga en Safari
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 text-transparent"
               />
-              <span className="absolute top-3 left-3 bg-slate-900/60 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+              <span className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider z-10">
                 {foto.category}
               </span>
             </div>
 
             <div className="p-5 flex-1 flex flex-col justify-between">
-              <h3 className="font-bold text-slate-800 text-base mb-2 group-hover:text-indigo-600 transition-colors">
+              <h3 className="font-bold text-slate-800 text-base mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
                 {foto.title}
               </h3>
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium mt-auto">
                 <button className="flex items-center gap-1.5 hover:text-rose-500 transition-colors">
                   <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20" /> {foto.likes} Me gusta
                 </button>
