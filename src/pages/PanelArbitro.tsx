@@ -1,342 +1,336 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Mail, Lock, ShieldCheck, UserCheck, AlertCircle, LogOut } from 'lucide-react';
-import { HOUSES, useArbitraje } from '../features/arbitraje/hooks/useArbitraje';
+import { Calendar, Clock, Trophy, Filter, Loader2, RefreshCw, Layers } from 'lucide-react';
 
-// Lista de correos autorizados para el panel de arbitraje
-const CORREOS_AUTORIZADOS = [
-  'larry.delao@innova.edu.pe',
-  'fabriziotp0001@gmail.com',
-  'arbitro@innova.edu.pe',
-  'mesa@innova.edu.pe'
+interface Partido {
+  id: number;
+  semana: number | string;
+  fecha: string;
+  dia: string;
+  hora: string;
+  deporte: string;
+  enfrentamiento: string;
+  categoria: string;
+  arbitro: string;
+  apoyo: string;
+  lugar: string;
+  estado: 'proximo' | 'en-vivo' | 'finalizado';
+}
+
+const PARTIDOS_OFICIALES: Partido[] = [
+  // Semana 1
+  {
+    id: 1,
+    semana: 1,
+    fecha: '2026-09-21',
+    dia: 'Lunes 21/09',
+    hora: '08:00 - 08:20',
+    deporte: 'FUTSAL',
+    enfrentamiento: 'ROJO VS AMARILLO',
+    categoria: 'Promesas (1º y 2º)',
+    arbitro: 'Larry Delao',
+    apoyo: 'Mesa Oficial',
+    lugar: 'Campo 1',
+    estado: 'finalizado'
+  },
+  {
+    id: 2,
+    semana: 1,
+    fecha: '2026-09-22',
+    dia: 'Martes 22/09',
+    hora: '08:20 - 08:40',
+    deporte: 'VÓLEY',
+    enfrentamiento: 'AZUL VS VERDE',
+    categoria: 'Junior (5º y 6º)',
+    arbitro: 'David',
+    apoyo: 'Apoyo Mesa',
+    lugar: 'Coliseo',
+    estado: 'proximo'
+  },
+  // Semana 2
+  {
+    id: 3,
+    semana: 2,
+    fecha: '2026-09-24',
+    dia: 'Jueves 24/09',
+    hora: '09:35 - 09:55',
+    deporte: 'CONEBALL',
+    enfrentamiento: 'BLANCO VS VERDE',
+    categoria: 'Infantil (3º y 4º)',
+    arbitro: 'DAVID',
+    apoyo: 'L. Natividad, K. Armas',
+    lugar: 'Campo 1',
+    estado: 'en-vivo'
+  },
+  // Semana 3
+  {
+    id: 4,
+    semana: 3,
+    fecha: '2026-09-28',
+    dia: 'Lunes 28/09',
+    hora: '09:35 - 09:55',
+    deporte: 'BALONMANO',
+    enfrentamiento: 'BLANCO VS VERDE',
+    categoria: 'Infantil (3º y 4º)',
+    arbitro: 'MARIO NUÑEZ',
+    apoyo: '3ER Y 4TO PUESTO',
+    lugar: 'Campo 1',
+    estado: 'proximo'
+  },
+  {
+    id: 5,
+    semana: 3,
+    fecha: '2026-09-29',
+    dia: 'Martes 29/09',
+    hora: '08:00 - 08:20',
+    deporte: 'CARRERAS',
+    enfrentamiento: 'VERDE VS AZUL',
+    categoria: 'Promesas (1º y 2º)',
+    arbitro: 'Larry Delao',
+    apoyo: 'David y Mario',
+    lugar: 'Campo 1',
+    estado: 'finalizado'
+  }
 ];
 
-export default function PanelArbitro() {
-  const [emailInput, setEmailInput] = useState('');
-  const [correoAutorizado, setCorreoAutorizado] = useState<string | null>(null);
-  const [error, setError] = useState('');
+export default function Fixture() {
+  const [partidos, setPartidos] = useState<Partido[]>(PARTIDOS_OFICIALES);
+  const [cargando, setCargando] = useState<boolean>(false);
+  const [filtroSemana, setFiltroSemana] = useState<string>('todos');
+  const [filtroEstado, setFiltroEstado] = useState<'todos' | 'proximo' | 'en-vivo' | 'finalizado'>('todos');
 
-  // Mantener la sesión guardada en el navegador
-  useEffect(() => {
-    const guardado = localStorage.getItem('arbitro_autorizado');
-    if (guardado && CORREOS_AUTORIZADOS.includes(guardado)) {
-      setCorreoAutorizado(guardado);
+  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw6v_-hQor-DMh7Mg2qtodwpuIiXIuCOqqtV3mY3Gs5ueqZBrDH8LORqa7RTMWhIH1uqw/exec';
+
+  const sincronizarDatos = async () => {
+    setCargando(true);
+    try {
+      const respuesta = await fetch(WEB_APP_URL);
+      const json = await respuesta.json();
+      if (json.partidos && json.partidos.length > 0) {
+        const mapeados = json.partidos.map((item: any, index: number) => ({
+          id: item.id || index + 1,
+          semana: item.semana || 1,
+          fecha: item.fecha || '',
+          dia: item.dia || item.fecha || 'Día Programado',
+          hora: item.hora || 'Por definir',
+          deporte: item.deporte || 'Deporte',
+          enfrentamiento: item.enfrentamiento || 'Equipo A VS Equipo B',
+          categoria: item.categoria || 'General',
+          arbitro: item.arbitro || 'Por asignar',
+          apoyo: item.apoyo || '',
+          lugar: 'Campo Principal',
+          estado: (index === 0 ? 'en-vivo' : index % 2 === 0 ? 'proximo' : 'finalizado') as 'proximo' | 'en-vivo' | 'finalizado'
+        }));
+        setPartidos(mapeados);
+      }
+    } catch (error) {
+      console.log('Usando datos de respaldo locales.');
+    } finally {
+      setCargando(false);
     }
+  };
+
+  useEffect(() => {
+    sincronizarDatos();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const emailLimpio = emailInput.trim().toLowerCase();
+  const semanasDisponibles = Array.from(new Set(partidos.map(p => String(p.semana)))).sort((a, b) => Number(a) - Number(b));
 
-    if (CORREOS_AUTORIZADOS.includes(emailLimpio)) {
-      setCorreoAutorizado(emailLimpio);
-      localStorage.setItem('arbitro_autorizado', emailLimpio);
-      setError('');
-    } else {
-      setError('Correo no autorizado. Solicita acceso al administrador.');
-    }
-  };
+  const partidosFiltrados = partidos.filter(p => {
+    const cumpleSemana = filtroSemana === 'todos' || String(p.semana) === filtroSemana;
+    const cumpleEstado = filtroEstado === 'todos' || p.estado === filtroEstado;
+    return cumpleSemana && cumpleEstado;
+  });
 
-  const handleLogout = () => {
-    setCorreoAutorizado(null);
-    localStorage.removeItem('arbitro_autorizado');
-    setEmailInput('');
-  };
+  // Agrupación jerárquica: Semana -> Día -> Partidos
+  const partidosAgrupados = partidosFiltrados.reduce((acc: { [semana: string]: { [dia: string]: Partido[] } }, partido) => {
+    const semKey = `Semana ${partido.semana}`;
+    const diaKey = String(partido.dia || 'Día Programado');
 
-  const {
-    selectedHouse, setSelectedHouse,
-    operation, setOperation,
-    category, setCategory,
-    points, setPoints,
-    activity, setActivity,
-    isSubmitting,
-    enviarPuntaje
-  } = useArbitraje();
+    if (!acc[semKey]) acc[semKey] = {};
+    if (!acc[semKey][diaKey]) acc[semKey][diaKey] = [];
+    acc[semKey][diaKey].push(partido);
 
-  // 1. Si NO está autenticado, muestra la pantalla de inicio de sesión con el mismo estilo estético
-  if (!correoAutorizado) {
-    return (
-      <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden font-sans text-slate-800 p-4 md:p-8 flex flex-col items-center justify-center">
-        <div className="absolute top-0 left-10 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
-        <div className="absolute top-0 right-20 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
-        <div className="absolute -bottom-8 left-40 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
+    return acc;
+  }, {});
 
-        <div className="relative z-10 w-full max-w-md bg-white/80 backdrop-blur-2xl p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white/80">
-          <div className="text-center space-y-3 mb-6">
-            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner border border-indigo-100">
-              <Lock size={28} />
-            </div>
-            <span className="inline-block py-1 px-3 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold tracking-widest uppercase shadow-sm">
-              Innova Schools • Acceso Restringido
-            </span>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Panel de Arbitraje</h1>
-            <p className="text-slate-500 text-xs font-medium">
-              Ingresa tu correo autorizado para acceder al registro oficial de puntajes.
-            </p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Correo Electrónico</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-3.5 text-slate-400" size={18} />
-                <input
-                  type="email"
-                  required
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder="tucorreo@innova.edu.pe"
-                  className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-sm transition-all"
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="flex items-center gap-2.5 bg-red-50 text-red-700 p-3.5 rounded-2xl text-xs font-semibold border border-red-100">
-                <AlertCircle size={18} className="shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-4 px-6 rounded-2xl shadow-[0_8px_20px_rgb(79,70,229,0.25)] transition-all text-sm"
-            >
-              Verificar Credenciales
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  // 2. Si SÍ está autenticado, muestra tu panel completo con una barra superior de sesión
   return (
-    <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden font-sans text-slate-800 p-4 md:p-8 flex flex-col items-center justify-center">
-      
-      {/* Decoración de fondo */}
-      <div className="absolute top-0 left-10 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
-      <div className="absolute top-0 right-20 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
-      <div className="absolute -bottom-8 left-40 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <Calendar className="text-blue-600" />
+            Calendario Oficial por Semanas y Días
+          </h1>
+          <p className="text-slate-500 text-sm">Cronograma completo sincronizado desde tu base de datos en Google Sheets.</p>
+        </div>
 
-      <div className="relative z-10 w-full max-w-5xl mt-4">
-        
-        {/* Barra superior de sesión autorizada */}
-        <div className="flex flex-col sm:flex-row items-center justify-between bg-white/80 backdrop-blur-xl px-6 py-3.5 rounded-2xl border border-slate-200 shadow-sm mb-8 gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-              <ShieldCheck size={18} />
-            </div>
-            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <UserCheck size={15} className="text-emerald-600" />
-              Sesión activa: <span className="text-indigo-600 font-extrabold">{correoAutorizado}</span>
-            </span>
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
           <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3.5 py-2 rounded-xl transition-colors border border-red-100"
+            onClick={sincronizarDatos}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-semibold hover:bg-indigo-100 transition-colors"
           >
-            <LogOut size={14} />
-            Cerrar Sesión
+            <RefreshCw size={14} className={cargando ? "animate-spin" : ""} />
+            Actualizar
           </button>
         </div>
+      </div>
 
-        {/* Cabecera */}
-        <div className="text-center mb-10">
-          <span className="inline-block py-1.5 px-4 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold tracking-widest uppercase mb-4 shadow-sm border border-indigo-100">
-            Innova Schools • San Martín de Porres
-          </span>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 mb-4 pb-1">
-            Control de Arbitraje
-          </h1>
-          <p className="text-slate-500 font-medium text-sm md:text-base">Registro oficial de puntajes y validación en tiempo real</p>
+      {/* Barra de Filtros */}
+      <div className="flex flex-col md:flex-row gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 flex-1">
+          <Layers size={16} className="text-slate-400 ml-2 shrink-0" />
+          <span className="text-xs font-bold text-slate-600 shrink-0">Semanas:</span>
+          <button
+            onClick={() => setFiltroSemana('todos')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+              filtroSemana === 'todos' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Todas
+          </button>
+          {semanasDisponibles.map(sem => (
+            <button
+              key={sem}
+              onClick={() => setFiltroSemana(sem)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                filtroSemana === sem ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Semana {sem}
+            </button>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Columna Izquierda: Formulario */}
-          <div className="lg:col-span-7 bg-white/70 backdrop-blur-2xl p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/80">
-            <form onSubmit={enviarPuntaje} className="space-y-5">
-              
-              {/* House Seleccionada Visual */}
-              <div className="bg-gradient-to-r from-slate-50/80 to-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 transition-all">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center flex-shrink-0">
-                  {selectedHouse ? (
-                    <img src={selectedHouse.img} alt={selectedHouse.name} className="w-full h-full object-contain drop-shadow-md transition-all duration-300" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-slate-100 shadow-inner flex items-center justify-center border border-slate-200 border-dashed">
-                      <span className="text-3xl text-slate-300">🎯</span>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Destinatario Oficial</p>
-                  <p className={`text-xl font-black tracking-tight ${selectedHouse ? 'text-slate-800' : 'text-slate-400'}`}>
-                    {selectedHouse ? selectedHouse.name : 'Selecciona una House...'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Operación */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Operación</label>
-                <div className="relative">
-                  <select 
-                    className="w-full pl-4 pr-10 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 appearance-none shadow-sm transition-all"
-                    value={operation} onChange={(e) => setOperation(e.target.value)}
-                  >
-                    <option value="">Selecciona la operación...</option>
-                    <option value="sumar">✅ Sumar Puntos (Victoria / Reto)</option>
-                    <option value="restar">❌ Restar Puntos (Penalidad)</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Categoría y Actividad */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Categoría</label>
-                  <div className="relative">
-                    <select 
-                      className="w-full pl-4 pr-10 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 appearance-none shadow-sm transition-all"
-                      value={category} onChange={(e) => setCategory(e.target.value)}
-                    >
-                      <option value="">Elige...</option>
-                      <option value="promesas">Promesas (1º y 2º)</option>
-                      <option value="infantil">Infantil (3º y 4º)</option>
-                      <option value="junior">Junior (5º y 6º)</option>
-                      <option value="juvenila">Juvenil A (7º y 8º)</option>
-                      <option value="juvenilb">Juvenil B (9º, 10º, 11º)</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Deporte / Reto</label>
-                  <div className="relative">
-                    <select 
-                      className="w-full pl-4 pr-10 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 appearance-none shadow-sm transition-all"
-                      value={activity} onChange={(e) => setActivity(e.target.value)}
-                    >
-                      <option value="">Elige el deporte o reto...</option>
-                      <optgroup label="Deportes Principales">
-                        <option value="8">Futsal</option>
-                        <option value="9">Vóley</option>
-                        <option value="10">Pasabola</option>
-                        <option value="11">Balonmano</option>
-                        <option value="12">Básquet</option>
-                        <option value="13">Coneball</option>
-                        <option value="17">Bádminton</option>
-                      </optgroup>
-                      <optgroup label="Gynkana y Carreras">
-                        <option value="14">Carrera 25 metros</option>
-                        <option value="15">Carrera de relevos</option>
-                        <option value="16">Carrera de Resistencia</option>
-                        <option value="18">Salta Soga</option>
-                        <option value="19">Carrera de Michi</option>
-                        <option value="20">Aros Musicales</option>
-                        <option value="21">Carrera de Canalestas</option>
-                        <option value="22">Comelones</option>
-                        <option value="23">Carrera revienta globos</option>
-                        <option value="24">La cuchara y el limón</option>
-                        <option value="25">Carrera de Ganchos</option>
-                        <option value="26">Carrera de Tres Piernas</option>
-                      </optgroup>
-                      <optgroup label="Retos Académicos">
-                        <option value="27">Matemática (Tangram, Retos)</option>
-                        <option value="28">Comunicación (Cuentos, Debate)</option>
-                        <option value="29">DPSC (Juegos Andinos, Taptana)</option>
-                        <option value="30">Inglés (English Race, Lyrics War)</option>
-                        <option value="31">Arte (Máscaras, Mural, Canto)</option>
-                      </optgroup>
-                      <optgroup label="Eventos Especiales y Reconocimientos">
-                        <option value="34">Concurso de Barras</option>
-                        <option value="35">Concurso de Drill Coreográfico</option>
-                        <option value="36">Reconocimiento: Sana Convivencia</option>
-                        <option value="37">Reconocimiento: Eco House</option>
-                      </optgroup>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Puntos */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Puntos a otorgar/restar</label>
-                <input 
-                  type="number" 
-                  placeholder="Ej: 100" 
-                  className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-sm transition-all placeholder:text-slate-300 placeholder:font-normal"
-                  value={points} onChange={(e) => setPoints(e.target.value)} 
-                />
-              </div>
-
-              {/* Botón Seguro y Optimizado */}
-              <button 
-                type="submit" 
-                disabled={isSubmitting || !selectedHouse}
-                className={`w-full mt-4 font-bold py-4 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2
-                  ${isSubmitting || !selectedHouse
-                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' 
-                    : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-[0_8px_20px_rgb(79,70,229,0.25)] hover:shadow-[0_10px_25px_rgb(79,70,229,0.4)] hover:-translate-y-0.5'
-                  }
-                `}
-              >
-                <span className="flex items-center justify-center gap-2">
-                  {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-                  <span>
-                    {isSubmitting ? 'Enviando a Base de Datos...' : 'Confirmar Transacción'}
-                  </span>
-                </span>
-              </button>
-
-            </form>
-          </div>
-
-          {/* Columna Derecha: Grilla de Houses */}
-          <div className="lg:col-span-5 grid grid-cols-2 gap-4">
-            {HOUSES.map((house) => (
-              <button
-                key={house.id}
-                type="button"
-                onClick={() => setSelectedHouse(house)}
-                className={`group relative flex flex-col items-center justify-center p-6 bg-white/90 backdrop-blur-sm rounded-[2rem] transition-all duration-300 min-h-[220px]
-                  ${selectedHouse?.id === house.id 
-                    ? 'border-0 ring-[3px] ring-indigo-500/40 scale-[1.03] shadow-[0_10px_30px_rgb(79,70,229,0.15)] z-10' 
-                    : 'border border-slate-100 hover:border-slate-200 hover:scale-[1.02] hover:shadow-lg shadow-sm'
-                  }
-                `}
-              >
-                {selectedHouse?.id === house.id && (
-                  <div className="absolute top-4 right-4 w-2.5 h-2.5 bg-indigo-500 rounded-full shadow-[0_0_8px_rgb(99,102,241)]"></div>
-                )}
-                
-                <div className={`relative mb-6 transition-transform duration-500 ease-out ${selectedHouse?.id === house.id ? 'scale-110 -translate-y-2' : 'group-hover:scale-125 group-hover:-translate-y-3'}`}>
-                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-2/3 h-4 bg-slate-900/10 blur-md rounded-full transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
-                  <img 
-                    src={house.img} 
-                    alt={house.name} 
-                    className="relative z-10 w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-2xl" 
-                  />
-                </div>
-                
-                <span className={`font-black tracking-widest text-sm uppercase transition-colors absolute bottom-6 ${selectedHouse?.id === house.id ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-800'}`}>
-                  {house.name}
-                </span>
-              </button>
-            ))}
-          </div>
-
+        <div className="flex items-center gap-2 border-t md:border-t-0 md:border-l border-slate-200 pt-2 md:pt-0 md:pl-3 overflow-x-auto">
+          <Filter size={16} className="text-slate-400 shrink-0" />
+          <button
+            onClick={() => setFiltroEstado('todos')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              filtroEstado === 'todos' ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Todos
+          </button>
+          <button
+            onClick={() => setFiltroEstado('en-vivo')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              filtroEstado === 'en-vivo' ? 'bg-red-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            En Vivo
+          </button>
+          <button
+            onClick={() => setFiltroEstado('proximo')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              filtroEstado === 'proximo' ? 'bg-amber-500 text-white' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Próximos
+          </button>
+          <button
+            onClick={() => setFiltroEstado('finalizado')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              filtroEstado === 'finalizado' ? 'bg-slate-700 text-white' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Finalizados
+          </button>
         </div>
       </div>
+
+      {cargando ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-3" />
+          <p className="text-slate-500 font-medium text-sm">Cargando cronograma por semanas y días...</p>
+        </div>
+      ) : Object.keys(partidosAgrupados).length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+          <p className="text-slate-400 font-medium">No se encontraron encuentros con los filtros seleccionados.</p>
+        </div>
+      ) : (
+        <div className="space-y-10">
+          {Object.entries(partidosAgrupados).map(([semanaTitulo, diasMap]) => (
+            <div key={semanaTitulo} className="space-y-6">
+              {/* Encabezado de la Semana */}
+              <div className="flex items-center gap-3 border-b-2 border-blue-600 pb-2">
+                <div className="bg-blue-600 text-white font-extrabold px-4 py-1.5 rounded-xl text-base shadow-sm flex items-center gap-2">
+                  <Calendar size={18} />
+                  {semanaTitulo}
+                </div>
+              </div>
+
+              {/* Días dentro de la Semana */}
+              <div className="space-y-6 pl-1 md:pl-4">
+                {Object.entries(diasMap).map(([diaTitulo, listaPartidos]) => (
+                  <div key={diaTitulo} className="space-y-3">
+                    <div className="flex items-center gap-2 text-slate-700 font-bold text-sm bg-slate-100 px-3.5 py-1.5 rounded-xl w-fit border border-slate-200">
+                      <Clock size={16} className="text-blue-600" />
+                      <span>{diaTitulo}</span>
+                      <span className="text-xs font-normal text-slate-500">({listaPartidos.length} partidos)</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {listaPartidos.map((partido) => {
+                        const equipos = partido.enfrentamiento.includes('VS')
+                          ? partido.enfrentamiento.split('VS')
+                          : [partido.enfrentamiento, ''];
+
+                        return (
+                          <div key={partido.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition-shadow relative overflow-hidden">
+                            <div className={`absolute top-0 left-0 bottom-0 w-2 ${
+                              partido.estado === 'en-vivo' ? 'bg-red-500 animate-pulse' :
+                              partido.estado === 'proximo' ? 'bg-amber-400' : 'bg-slate-400'
+                            }`} />
+
+                            <div className="flex justify-between items-center mb-3 pl-2">
+                              <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">
+                                {partido.deporte}
+                              </span>
+                              <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
+                                <Trophy size={14} className="text-yellow-500" />
+                                {partido.categoria}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between my-4 pl-2">
+                              <div className="flex-1 text-right font-bold text-slate-800 text-base">
+                                {equipos[0]?.trim() || 'Local'}
+                              </div>
+                              <div className="px-3 text-center">
+                                <span className="text-xs font-bold text-slate-400 uppercase bg-slate-100 px-2.5 py-1 rounded-md">
+                                  vs
+                                </span>
+                              </div>
+                              <div className="flex-1 text-left font-bold text-slate-800 text-base">
+                                {equipos[1]?.trim() || 'Visita'}
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5 pt-3 border-t border-slate-100 pl-2 text-xs text-slate-500">
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1">
+                                  <Clock size={14} className="text-slate-400" />
+                                  {partido.hora}
+                                </span>
+                                <span className="font-medium text-slate-600">Árbitro: {partido.arbitro}</span>
+                              </div>
+                              {partido.apoyo && (
+                                <div className="text-slate-400 text-[11px] truncate">
+                                  Apoyo / Mesa: {partido.apoyo}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
