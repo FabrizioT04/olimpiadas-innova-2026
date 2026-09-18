@@ -6,14 +6,15 @@ export default function BannerInnova() {
       <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
       <div className="absolute left-1/3 bottom-0 w-64 h-64 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-      {/* Lado izquierdo: Logo e información */}
-      <div className="relative z-10 flex items-center gap-5 text-center md:text-left flex-col md:flex-row">
+      {/* Lado izquierdo: Logo grande sin fondo e información */}
+      <div className="relative z-10 flex items-center gap-6 text-center md:text-left flex-col md:flex-row">
         
-        <div className="w-16 h-16 bg-white backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-inner flex-shrink-0 p-2 overflow-hidden">
+        {/* Logo sin caja blanca, más grande y con sombra sutil para resaltar */}
+        <div className="flex-shrink-0">
           <img 
             src="/logo-innova.png" 
             alt="Logo Innova Schools" 
-            className="w-full h-full object-contain" 
+            className="w-24 h-24 md:w-28 md:h-28 object-contain drop-shadow-lg" 
           />
         </div>
 
