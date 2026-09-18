@@ -17,44 +17,173 @@ interface Partido {
 }
 
 const PARTIDOS_OFICIALES: Partido[] = [
-  // --- SEMANA 1 (14/09 al 18/09) ---
-  { id: 1, semana: 1, fecha: '2026-09-14', dia: 'Lunes 14/09/2026', hora: '09:35 - 09:55 am', deporte: 'CONEBALL / BÁSQUET', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Melissa Gurrionero, Gloria Huaman, Nicol Aguilar, Dayanara Quirica', lugar: 'Campo 1', estado: 'finalizado' },
+  // ================= SEMANA 1 (25 PARTIDOS) =================
+  { id: 1, semana: 1, fecha: '2026-09-14', dia: 'Lunes 14/09/2026', hora: '09:35 - 09:55 am', deporte: 'CONEBALL', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Melissa Gurrionero, Gloria Huaman, Nicol Aguilar, Dayanara Quirica', lugar: 'Campo 1', estado: 'finalizado' },
   { id: 2, semana: 1, fecha: '2026-09-14', dia: 'Lunes 14/09/2026', hora: '09:55 - 10:15 am', deporte: 'BÁSQUET', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Junior (5º y 6º)', arbitro: 'DAVID', apoyo: 'Dayanara Quirica, Jorge Romero, Karla Armas', lugar: 'Campo 1', estado: 'finalizado' },
   { id: 3, semana: 1, fecha: '2026-09-14', dia: 'Lunes 14/09/2026', hora: '10:55 - 11:15 am', deporte: 'BÁSQUET', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Juvenil A (7º y 8º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'Jimena Esteban, David Sajami, Karol Caballero, Diana Liviapoma', lugar: 'Campo 1', estado: 'finalizado' },
-  { id: 4, semana: 1, fecha: '2026-09-14', dia: 'Lunes 14/09/2026', hora: '11:15 - 11:35 am', deporte: 'CONEBALL', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ / DAVID', apoyo: 'Tutores y Cotutores, Volates', lugar: 'Campo 1', estado: 'finalizado' },
-  { id: 5, semana: 1, fecha: '2026-09-14', dia: 'Lunes 14/09/2026', hora: '12:55 - 13:15 pm', deporte: 'BÁSQUET', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Juvenil B (9º, 10º y 11º)', arbitro: 'ENRIQUE ALCAZAR 9C', apoyo: 'Saira Ramirez, Mario Nuñez, Karol Caballero, Diana Liviapoma', lugar: 'Campo 1', estado: 'finalizado' },
-  { id: 6, semana: 1, fecha: '2026-09-15', dia: 'Martes 15/09/2026', hora: '09:35 - 09:55 am', deporte: 'CONEBALL', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Melissa Gurrionero, Liz Natividad, Valeria Valverde, David Sajami', lugar: 'Campo 1', estado: 'proximo' },
-  { id: 7, semana: 1, fecha: '2026-09-15', dia: 'Martes 15/09/2026', hora: '09:55 - 10:15 am', deporte: 'BÁSQUET', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Junior (5º y 6º)', arbitro: 'DAVID', apoyo: 'Gloria Huaman, Pamela Coronado, Karl Sopla, Mariaelena Castillo', lugar: 'Campo 1', estado: 'proximo' },
-  { id: 8, semana: 1, fecha: '2026-09-15', dia: 'Martes 15/09/2026', hora: '10:55 - 11:15 am', deporte: 'BÁSQUET', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Juvenil A (7º y 8º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'Mario Nuñez, Karol Caballero, David Sajami', lugar: 'Campo 1', estado: 'proximo' },
-  { id: 9, semana: 1, fecha: '2026-09-16', dia: 'Miércoles 16/09/2026', hora: '09:35 - 09:55 am', deporte: 'BALONMANO', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Infantil (3º y 4º)', arbitro: 'MARIO NUÑEZ', apoyo: 'Mayra Alarcon, Karla Armas, Jorge Romero, Valeria Valverde', lugar: 'Campo 1', estado: 'proximo' },
-  { id: 10, semana: 1, fecha: '2026-09-16', dia: 'Miércoles 16/09/2026', hora: '09:55 - 10:15 am', deporte: 'BALONMANO', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Junior (5º y 6º)', arbitro: 'MARIO NUÑEZ', apoyo: 'David Sajami, Leakey Gambini, Dayanara Quirica', lugar: 'Campo 1', estado: 'proximo' },
-  { id: 11, semana: 1, fecha: '2026-09-17', dia: 'Jueves 17/09/2026', hora: '09:35 - 09:55 am', deporte: 'BALONMANO', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Liz Natividad, David Sajami, Karla Armas, Valeria Valverde', lugar: 'Campo 1', estado: 'proximo' },
-  { id: 12, semana: 1, fecha: '2026-09-18', dia: 'Viernes 18/09/2026', hora: '09:35 - 09:55 am', deporte: 'VÓLEY', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Infantil (3º y 4º)', arbitro: 'MARIO NUÑEZ', apoyo: 'Leakey Gambini, Karl Sopla, Marisol Reynaga, Valeria Valverde', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 4, semana: 1, fecha: '2026-09-14', dia: 'Lunes 14/09/2026', hora: '11:15 - 11:35 am', deporte: 'CONEBALL', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ 9A / DAVID', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 5, semana: 1, fecha: '2026-09-14', dia: 'Lunes 14/09/2026', hora: '12:55 - 13:15 pm', deporte: 'BÁSQUET', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Juvenil B (9º a 11º)', arbitro: 'ENRIQUE ALCAZAR 9C', apoyo: 'Saira Ramirez, Mario Nuñez, Karol Caballero, Diana Liviapoma - 9C', lugar: 'Campo 1', estado: 'finalizado' },
 
-  // --- SEMANA 2 (21/09 al 28/09) ---
-  { id: 13, semana: 2, fecha: '2026-09-21', dia: 'Lunes 21/09/2026', hora: '09:35 - 09:55 am', deporte: 'VÓLEY Y PASABOLA', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Melissa Gurrionero, Gloria Huaman, Nicol Aguilar, Leakey Gambini', lugar: 'Campo 1', estado: 'proximo' },
-  { id: 14, semana: 2, fecha: '2026-09-22', dia: 'Martes 22/09/2026', hora: '09:35 - 09:55 am', deporte: 'FUTSAL', enfrentamiento: 'VERDE VS AZUL', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Melissa Gurrionero, Liz Natividad, Valeria Valverde', lugar: 'Campo 1', estado: 'proximo' },
-  { id: 15, semana: 2, fecha: '2026-09-23', dia: 'Miércoles 23/09/2026', hora: '09:35 - 09:55 am', deporte: 'FUTSAL', enfrentamiento: 'BLANCO VS ANARANJADO', categoria: 'Infantil (3º y 4º)', arbitro: 'MARIO NUÑEZ', apoyo: 'Mayra Alarcon, Karla Armas, Jorge Romero', lugar: 'Campo 1', estado: 'proximo' },
-  { id: 16, semana: 2, fecha: '2026-09-24', dia: 'Jueves 24/09/2026', hora: '09:35 - 09:55 am', deporte: 'CONEBALL - BÁSQUET', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Liz Natividad, Karla Armas, Valeria Valverde', lugar: 'Campo 1', estado: 'en-vivo' },
-  { id: 17, semana: 2, fecha: '2026-09-28', dia: 'Lunes 28/09/2026', hora: '09:35 - 09:55 am', deporte: '3ER Y 4TO PUESTO BALONMANO', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Melissa Gurrionero, Gloria Huaman, Nicol Aguilar', lugar: 'Campo 1', estado: 'proximo' }
+  { id: 6, semana: 1, fecha: '2026-09-15', dia: 'Martes 15/09/2026', hora: '09:35 - 09:55 am', deporte: 'CONEBALL', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Melissa Gurrionero, Liz Natividad, Valeria Valverde, David Sajami', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 7, semana: 1, fecha: '2026-09-15', dia: 'Martes 15/09/2026', hora: '09:55 - 10:15 am', deporte: 'BÁSQUET', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Junior (5º y 6º)', arbitro: 'DAVID', apoyo: 'Gloria Huaman, Pamela Coronado, Karl Sopla, Mariaelena Castillo', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 8, semana: 1, fecha: '2026-09-15', dia: 'Martes 15/09/2026', hora: '10:55 - 11:15 am', deporte: 'BÁSQUET', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Juvenil A (7º y 8º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'Mario Nuñez, Karol Caballero, David Sajami', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 9, semana: 1, fecha: '2026-09-15', dia: 'Martes 15/09/2026', hora: '11:15 - 11:35 am', deporte: 'CONEBALL', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ / DAVID', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 10, semana: 1, fecha: '2026-09-15', dia: 'Martes 15/09/2026', hora: '12:55 - 13:15 pm', deporte: 'BÁSQUET', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Juvenil B (9º a 11º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'Katty Ramos, Luis Figueroa, Saira Ramirez', lugar: 'Campo 1', estado: 'finalizado' },
+
+  { id: 11, semana: 1, fecha: '2026-09-16', dia: 'Miércoles 16/09/2026', hora: '09:35 - 09:55 am', deporte: 'BALONMANO', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Infantil (3º y 4º)', arbitro: 'MARIO NUÑEZ', apoyo: 'Mayra Alarcon, Karla Armas, Jorge Romero, Valeria Valverde', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 12, semana: 1, fecha: '2026-09-16', dia: 'Miércoles 16/09/2026', hora: '09:55 - 10:15 am', deporte: 'BALONMANO', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Junior (5º y 6º)', arbitro: 'MARIO NUÑEZ', apoyo: 'David Sajami, Leakey Gambini, Dayanara Quirica', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 13, semana: 1, fecha: '2026-09-16', dia: 'Miércoles 16/09/2026', hora: '10:55 - 11:15 am', deporte: 'BALONMANO', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Juvenil A (7º y 8º)', arbitro: 'MARIO NUÑEZ', apoyo: 'Luis Figueroa, Katty Ramos, Pamela Coronado', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 14, semana: 1, fecha: '2026-09-16', dia: 'Miércoles 16/09/2026', hora: '11:15 - 11:35 am', deporte: 'BALONMANO', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ 8A / DAVID', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 15, semana: 1, fecha: '2026-09-16', dia: 'Miércoles 16/09/2026', hora: '12:55 - 13:15 pm', deporte: 'BALONMANO', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Juvenil B (9º a 11º)', arbitro: 'MARIO NUÑEZ', apoyo: 'David Sajami, Karl Sopla, Pamela coronado', lugar: 'Campo 1', estado: 'finalizado' },
+
+  { id: 16, semana: 1, fecha: '2026-09-17', dia: 'Jueves 17/09/2026', hora: '09:35 - 09:55 am', deporte: 'BALONMANO', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Liz Natividad, David Sajami, Karla Armas, Valeria Valverde', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 17, semana: 1, fecha: '2026-09-17', dia: 'Jueves 17/09/2026', hora: '09:55 - 10:15 am', deporte: 'BALONMANO', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Junior (5º y 6º)', arbitro: 'DAVID', apoyo: 'Leakey Gambini, Jorge Romero, Karla Armas, Pamela coronado', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 18, semana: 1, fecha: '2026-09-17', dia: 'Jueves 17/09/2026', hora: '10:55 - 11:15 am', deporte: 'BALONMANO', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Juvenil A (7º y 8º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'David Sajami, Dayanara, Diana Liviapoma', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 19, semana: 1, fecha: '2026-09-17', dia: 'Jueves 17/09/2026', hora: '11:15 - 11:35 am', deporte: 'BALONMANO', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ / DAVID 9C', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 20, semana: 1, fecha: '2026-09-17', dia: 'Jueves 17/09/2026', hora: '12:55 - 13:15 pm', deporte: 'BALONMANO', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Juvenil B (9º a 11º)', arbitro: 'MARIO NUÑEZ', apoyo: 'David Sajami, Dayanara Quirica 9C, Leakey Gambini', lugar: 'Campo 1', estado: 'finalizado' },
+
+  { id: 21, semana: 1, fecha: '2026-09-18', dia: 'Viernes 18/09/2026', hora: '09:35 - 09:55 am', deporte: 'VÓLEY', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Infantil (3º y 4º)', arbitro: 'MARIO NUÑEZ', apoyo: 'Leakey Gambini, Karl Sopla, Marisol Reynaga, Valeria Valverde', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 22, semana: 1, fecha: '2026-09-18', dia: 'Viernes 18/09/2026', hora: '09:55 - 10:15 am', deporte: 'VÓLEY', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Junior (5º y 6º)', arbitro: 'MARIO NUÑEZ', apoyo: 'Karol Caballero, Gloria Huaman, Nicol Aguilar, Leakey Gambini', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 23, semana: 1, fecha: '2026-09-18', dia: 'Viernes 18/09/2026', hora: '10:55 - 11:15 am', deporte: 'VÓLEY', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Juvenil A (7º y 8º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'Diana Liviapoma - 11A, Pamela Coronado, Gloria Huaman, Jimena Esteban', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 24, semana: 1, fecha: '2026-09-18', dia: 'Viernes 18/09/2026', hora: '11:15 - 11:35 am', deporte: 'PASABOLA', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ 9B', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'finalizado' },
+  { id: 25, semana: 1, fecha: '2026-09-18', dia: 'Viernes 18/09/2026', hora: '12:55 - 13:15 pm', deporte: 'VÓLEY', enfrentamiento: 'ANARANJADO VS AZUL', categoria: 'Juvenil B (9º a 11º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'Luis Figueroa, Mario Nuñez, Saira Ramirez, Larry Delao', lugar: 'Campo 1', estado: 'finalizado' },
+
+  // ================= SEMANA 2 (24 PARTIDOS ACTUALIZADOS CON APOYO EXACTO) =================
+  { id: 26, semana: 2, fecha: '2026-09-21', dia: 'Lunes 21/09/2026', hora: '09:35 - 09:55 am', deporte: 'VÓLEY', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Melissa Gurrionero, Gloria Huaman, Nicol Aguilar, Leakey Gambini', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 27, semana: 2, fecha: '2026-09-21', dia: 'Lunes 21/09/2026', hora: '09:55 - 10:15 am', deporte: 'VÓLEY', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Junior (5º y 6º)', arbitro: 'DAVID', apoyo: 'Dayanara Quirica, Jorge Romero, Karla Armas', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 28, semana: 2, fecha: '2026-09-21', dia: 'Lunes 21/09/2026', hora: '10:55 - 11:15 am', deporte: 'VÓLEY', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Juvenil A (7º y 8º)', arbitro: 'KATTY RAMOS', apoyo: 'Jimena Esteban, David Sajami, Karol Caballero, Diana Liviapoma', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 29, semana: 2, fecha: '2026-09-21', dia: 'Lunes 21/09/2026', hora: '11:15 - 11:35 am', deporte: 'VÓLEY', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ 9A/DAVID', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 30, semana: 2, fecha: '2026-09-21', dia: 'Lunes 21/09/2026', hora: '12:55 - 13:15 pm', deporte: 'VÓLEY', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Juvenil B (9º a 11º)', arbitro: 'KATTY RAMOS', apoyo: 'Saira, Mario Nuñez, Karol Caballero, Diana Liviapoma', lugar: 'Campo 1', estado: 'proximo' },
+
+  { id: 31, semana: 2, fecha: '2026-09-22', dia: 'Martes 22/09/2026', hora: '09:35 - 09:55 am', deporte: 'FUTSAL', enfrentamiento: 'VERDE VS AZUL', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Melissa Gurrionero, Liz Natividad, Valeria Valverde', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 32, semana: 2, fecha: '2026-09-22', dia: 'Martes 22/09/2026', hora: '09:55 - 10:15 am', deporte: 'FUTSAL', enfrentamiento: 'VERDE VS AZUL', categoria: 'Junior (5º y 6º)', arbitro: 'Karl Sopla', apoyo: 'Pamela Coronado, Gloria Huaman, Mariaelena Castillo', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 33, semana: 2, fecha: '2026-09-22', dia: 'Martes 22/09/2026', hora: '10:55 - 11:15 am', deporte: 'FUTSAL', enfrentamiento: 'VERDE VS AZUL', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Larry Delao 10B', apoyo: 'Mario Nuñez, David Sajami, Karol Caballero, Enrique Alcazar', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 34, semana: 2, fecha: '2026-09-22', dia: 'Martes 22/09/2026', hora: '11:15 - 11:35 am', deporte: 'FUTSAL', enfrentamiento: 'VERDE VS AZUL', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ/DAVID', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 35, semana: 2, fecha: '2026-09-22', dia: 'Martes 22/09/2026', hora: '12:55 - 13:15 pm', deporte: 'FUTSAL', enfrentamiento: 'VERDE VS AZUL', categoria: 'Juvenil B (9º a 11º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'Katty Ramos, Luis Figueroa, Saira Ramirez', lugar: 'Campo 1', estado: 'proximo' },
+
+  { id: 36, semana: 2, fecha: '2026-09-23', dia: 'Miércoles 23/09/2026', hora: '09:35 - 09:55 am', deporte: 'FUTSAL', enfrentamiento: 'BLANCO VS ANARANJADO', categoria: 'Infantil (3º y 4º)', arbitro: 'MARIO NUÑEZ', apoyo: 'Mayra Alarcon, Karla Armas, Jorge Romero, Valeria Valverde', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 37, semana: 2, fecha: '2026-09-23', dia: 'Miércoles 23/09/2026', hora: '09:55 - 10:15 am', deporte: 'FUTSAL', enfrentamiento: 'BLANCO VS ANARANJADO', categoria: 'Junior (5º y 6º)', arbitro: 'MARIO', apoyo: 'David Sajami, Leakey Gambini, Dayanara Quirica', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 38, semana: 2, fecha: '2026-09-23', dia: 'Miércoles 23/09/2026', hora: '10:55 - 11:15 am', deporte: 'FUTSAL', enfrentamiento: 'BLANCO VS ANARANJADO', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Larry Delao 10A', apoyo: 'Luis Figueroa, Mario Nuñez, Katty Ramos, Pamela Coronado', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 39, semana: 2, fecha: '2026-09-23', dia: 'Miércoles 23/09/2026', hora: '11:15 - 11:35 am', deporte: 'FUTSAL', enfrentamiento: 'BLANCO VS ANARANJADO', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ 8A/DAVID', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 40, semana: 2, fecha: '2026-09-23', dia: 'Miércoles 23/09/2026', hora: '12:55 - 13:15 pm', deporte: 'FUTSAL', enfrentamiento: 'BLANCO VS ANARANJADO', categoria: 'Juvenil B (9º a 11º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'David Sajami, Karl Sopla, Pamela coronado', lugar: 'Campo 1', estado: 'proximo' },
+
+  { id: 41, semana: 2, fecha: '2026-09-24', dia: 'Jueves 24/09/2026', hora: '09:35 - 09:55 am', deporte: 'CONEBALL', enfrentamiento: 'BLANCO VS VERDE', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Liz Natividad, Karla Armas, Valeria Valverde', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 42, semana: 2, fecha: '2026-09-24', dia: 'Jueves 24/09/2026', hora: '09:55 - 10:15 am', deporte: 'BÁSQUET', enfrentamiento: 'POR DEFINIR', categoria: 'Junior (5º y 6º)', arbitro: 'DAVID', apoyo: 'Leakey Gambini, Jorge Romero, Karla Armas, Pamela coronado', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 43, semana: 2, fecha: '2026-09-24', dia: 'Jueves 24/09/2026', hora: '10:55 - 11:15 am', deporte: 'BÁSQUET', enfrentamiento: 'POR DEFINIR', categoria: 'Juvenil A (7º y 8º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'David Sajami, Enrique, Leakey Gambini, Diana Liviapoma', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 44, semana: 2, fecha: '2026-09-24', dia: 'Jueves 24/09/2026', hora: '11:15 - 11:35 am', deporte: 'CONEBALL', enfrentamiento: 'POR DEFINIR', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ/DAVID 9C', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 45, semana: 2, fecha: '2026-09-24', dia: 'Jueves 24/09/2026', hora: '12:55 - 13:15 pm', deporte: 'BÁSQUET', enfrentamiento: 'POR DEFINIR', categoria: 'Juvenil B (9º a 11º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'David Sajami, Mario Nuñez, Dayanara Quirica 9C, Leakey Gambini', lugar: 'Campo 1', estado: 'proximo' },
+
+  { id: 46, semana: 2, fecha: '2026-09-25', dia: 'Viernes 25/09/2026', hora: '08:00 - 09:55 am', deporte: 'INAUGURACIÓN', enfrentamiento: 'BIENVENIDA A ESTUDIANTES', categoria: 'Todas las House', arbitro: 'Comisión', apoyo: 'General', lugar: 'Campo Dep. Navarro', estado: 'proximo' },
+  { id: 47, semana: 2, fecha: '2026-09-25', dia: 'Viernes 25/09/2026', hora: '09:55 - 10:15 am', deporte: 'INAUGURACIÓN', enfrentamiento: 'DESFILE DE LAS HOUSE', categoria: 'Todas las House', arbitro: 'Comisión', apoyo: 'General', lugar: 'Campo Dep. Navarro', estado: 'proximo' },
+  { id: 48, semana: 2, fecha: '2026-09-25', dia: 'Viernes 25/09/2026', hora: '10:55 - 11:15 am', deporte: 'INAUGURACIÓN', enfrentamiento: 'DRILL GIMNÁSTICO', categoria: 'Todas las House', arbitro: 'Comisión', apoyo: 'General', lugar: 'Campo Dep. Navarro', estado: 'proximo' },
+  { id: 49, semana: 2, fecha: '2026-09-25', dia: 'Viernes 25/09/2026', hora: '11:15 - 13:15 pm', deporte: 'INAUGURACIÓN', enfrentamiento: 'ENCUENTRO DE PADRES', categoria: 'Todas las House', arbitro: 'Comisión', apoyo: 'General', lugar: 'Campo Dep. Navarro', estado: 'proximo' },
+
+  // ================= SEMANA 3 =================
+  // LUNES 28/09 (ACTUALIZADO CON APOYO EXACTO DE LA TABLA 2DA SEMANA)
+  { id: 50, semana: 3, fecha: '2026-09-28', dia: 'Lunes 28/09/2026', hora: '09:35 - 09:55 am', deporte: 'BALONMANO', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Infantil (3º y 4º)', arbitro: 'DAVID', apoyo: 'Melissa Gurrionero, Gloria Huaman, Nicol Aguilar, Leakey Gambini', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 51, semana: 3, fecha: '2026-09-28', dia: 'Lunes 28/09/2026', hora: '09:55 - 10:15 am', deporte: 'BALONMANO', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Junior (5º y 6º)', arbitro: 'DAVID', apoyo: 'Dayanara Quirica, Jorge Romero, Karla Armas', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 52, semana: 3, fecha: '2026-09-28', dia: 'Lunes 28/09/2026', hora: '10:55 - 11:15 am', deporte: 'BALONMANO', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil A (7º y 8º)', arbitro: 'KATTY RAMOS', apoyo: 'Jimena Esteban, David Sajami, Karol Caballero, Diana Liviapoma', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 53, semana: 3, fecha: '2026-09-28', dia: 'Lunes 28/09/2026', hora: '11:15 - 11:35 am', deporte: 'BALONMANO', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ 9A/DAVID', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 54, semana: 3, fecha: '2026-09-28', dia: 'Lunes 28/09/2026', hora: '12:55 - 13:15 pm', deporte: 'BALONMANO', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil B (9º a 11º)', arbitro: 'KATTY RAMOS', apoyo: 'Saira Ramirez, Mario Nuñez, Karol Caballero, Diana Liviapoma', lugar: 'Campo 1', estado: 'proximo' },
+
+  // MARTES 29/09
+  { id: 55, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '08:00 - 08:20 am', deporte: 'CARRERAS', enfrentamiento: 'PRELIMINAR', categoria: 'Promesas (1º y 2º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 56, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '08:20 - 08:40 am', deporte: 'CARRERAS', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 57, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '08:40 - 09:00 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Promesas (1º y 2º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 63, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '12:00 - 12:20 pm', deporte: 'CARRERAS', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 64, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '12:20 - 12:40 pm', deporte: 'CARRERAS', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 65, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '12:40 - 01:00 pm', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 66, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '01:00 - 01:20 pm', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 67, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '01:20 - 01:40 pm', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 68, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '01:40 - 02:00 pm', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 58, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '09:35 - 09:55 am', deporte: 'POR DEFINIR', enfrentamiento: 'PRELIMINARES', categoria: 'Infantil (3º y 4º)', arbitro: 'Por asignar', apoyo: 'Por asignar', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 59, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '09:55 - 10:15 am', deporte: 'POR DEFINIR', enfrentamiento: 'PRELIMINARES', categoria: 'Junior (5º y 6º)', arbitro: 'Por asignar', apoyo: 'Por asignar', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 60, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '10:55 - 11:15 am', deporte: 'POR DEFINIR', enfrentamiento: 'PRELIMINARES', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Por asignar', apoyo: 'Por asignar', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 61, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '11:15 - 11:35 am', deporte: 'POR DEFINIR', enfrentamiento: 'PRELIMINARES', categoria: 'Promesas (1º y 2º)', arbitro: 'Por asignar', apoyo: 'Por asignar', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 62, semana: 3, fecha: '2026-09-29', dia: 'Martes 29/09/2026', hora: '12:55 - 13:15 pm', deporte: 'POR DEFINIR', enfrentamiento: 'PRELIMINARES', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Por asignar', apoyo: 'Por asignar', lugar: 'Campo 1', estado: 'proximo' },
+
+  // MIÉRCOLES 30/09
+  { id: 69, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '08:00 - 08:20 am', deporte: 'CARRERAS', enfrentamiento: 'PRELIMINAR', categoria: 'Promesas (1º y 2º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 70, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '08:20 - 08:40 am', deporte: 'CARRERAS', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 71, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '08:40 - 09:00 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Promesas (1º y 2º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 72, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '09:00 - 09:20 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Promesas (1º y 2º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 73, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '09:20 - 09:40 am', deporte: 'CARRERAS', enfrentamiento: 'PRELIMINAR', categoria: 'Infantil (3º y 4º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 74, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '09:40 - 10:00 am', deporte: 'CARRERAS', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Infantil (3º y 4º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 75, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '10:00 - 10:20 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Infantil (3º y 4º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 76, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '10:20 - 10:40 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Infantil (3º y 4º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 77, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '10:40 - 11:00 am', deporte: 'CARRERAS', enfrentamiento: 'PRELIMINAR', categoria: 'Junior (5º y 6º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 78, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '11:00 - 11:20 am', deporte: 'CARRERAS', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Junior (5º y 6º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 79, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '11:20 - 11:40 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Junior (5º y 6º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 80, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '11:40 - 12:00 pm', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Junior (5º y 6º)', arbitro: 'Larry Delao', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 81, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '12:00 - 12:20 pm', deporte: 'CARRERAS', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 82, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '12:20 - 12:40 pm', deporte: 'CARRERAS', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 83, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '12:40 - 01:00 pm', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 84, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '01:00 - 01:20 pm', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 85, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '01:20 - 01:40 pm', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 86, semana: 3, fecha: '2026-09-30', dia: 'Miércoles 30/09/2026', hora: '01:40 - 02:00 pm', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+
+  // JUEVES 01/10
+  { id: 87, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '08:00 - 08:20 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Promesas (1º y 2º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 2', estado: 'proximo' },
+  { id: 88, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '08:20 - 08:40 am', deporte: 'FÚTBOL', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 2', estado: 'proximo' },
+  { id: 89, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '08:40 - 09:00 am', deporte: 'GYMKANA', enfrentamiento: 'PRELIMINAR', categoria: 'Promesas (1º y 2º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 90, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '09:00 - 09:20 am', deporte: 'GYMKANA', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 91, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '08:40 - 09:00 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Infantil (3º y 4º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 2', estado: 'proximo' },
+  { id: 92, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '09:00 - 09:20 am', deporte: 'FÚTBOL', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Infantil (3º y 4º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 2', estado: 'proximo' },
+  { id: 93, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '08:00 - 08:20 am', deporte: 'GYMKANA', enfrentamiento: 'PRELIMINAR', categoria: 'Infantil (3º y 4º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 94, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '08:20 - 08:40 am', deporte: 'GYMKANA', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Infantil (3º y 4º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 95, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '08:40 - 09:00 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Junior (5º y 6º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 2', estado: 'proximo' },
+  { id: 96, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '09:00 - 09:20 am', deporte: 'FÚTBOL', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Junior (5º y 6º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 2', estado: 'proximo' },
+  { id: 97, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '08:40 - 09:00 am', deporte: 'GYMKANA', enfrentamiento: 'PRELIMINAR', categoria: 'Junior (5º y 6º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 98, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '09:00 - 09:20 am', deporte: 'GYMKANA', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Junior (5º y 6º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 99, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '09:20 - 09:40 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 100, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '09:40 - 10:00 am', deporte: 'FÚTBOL', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 101, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '10:00 - 10:20 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 102, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '10:20 - 10:40 am', deporte: 'FÚTBOL', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Katy', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 103, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '10:40 - 11:00 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 104, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '11:00 - 11:20 am', deporte: 'FÚTBOL', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 105, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '11:20 - 11:40 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 106, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '11:40 - 12:00 pm', deporte: 'FÚTBOL', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
+
+  // VIERNES 02/10 (FINALES)
+  { id: 107, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '08:00 - 08:20 am', deporte: 'POR DEFINIR', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 2', estado: 'proximo' },
+  { id: 108, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '08:20 - 08:40 am', deporte: 'POR DEFINIR', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 109, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '08:40 - 09:00 am', deporte: 'POR DEFINIR', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 110, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '09:00 - 09:20 am', deporte: 'POR DEFINIR', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Infantil (3º y 4º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 2', estado: 'proximo' },
+  { id: 111, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '09:20 - 09:40 am', deporte: 'POR DEFINIR', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Infantil (3º y 4º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 112, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '09:40 - 10:00 am', deporte: 'POR DEFINIR', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Infantil (3º y 4º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 113, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '10:00 - 10:20 am', deporte: 'POR DEFINIR', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Junior (5º y 6º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 114, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '10:40 - 11:00 am', deporte: 'POR DEFINIR', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Junior (5º y 6º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 115, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '11:00 - 11:20 am', deporte: 'POR DEFINIR', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Junior (5º y 6º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 116, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '11:20 - 11:40 am', deporte: 'POR DEFINIR', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 117, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '11:40 - 12:00 pm', deporte: 'POR DEFINIR', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 118, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '12:00 - 12:20 pm', deporte: 'POR DEFINIR', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Juvenil A (7º y 8º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 119, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '12:20 - 12:40 pm', deporte: 'POR DEFINIR', enfrentamiento: 'PRELIMINAR 2DO TIEMPO DAMAS', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 120, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '12:40 - 01:00 pm', deporte: 'POR DEFINIR', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 121, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '01:00 - 01:20 pm', deporte: 'POR DEFINIR', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 122, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '01:20 - 01:40 pm', deporte: 'POR DEFINIR', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
+  { id: 123, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '01:40 - 02:00 pm', deporte: 'POR DEFINIR', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' }
 ];
 
 export default function Fixture() {
   const [partidos, setPartidos] = useState<Partido[]>(PARTIDOS_OFICIALES);
-  const [cargando, setCargando] = useState<boolean>(false);
+  
+  const [cargando, setCargando] = useState<boolean>(true);
+  const [actualizando, setActualizando] = useState<boolean>(false);
   const [filtroSemana, setFiltroSemana] = useState<string>('todos');
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'proximo' | 'en-vivo' | 'finalizado'>('todos');
   
-  // Estado para controlar qué días están desplegados (cerrados por defecto)
   const [diasExpandidos, setDiasExpandidos] = useState<Record<string, boolean>>({});
 
   const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw6v_-hQor-DMh7Mg2qtodwpuIiXIuCOqqtV3mY3Gs5ueqZBrDH8LORqa7RTMWhIH1uqw/exec';
 
-  const sincronizarDatos = async () => {
-    setCargando(true);
+  const sincronizarDatos = async (silencioso = false) => {
+    if (!silencioso) setCargando(true);
+    if (silencioso) setActualizando(true);
+    
     try {
       const respuesta = await fetch(WEB_APP_URL);
       const json = await respuesta.json();
+      
       if (json.partidos && json.partidos.length > 0) {
         const mapeados = json.partidos.map((item: any, index: number) => ({
           id: item.id || index + 1,
@@ -67,20 +196,28 @@ export default function Fixture() {
           categoria: item.categoria || 'General',
           arbitro: item.arbitro || 'Por asignar',
           apoyo: item.apoyo || '',
-          lugar: 'Campo Principal',
-          estado: (index === 0 ? 'en-vivo' : index % 2 === 0 ? 'proximo' : 'finalizado') as 'proximo' | 'en-vivo' | 'finalizado'
+          lugar: item.lugar || 'Campo 1',
+          estado: (item.estado || (index === 0 ? 'en-vivo' : index % 2 === 0 ? 'proximo' : 'finalizado')).toLowerCase() as 'proximo' | 'en-vivo' | 'finalizado'
         }));
         setPartidos(mapeados);
+      } else {
+        setPartidos(PARTIDOS_OFICIALES);
       }
     } catch (error) {
-      console.log('Usando datos oficiales de respaldo.');
+      setPartidos(PARTIDOS_OFICIALES);
+      console.log('Usando datos locales completos por defecto.');
     } finally {
       setCargando(false);
+      setActualizando(false);
     }
   };
 
   useEffect(() => {
-    sincronizarDatos();
+    sincronizarDatos(false);
+    const intervalo = setInterval(() => {
+      sincronizarDatos(true);
+    }, 30000);
+    return () => clearInterval(intervalo);
   }, []);
 
   const semanasDisponibles = Array.from(new Set(partidos.map(p => String(p.semana)))).sort((a, b) => Number(a) - Number(b));
@@ -102,7 +239,6 @@ export default function Fixture() {
     return acc;
   }, {});
 
-  // Función para abrir y cerrar el acordeón de cada día
   const toggleDia = (diaTitulo: string) => {
     setDiasExpandidos(prev => ({
       ...prev,
@@ -118,21 +254,20 @@ export default function Fixture() {
             <Calendar className="text-blue-600" />
             Calendario Oficial por Semanas y Días
           </h1>
-          <p className="text-slate-500 text-sm">Cronograma completo sincronizado con asignación exacta de árbitros.</p>
+          <p className="text-slate-500 text-sm">Cronograma interactivo sincronizado en tiempo real con Google Sheets.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <button
-            onClick={sincronizarDatos}
+            onClick={() => sincronizarDatos(false)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-semibold hover:bg-indigo-100 transition-colors"
           >
-            <RefreshCw size={14} className={cargando ? "animate-spin" : ""} />
-            Actualizar
+            <RefreshCw size={14} className={actualizando || cargando ? "animate-spin" : ""} />
+            {actualizando ? "Sincronizando..." : "Actualizar"}
           </button>
         </div>
       </div>
 
-      {/* Barra de Filtros */}
       <div className="flex flex-col md:flex-row gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 flex-1">
           <Layers size={16} className="text-slate-400 ml-2 shrink-0" />
@@ -198,17 +333,17 @@ export default function Fixture() {
       {cargando ? (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-3" />
-          <p className="text-slate-500 font-medium text-sm">Cargando cronograma por semanas y días...</p>
+          <p className="text-slate-500 font-medium text-sm">Cargando cronograma...</p>
         </div>
       ) : Object.keys(partidosAgrupados).length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
-          <p className="text-slate-400 font-medium">No se encontraron encuentros con los filtros seleccionados.</p>
+          <p className="text-slate-400 font-medium">No hay partidos registrados aún en la base de datos.</p>
         </div>
       ) : (
         <div className="space-y-12">
           {Object.entries(partidosAgrupados).map(([semanaTitulo, diasMap]) => (
             <div key={semanaTitulo} className="space-y-6">
-              {/* Encabezado de la Semana */}
+              
               <div className="flex items-center gap-3 mb-2">
                 <div className="bg-blue-600 text-white font-extrabold px-4 py-1.5 rounded-xl text-base shadow-sm">
                   {semanaTitulo}
@@ -216,15 +351,13 @@ export default function Fixture() {
                 <div className="h-px flex-1 bg-blue-100"></div>
               </div>
 
-              {/* Días dentro de la Semana (Acordeón) */}
               <div className="space-y-4 pl-1 md:pl-2">
                 {Object.entries(diasMap).map(([diaTitulo, listaPartidos]) => {
-                  const estaExpandido = diasExpandidos[diaTitulo] ?? false; // Cerrado por defecto
+                  const estaExpandido = diasExpandidos[diaTitulo] ?? false; 
                   
                   return (
                     <div key={diaTitulo} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                       
-                      {/* Botón para desplegar el día */}
                       <button 
                         onClick={() => toggleDia(diaTitulo)}
                         className="w-full flex items-center justify-between px-5 py-4 hover:bg-blue-50/50 transition-colors cursor-pointer focus:outline-none"
@@ -247,14 +380,15 @@ export default function Fixture() {
                         </div>
                       </button>
 
-                      {/* Contenedor de Partidos (Se muestra solo si está expandido) */}
                       {estaExpandido && (
                         <div className="p-5 pt-2 border-t border-slate-100 bg-slate-50/50">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {listaPartidos.map((partido) => {
                               const equipos = partido.enfrentamiento.includes('VS')
                                 ? partido.enfrentamiento.split('VS')
-                                : [partido.enfrentamiento, ''];
+                                : partido.enfrentamiento.includes('/') 
+                                  ? partido.enfrentamiento.split('/')
+                                  : [partido.enfrentamiento, ''];
 
                               return (
                                 <div key={partido.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition-shadow relative overflow-hidden">
@@ -275,7 +409,7 @@ export default function Fixture() {
 
                                   <div className="flex items-center justify-between my-4 pl-2">
                                     <div className="flex-1 text-right font-bold text-slate-800 text-base">
-                                      {equipos[0]?.trim() || 'Local'}
+                                      {equipos[0]?.trim() || 'Equipos'}
                                     </div>
                                     <div className="px-3 text-center">
                                       <span className="text-xs font-bold text-slate-400 uppercase bg-slate-100 px-2.5 py-1 rounded-md">
@@ -283,7 +417,7 @@ export default function Fixture() {
                                       </span>
                                     </div>
                                     <div className="flex-1 text-left font-bold text-slate-800 text-base">
-                                      {equipos[1]?.trim() || 'Visita'}
+                                      {equipos[1]?.trim() || 'Mixtos'}
                                     </div>
                                   </div>
 
@@ -293,12 +427,12 @@ export default function Fixture() {
                                         <Clock size={14} className="text-slate-400" />
                                         {partido.hora}
                                       </span>
-                                      <span className="font-medium text-indigo-600 font-bold">Árbitro: {partido.arbitro}</span>
+                                      <span className="font-bold text-indigo-600">Árbitro: {partido.arbitro}</span>
                                     </div>
                                     {partido.apoyo && (
                                       <div className="text-slate-400 text-[11px] truncate flex justify-between items-center">
                                         <span>{partido.apoyo}</span>
-                                        <span className="font-semibold text-slate-400">{partido.lugar}</span>
+                                        <span className="font-semibold text-slate-400">Campo {partido.lugar}</span>
                                       </div>
                                     )}
                                   </div>
