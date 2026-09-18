@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon, Menu, X } from 'lucide-react';
 import PanelArbitro from '../pages/PanelArbitro';
 import Puntajes from '../pages/Puntajes';
 import Fixture from '../pages/Fixture';
-import Galeria from '../pages/Galeria'; // <--- Importado correctamente
+import Galeria from '../pages/Galeria';
 import BannerInnova from '../components/BannerInnova';
 
 export default function MainLayout() {
-  // Detecta la pestaña inicial basándose en la URL actual del navegador
   const [activeTab, setActiveTab] = useState(() => {
     const path = window.location.pathname;
     if (path.includes('arbitraje')) return 'arbitraje';
@@ -16,19 +15,20 @@ export default function MainLayout() {
     return 'fixture';
   });
 
-  // Función que maneja la navegación real
+  // Estado para controlar la apertura del menú en celulares
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const handleTabChange = (tab: string) => {
     if (tab === 'arbitraje') {
       window.location.href = '/arbitraje';
     } else {
       setActiveTab(tab);
-      // Actualizamos la URL limpiamente para que si recargan la página, se mantengan en la pestaña
       const newPath = tab === 'fixture' ? '/' : `/${tab}`;
       window.history.pushState({}, '', newPath);
+      setIsMobileMenuOpen(false); // Cierra el menú en móvil al hacer clic
     }
   };
 
-  // Función que decide qué pantalla renderizar a la derecha
   const renderContent = () => {
     switch (activeTab) {
       case 'arbitraje':
@@ -38,7 +38,7 @@ export default function MainLayout() {
       case 'medallero':
         return <Puntajes />;
       case 'galeria':
-        return <Galeria />; // <--- ¡Aquí estaba el detalle! Ahora muestra tu componente real
+        return <Galeria />;
       default:
         return <Fixture />;
     }
@@ -46,26 +46,49 @@ export default function MainLayout() {
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans">
-      {/* Barra Lateral (Sidebar) */}
-      <aside className="w-64 bg-white border-r border-slate-100 flex flex-col flex-shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20">
+      
+      {/* Fondo oscuro translúcido para móviles cuando el menú está abierto */}
+      {isMobileMenuOpen && (
+        <div 
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 md:hidden"
+        />
+      )}
+
+      {/* Barra Lateral (Sidebar Responsivo) */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-100 flex flex-col flex-shrink-0 
+        shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-transform duration-300 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:relative
+      `}>
         
         {/* Logo */}
-        <div className="h-24 flex items-center px-6 border-b border-slate-50">
-          <div className="w-11 h-11 flex items-center justify-center flex-shrink-0">
-            <img 
-              src="/logo-innova.png" 
-              alt="Logo Innova Schools" 
-              className="w-full h-full object-contain drop-shadow-sm" 
-            />
+        <div className="h-24 flex items-center justify-between px-6 border-b border-slate-50">
+          <div className="flex items-center">
+            <div className="w-11 h-11 flex items-center justify-center flex-shrink-0">
+              <img 
+                src="/logo-innova.png" 
+                alt="Logo Innova Schools" 
+                className="w-full h-full object-contain drop-shadow-sm" 
+              />
+            </div>
+            <div className="ml-3">
+              <h1 className="text-sm font-black text-slate-800 leading-tight">Olimpiadas 360°</h1>
+              <p className="text-[10px] font-bold text-slate-400">SMP PERÚ</p>
+            </div>
           </div>
-          <div className="ml-3">
-            <h1 className="text-sm font-black text-slate-800 leading-tight">Olimpiadas 360°</h1>
-            <p className="text-[10px] font-bold text-slate-400">SMP PERÚ</p>
-          </div>
+          
+          {/* Botón para cerrar menú en móviles */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="md:hidden text-slate-400 hover:text-slate-600 p-1"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Navegación */}
-        <nav className="flex-1 px-4 py-8 space-y-2">
+        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
           <button
             onClick={() => handleTabChange('arbitraje')}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
@@ -151,11 +174,28 @@ export default function MainLayout() {
         
       </aside>
 
-      {/* Área de Contenido Principal */}
-      <main className="flex-1 overflow-y-auto relative p-4 md:p-8">
-        <BannerInnova />
-        {renderContent()}
-      </main>
+      {/* Área Principal con Barra Superior Móvil */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        {/* Cabecera superior solo visible en celulares */}
+        <header className="md:hidden h-16 bg-white border-b border-slate-100 px-4 flex items-center justify-between flex-shrink-0 z-10">
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <span className="font-black text-slate-800 text-sm">Olimpiadas 360°</span>
+          <div className="w-10"></div> {/* Espaciador simétrico */}
+        </header>
+
+        {/* Área de Contenido Principal */}
+        <main className="flex-1 overflow-y-auto relative p-4 md:p-8">
+          <BannerInnova />
+          {renderContent()}
+        </main>
+
+      </div>
     </div>
   );
 }
