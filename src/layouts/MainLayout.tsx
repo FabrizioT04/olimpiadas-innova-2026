@@ -5,7 +5,7 @@ import Puntajes from '../pages/Puntajes';
 import Fixture from '../pages/Fixture';
 
 export default function MainLayout() {
-  const [activeTab, setActiveTab] = useState('arbitraje');
+  const [activeTab, setActiveTab] = useState('fixture');
 
   // Función que decide qué pantalla renderizar a la derecha
   const renderContent = () => {

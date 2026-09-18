@@ -73,6 +73,7 @@ const PARTIDOS_OFICIALES: Partido[] = [
   { id: 44, semana: 2, fecha: '2026-09-24', dia: 'Jueves 24/09/2026', hora: '11:15 - 11:35 am', deporte: 'CONEBALL', enfrentamiento: 'POR DEFINIR', categoria: 'Promesas (1º y 2º)', arbitro: 'MARIO NUÑEZ/DAVID 9C', apoyo: 'Tutores y Cotutores, Volantes', lugar: 'Campo 1', estado: 'proximo' },
   { id: 45, semana: 2, fecha: '2026-09-24', dia: 'Jueves 24/09/2026', hora: '12:55 - 13:15 pm', deporte: 'BÁSQUET', enfrentamiento: 'POR DEFINIR', categoria: 'Juvenil B (9º a 11º)', arbitro: 'ENRIQUE ALCAZAR', apoyo: 'David Sajami, Mario Nuñez, Dayanara Quirica 9C, Leakey Gambini', lugar: 'Campo 1', estado: 'proximo' },
 
+  // VIERNES 25/09 (INAUGURACIÓN Y EVENTOS)
   { id: 46, semana: 2, fecha: '2026-09-25', dia: 'Viernes 25/09/2026', hora: '08:00 - 09:55 am', deporte: 'INAUGURACIÓN', enfrentamiento: 'BIENVENIDA A ESTUDIANTES', categoria: 'Todas las House', arbitro: 'Comisión', apoyo: 'General', lugar: 'Campo Dep. Navarro', estado: 'proximo' },
   { id: 47, semana: 2, fecha: '2026-09-25', dia: 'Viernes 25/09/2026', hora: '09:55 - 10:15 am', deporte: 'INAUGURACIÓN', enfrentamiento: 'DESFILE DE LAS HOUSE', categoria: 'Todas las House', arbitro: 'Comisión', apoyo: 'General', lugar: 'Campo Dep. Navarro', estado: 'proximo' },
   { id: 48, semana: 2, fecha: '2026-09-25', dia: 'Viernes 25/09/2026', hora: '10:55 - 11:15 am', deporte: 'INAUGURACIÓN', enfrentamiento: 'DRILL GIMNÁSTICO', categoria: 'Todas las House', arbitro: 'Comisión', apoyo: 'General', lugar: 'Campo Dep. Navarro', estado: 'proximo' },
@@ -140,6 +141,7 @@ const PARTIDOS_OFICIALES: Partido[] = [
   { id: 105, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '11:20 - 11:40 am', deporte: 'FÚTBOL', enfrentamiento: 'PRELIMINAR', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
   { id: 106, semana: 3, fecha: '2026-10-01', dia: 'Jueves 01/10/2026', hora: '11:40 - 12:00 pm', deporte: 'FÚTBOL', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Juvenil B (9º a 11º)', arbitro: 'Enrique Alcazar', apoyo: 'Mesa: David y Mario', lugar: 'Campo 1', estado: 'proximo' },
 
+  // VIERNES 02/10 (FINALES)
   { id: 107, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '08:00 - 08:20 am', deporte: 'FINAL', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 2', estado: 'proximo' },
   { id: 108, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '08:20 - 08:40 am', deporte: 'FINAL', enfrentamiento: '3ER Y 4TO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
   { id: 109, semana: 3, fecha: '2026-10-02', dia: 'Viernes 02/10/2026', hora: '08:40 - 09:00 am', deporte: 'FINAL', enfrentamiento: '1ER Y 2DO PUESTO', categoria: 'Promesas (1º y 2º)', arbitro: 'Comisión', apoyo: 'Mesa Oficial', lugar: 'Campo 1', estado: 'proximo' },
@@ -400,7 +402,6 @@ export default function Fixture() {
                                     </span>
                                   </div>
 
-                                  {/* Mostrar formato VS o texto completo según corresponda */}
                                   {tieneVs ? (
                                     <div className="flex items-center justify-between my-4 pl-2">
                                       <div className="flex-1 text-right font-bold text-slate-800 text-base">
