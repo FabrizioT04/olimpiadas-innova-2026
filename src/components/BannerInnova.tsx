@@ -8,16 +8,21 @@ export default function BannerInnova() {
 
       {/* Lado izquierdo: Logo e información */}
       <div className="relative z-10 flex items-center gap-5 text-center md:text-left flex-col md:flex-row">
-        <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-inner flex-shrink-0">
-          {/* Si tienes una imagen de logo, reemplaza este texto por <img src="/ruta-logo.png" alt="Logo" className="w-10 h-10 object-contain" /> */}
-          <span className="text-2xl font-black tracking-wider text-white">IS</span>
+        
+        <div className="w-16 h-16 bg-white backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-inner flex-shrink-0 p-2 overflow-hidden">
+          <img 
+            src="/logo-innova.png" 
+            alt="Logo Innova Schools" 
+            className="w-full h-full object-contain" 
+          />
         </div>
+
         <div>
           <span className="bg-blue-500/30 text-blue-200 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border border-blue-400/30 inline-block mb-2">
-            Sede San Martín de Porres
+            Innova Schools SMP Perú
           </span>
           <h2 className="text-xl md:text-2xl font-black tracking-tight text-white leading-tight">
-            Innova Schools • Olimpiadas 2026
+            Olimpiadas 360° 2026
           </h2>
           <p className="text-xs md:text-sm text-indigo-200/90 font-medium mt-1">
             Plataforma oficial de gestión, cronograma y validación de resultados.
@@ -25,7 +30,7 @@ export default function BannerInnova() {
         </div>
       </div>
 
-      {/* Lado derecho: Insignia o detalles adicionales */}
+      {/* Lado derecho: Insignia */}
       <div className="relative z-10 hidden lg:flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/15 text-xs font-bold text-indigo-100 shadow-sm">
         <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
         <span>Sistema en Vivo</span>

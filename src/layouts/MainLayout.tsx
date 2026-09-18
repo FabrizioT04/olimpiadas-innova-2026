@@ -55,14 +55,14 @@ export default function MainLayout() {
         
         {/* Logo */}
         <div className="h-24 flex items-center px-8 border-b border-slate-50">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-            <span className="text-white font-bold text-xl">O</span>
-          </div>
-          <div className="ml-3">
-            <h1 className="text-sm font-black text-slate-800 leading-tight">Olimpiadas</h1>
-            <p className="text-[10px] font-bold text-slate-400">INNOVA SMP 2026</p>
-          </div>
+        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+         <span className="text-white font-bold text-xl">O</span>
         </div>
+      <div className="ml-3">
+       <h1 className="text-sm font-black text-slate-800 leading-tight">Olimpiadas 360°</h1>
+        <p className="text-[10px] font-bold text-slate-400">SMP PERÚ</p>
+        </div>
+      </div>
 
         {/* Navegación */}
         <nav className="flex-1 px-4 py-8 space-y-2">
