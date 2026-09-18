@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon, Menu, X } from 'lucide-react';
+// 1. AÑADIDO: Importamos BookOpen para tu nuevo botón
+import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon, Menu, X, BookOpen } from 'lucide-react';
 import PanelArbitro from '../pages/PanelArbitro';
 import Puntajes from '../pages/Puntajes';
 import Fixture from '../pages/Fixture';
 import Galeria from '../pages/Galeria';
+import Actividades from '../pages/Actividades';
 import BannerInnova from '../components/BannerInnova';
 
 export default function MainLayout() {
@@ -12,6 +14,8 @@ export default function MainLayout() {
     if (path.includes('arbitraje')) return 'arbitraje';
     if (path.includes('puntajes') || path.includes('medallero')) return 'medallero';
     if (path.includes('galeria')) return 'galeria';
+    // 2. AÑADIDO: Detectar la ruta de actividades al recargar la página
+    if (path.includes('actividades')) return 'actividades';
     return 'fixture';
   });
 
@@ -33,6 +37,9 @@ export default function MainLayout() {
     switch (activeTab) {
       case 'arbitraje':
         return <PanelArbitro />;
+      // 3. AÑADIDO: Le decimos a React qué componente mostrar cuando se selecciona 'actividades'
+      case 'actividades':
+        return <Actividades />;
       case 'fixture':
         return <Fixture />;
       case 'medallero':
@@ -102,6 +109,19 @@ export default function MainLayout() {
             {activeTab === 'arbitraje' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
           </button>
 
+          <button
+            onClick={() => handleTabChange('actividades')}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
+              activeTab === 'actividades'
+                ? 'bg-indigo-50 text-indigo-600 shadow-sm'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+            }`}
+          >
+            <BookOpen className="w-5 h-5" />
+            Actividades y Reglas
+            {activeTab === 'actividades' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
+          </button>
+       
           <button
             onClick={() => handleTabChange('fixture')}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
