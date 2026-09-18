@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react';
 
-// Lista de degradados con los tonos oficiales del logo
+// Degradados basados exactamente en los 3 colores principales del logo (Azul, Verde y Naranja)
 const brandGradients = [
-  "bg-gradient-to-r from-indigo-900 via-blue-900 to-indigo-800", // Azul institucional
-  "bg-gradient-to-r from-emerald-900 via-teal-900 to-green-900",  // Verde vibrante
-  "bg-gradient-to-r from-blue-950 via-cyan-900 to-blue-900",    // Celeste y azul profundo
-  "bg-gradient-to-r from-amber-900 via-orange-900 to-amber-950" // Naranja cálido
+  "bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950",  
+  "bg-gradient-to-r from-emerald-800 via-green-800 to-teal-900",
+  "bg-gradient-to-r from-amber-800 via-orange-800 to-amber-950"  
 ];
 
 export default function BannerInnova() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Cambia de color cada 4 segundos de forma automática
+  // Transición suave cada 4.5 segundos
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % brandGradients.length);
-    }, 4000);
+    }, 4500);
 
     return () => clearInterval(timer);
   }, []);
@@ -23,7 +22,7 @@ export default function BannerInnova() {
   return (
     <div className="w-full rounded-3xl p-6 md:p-8 mb-8 text-white shadow-xl shadow-indigo-950/10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/15">
       
-      {/* Capas de fondo con fundido cruzado (Cross-fade) para una transición ultra suave */}
+      {/* Capas de fondo con fundido cruzado ultra suave */}
       {brandGradients.map((gradient, index) => (
         <div
           key={index}
@@ -33,18 +32,18 @@ export default function BannerInnova() {
         />
       ))}
 
-      {/* Efectos decorativos de fondo (por encima de los gradientes) */}
+      {/* Efectos decorativos de fondo */}
       <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none z-0"></div>
       <div className="absolute left-1/3 bottom-0 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none z-0"></div>
 
-      {/* Lado izquierdo: Logo sin fondo e información */}
+      {/* Lado izquierdo: Logo grande e información */}
       <div className="relative z-10 flex items-center gap-6 text-center md:text-left flex-col md:flex-row">
         
         <div className="flex-shrink-0">
           <img 
             src="/logo-innova.png" 
             alt="Logo Innova Schools" 
-            className="w-24 h-24 md:w-28 md:h-28 object-contain drop-shadow-lg" 
+            className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-2xl" 
           />
         </div>
 
