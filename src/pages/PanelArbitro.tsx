@@ -1,7 +1,47 @@
-import { Loader2 } from 'lucide-react'; // <-- Importación para el icono de carga
+import { useState, useEffect } from 'react';
+import { Loader2, Mail, Lock, ShieldCheck, UserCheck, AlertCircle, LogOut } from 'lucide-react';
 import { HOUSES, useArbitraje } from '../features/arbitraje/hooks/useArbitraje';
 
+// Lista de correos autorizados para el panel de arbitraje
+const CORREOS_AUTORIZADOS = [
+  'larry.delao@innova.edu.pe',
+  'fabriziotp0001@gmail.com',
+  'arbitro@innova.edu.pe',
+  'mesa@innova.edu.pe'
+];
+
 export default function PanelArbitro() {
+  const [emailInput, setEmailInput] = useState('');
+  const [correoAutorizado, setCorreoAutorizado] = useState<string | null>(null);
+  const [error, setError] = useState('');
+
+  // Mantener la sesión guardada en el navegador
+  useEffect(() => {
+    const guardado = localStorage.getItem('arbitro_autorizado');
+    if (guardado && CORREOS_AUTORIZADOS.includes(guardado)) {
+      setCorreoAutorizado(guardado);
+    }
+  }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const emailLimpio = emailInput.trim().toLowerCase();
+
+    if (CORREOS_AUTORIZADOS.includes(emailLimpio)) {
+      setCorreoAutorizado(emailLimpio);
+      localStorage.setItem('arbitro_autorizado', emailLimpio);
+      setError('');
+    } else {
+      setError('Correo no autorizado. Solicita acceso al administrador.');
+    }
+  };
+
+  const handleLogout = () => {
+    setCorreoAutorizado(null);
+    localStorage.removeItem('arbitro_autorizado');
+    setEmailInput('');
+  };
+
   const {
     selectedHouse, setSelectedHouse,
     operation, setOperation,
@@ -12,6 +52,64 @@ export default function PanelArbitro() {
     enviarPuntaje
   } = useArbitraje();
 
+  // 1. Si NO está autenticado, muestra la pantalla de inicio de sesión con el mismo estilo estético
+  if (!correoAutorizado) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden font-sans text-slate-800 p-4 md:p-8 flex flex-col items-center justify-center">
+        <div className="absolute top-0 left-10 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
+        <div className="absolute top-0 right-20 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
+        <div className="absolute -bottom-8 left-40 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
+
+        <div className="relative z-10 w-full max-w-md bg-white/80 backdrop-blur-2xl p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white/80">
+          <div className="text-center space-y-3 mb-6">
+            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner border border-indigo-100">
+              <Lock size={28} />
+            </div>
+            <span className="inline-block py-1 px-3 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold tracking-widest uppercase shadow-sm">
+              Innova Schools • Acceso Restringido
+            </span>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Panel de Arbitraje</h1>
+            <p className="text-slate-500 text-xs font-medium">
+              Ingresa tu correo autorizado para acceder al registro oficial de puntajes.
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Correo Electrónico</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-3.5 text-slate-400" size={18} />
+                <input
+                  type="email"
+                  required
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  placeholder="tucorreo@innova.edu.pe"
+                  className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-sm transition-all"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="flex items-center gap-2.5 bg-red-50 text-red-700 p-3.5 rounded-2xl text-xs font-semibold border border-red-100">
+                <AlertCircle size={18} className="shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-4 px-6 rounded-2xl shadow-[0_8px_20px_rgb(79,70,229,0.25)] transition-all text-sm"
+            >
+              Verificar Credenciales
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Si SÍ está autenticado, muestra tu panel completo con una barra superior de sesión
   return (
     <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden font-sans text-slate-800 p-4 md:p-8 flex flex-col items-center justify-center">
       
@@ -20,9 +118,30 @@ export default function PanelArbitro() {
       <div className="absolute top-0 right-20 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
       <div className="absolute -bottom-8 left-40 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
 
-      <div className="relative z-10 w-full max-w-5xl mt-8">
+      <div className="relative z-10 w-full max-w-5xl mt-4">
+        
+        {/* Barra superior de sesión autorizada */}
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-white/80 backdrop-blur-xl px-6 py-3.5 rounded-2xl border border-slate-200 shadow-sm mb-8 gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+              <ShieldCheck size={18} />
+            </div>
+            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <UserCheck size={15} className="text-emerald-600" />
+              Sesión activa: <span className="text-indigo-600 font-extrabold">{correoAutorizado}</span>
+            </span>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3.5 py-2 rounded-xl transition-colors border border-red-100"
+          >
+            <LogOut size={14} />
+            Cerrar Sesión
+          </button>
+        </div>
+
         {/* Cabecera */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <span className="inline-block py-1.5 px-4 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold tracking-widest uppercase mb-4 shadow-sm border border-indigo-100">
             Innova Schools • San Martín de Porres
           </span>
