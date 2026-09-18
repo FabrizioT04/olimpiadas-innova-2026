@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon, LogOut } from 'lucide-react';
 import PanelArbitro from '../pages/PanelArbitro';
 import Puntajes from '../pages/Puntajes';
