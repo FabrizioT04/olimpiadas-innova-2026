@@ -56,7 +56,8 @@ export default function Galeria() {
             key={foto.id} 
             className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col"
           >
-            <div className="relative h-56 overflow-hidden bg-slate-100">
+            {/* Altura adaptable en móvil (h-48) y escritorio (h-56) */}
+            <div className="relative h-48 sm:h-56 overflow-hidden bg-slate-100">
               <img 
                 src={foto.img} 
                 alt={foto.title} 

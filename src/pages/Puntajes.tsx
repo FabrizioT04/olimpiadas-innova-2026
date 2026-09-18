@@ -76,7 +76,6 @@ export default function Puntajes() {
       if (datosUltimos.length > 0) {
         const todosTienenMismoPuntaje = datosUltimos.every(item => item.points === datosUltimos[0].points);
         if (todosTienenMismoPuntaje) {
-          // Movemos el primer elemento al final de la lista para rotar visualmente
           const rotado = [...datosUltimos.slice(1), datosUltimos[0]];
           datosUltimos = rotado;
           actualizarVista(rotado);
@@ -120,7 +119,7 @@ export default function Puntajes() {
           {rankings.map((team) => (
             <motion.div 
               key={team.id}
-              layout // Hace que las tarjetas se deslicen de lugar suavemente
+              layout
               transition={{ type: "spring", stiffness: 250, damping: 25 }}
               className={`relative group flex flex-col sm:flex-row items-center gap-4 sm:gap-6 p-5 sm:p-6 rounded-[2rem] bg-white border
                 ${team.isTied 
@@ -143,8 +142,8 @@ export default function Puntajes() {
                 </span>
               </div>
 
-              {/* Escudo */}
-              <div className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:-translate-y-1">
+              {/* Escudo con tamaño ampliado en móviles y escritorios */}
+              <div className="flex-shrink-0 w-32 h-32 sm:w-36 sm:h-36 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:-translate-y-1">
                  <img src={team.house?.img} alt={team.house?.name} className="w-full h-full object-contain drop-shadow-xl" />
               </div>
 
