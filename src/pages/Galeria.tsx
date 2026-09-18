@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, Share2, Sparkles, PlayCircle, Download } from 'lucide-react';
+import { Heart, Sparkles, Download, PlayCircle } from 'lucide-react';
 
 // Estructura preparada para tus archivos de Eco House y demás áreas
 const mediaData = [
