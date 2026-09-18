@@ -5,7 +5,25 @@ import Puntajes from '../pages/Puntajes';
 import Fixture from '../pages/Fixture';
 
 export default function MainLayout() {
-  const [activeTab, setActiveTab] = useState('fixture');
+  // Detecta la pestaña inicial basándose en la URL actual del navegador
+  const [activeTab, setActiveTab] = useState(() => {
+    const path = window.location.pathname;
+    if (path.includes('arbitraje')) return 'arbitraje';
+    if (path.includes('puntajes') || path.includes('medallero')) return 'medallero';
+    if (path.includes('galeria')) return 'galeria';
+    return 'fixture';
+  });
+
+  // Función que maneja la navegación real hacia la ruta protegida
+  const handleTabChange = (tab: string) => {
+    if (tab === 'arbitraje') {
+      // Esto obliga al navegador a cambiar la URL a /arbitraje, activando Cloudflare Access
+      window.location.href = '/arbitraje';
+    } else {
+      setActiveTab(tab);
+      window.history.pushState({}, '', '/');
+    }
+  };
 
   // Función que decide qué pantalla renderizar a la derecha
   const renderContent = () => {
@@ -13,7 +31,7 @@ export default function MainLayout() {
       case 'arbitraje':
         return <PanelArbitro />;
       case 'fixture':
-        return <Fixture />; // <--- Aquí ya usamos tu componente importado correctamente
+        return <Fixture />;
       case 'medallero':
         return <Puntajes />;
       case 'galeria':
@@ -25,7 +43,7 @@ export default function MainLayout() {
           </div>
         );
       default:
-        return <PanelArbitro />;
+        return <Fixture />;
     }
   };
 
@@ -48,7 +66,7 @@ export default function MainLayout() {
         {/* Navegación */}
         <nav className="flex-1 px-4 py-8 space-y-2">
           <button
-            onClick={() => setActiveTab('arbitraje')}
+            onClick={() => handleTabChange('arbitraje')}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
               activeTab === 'arbitraje'
                 ? 'bg-indigo-50 text-indigo-600 shadow-sm'
@@ -61,7 +79,7 @@ export default function MainLayout() {
           </button>
 
           <button
-            onClick={() => setActiveTab('fixture')}
+            onClick={() => handleTabChange('fixture')}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
               activeTab === 'fixture'
                 ? 'bg-indigo-50 text-indigo-600 shadow-sm'
@@ -74,7 +92,7 @@ export default function MainLayout() {
           </button>
 
           <button
-            onClick={() => setActiveTab('medallero')}
+            onClick={() => handleTabChange('medallero')}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
               activeTab === 'medallero'
                 ? 'bg-indigo-50 text-indigo-600 shadow-sm'
@@ -87,7 +105,7 @@ export default function MainLayout() {
           </button>
 
           <button
-            onClick={() => setActiveTab('galeria')}
+            onClick={() => handleTabChange('galeria')}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
               activeTab === 'galeria'
                 ? 'bg-indigo-50 text-indigo-600 shadow-sm'
@@ -100,10 +118,9 @@ export default function MainLayout() {
           </button>
         </nav>
 
-        {/* Widget de Estado de Plataforma (Reemplazo del Perfil de Usuario) */}
+        {/* Widget de Estado de Plataforma */}
         <div className="p-4 border-t border-slate-50">
           <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group">
-            {/* Efecto decorativo */}
             <div className="absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-full blur-xl opacity-50 -mr-6 -mt-6 group-hover:opacity-80 transition-opacity"></div>
             
             <div className="flex items-center gap-2.5 mb-2.5 relative z-10">
