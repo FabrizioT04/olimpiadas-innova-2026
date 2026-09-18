@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 
-// Degradados basados exactamente en los 3 colores principales del logo (Azul, Verde y Naranja)
+// Degradados basados en los 3 colores principales del logo (Azul, Verde y Naranja)
 const brandGradients = [
-  "bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950",  
-  "bg-gradient-to-r from-emerald-800 via-green-800 to-teal-900",
+  "bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950",   
+  "bg-gradient-to-r from-emerald-800 via-green-800 to-teal-900",  
   "bg-gradient-to-r from-amber-800 via-orange-800 to-amber-950"  
 ];
 
 export default function BannerInnova() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Transición suave cada 4.5 segundos
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % brandGradients.length);
@@ -20,7 +19,7 @@ export default function BannerInnova() {
   }, []);
 
   return (
-    <div className="w-full rounded-3xl p-6 md:p-8 mb-8 text-white shadow-xl shadow-indigo-950/10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/15">
+    <div className="w-full rounded-3xl py-4 px-6 md:px-8 mb-6 text-white shadow-xl shadow-indigo-950/10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/15">
       
       {/* Capas de fondo con fundido cruzado ultra suave */}
       {brandGradients.map((gradient, index) => (
@@ -36,19 +35,20 @@ export default function BannerInnova() {
       <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none z-0"></div>
       <div className="absolute left-1/3 bottom-0 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none z-0"></div>
 
-      {/* Lado izquierdo: Logo grande e información */}
+      {/* Lado izquierdo: Logo más grande y textos más compactos */}
       <div className="relative z-10 flex items-center gap-6 text-center md:text-left flex-col md:flex-row">
         
+        {/* Logo ampliado */}
         <div className="flex-shrink-0">
           <img 
             src="/logo-innova.png" 
             alt="Logo Innova Schools" 
-            className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-2xl" 
+            className="w-36 h-36 md:w-44 md:h-44 object-contain drop-shadow-2xl" 
           />
         </div>
 
         <div>
-          <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border border-white/25 inline-block mb-2">
+          <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border border-white/25 inline-block mb-1.5">
             Innova Schools SMP Perú
           </span>
           <h2 className="text-xl md:text-2xl font-black tracking-tight text-white leading-tight">

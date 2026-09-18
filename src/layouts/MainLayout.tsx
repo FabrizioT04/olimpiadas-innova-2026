@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon} from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon } from 'lucide-react';
 import PanelArbitro from '../pages/PanelArbitro';
 import Puntajes from '../pages/Puntajes';
 import Fixture from '../pages/Fixture';
-import BannerInnova from '../components/BannerInnova'
+import Galeria from '../pages/Galeria'; // <--- Importado correctamente
+import BannerInnova from '../components/BannerInnova';
 
 export default function MainLayout() {
   // Detecta la pestaña inicial basándose en la URL actual del navegador
@@ -15,14 +16,15 @@ export default function MainLayout() {
     return 'fixture';
   });
 
-  // Función que maneja la navegación real hacia la ruta protegida
+  // Función que maneja la navegación real
   const handleTabChange = (tab: string) => {
     if (tab === 'arbitraje') {
-      // Esto obliga al navegador a cambiar la URL a /arbitraje, activando Cloudflare Access
       window.location.href = '/arbitraje';
     } else {
       setActiveTab(tab);
-      window.history.pushState({}, '', '/');
+      // Actualizamos la URL limpiamente para que si recargan la página, se mantengan en la pestaña
+      const newPath = tab === 'fixture' ? '/' : `/${tab}`;
+      window.history.pushState({}, '', newPath);
     }
   };
 
@@ -36,13 +38,7 @@ export default function MainLayout() {
       case 'medallero':
         return <Puntajes />;
       case 'galeria':
-        return (
-          <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
-            <ImageIcon className="w-24 h-24 text-indigo-200 mb-6" />
-            <h2 className="text-3xl font-black text-slate-800 mb-2">Momentos y Fotos</h2>
-            <p className="text-slate-500 font-medium">Módulo en construcción...</p>
-          </div>
-        );
+        return <Galeria />; // <--- ¡Aquí estaba el detalle! Ahora muestra tu componente real
       default:
         return <Fixture />;
     }
@@ -62,11 +58,11 @@ export default function MainLayout() {
               className="w-full h-full object-contain drop-shadow-sm" 
             />
           </div>
-      <div className="ml-3">
-       <h1 className="text-sm font-black text-slate-800 leading-tight">Olimpiadas 360°</h1>
-        <p className="text-[10px] font-bold text-slate-400">SMP PERÚ</p>
+          <div className="ml-3">
+            <h1 className="text-sm font-black text-slate-800 leading-tight">Olimpiadas 360°</h1>
+            <p className="text-[10px] font-bold text-slate-400">SMP PERÚ</p>
+          </div>
         </div>
-      </div>
 
         {/* Navegación */}
         <nav className="flex-1 px-4 py-8 space-y-2">
