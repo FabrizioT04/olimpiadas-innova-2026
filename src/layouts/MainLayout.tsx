@@ -54,10 +54,14 @@ export default function MainLayout() {
       <aside className="w-64 bg-white border-r border-slate-100 flex flex-col flex-shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20">
         
         {/* Logo */}
-        <div className="h-24 flex items-center px-8 border-b border-slate-50">
-        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-         <span className="text-white font-bold text-xl">O</span>
-        </div>
+        <div className="h-24 flex items-center px-6 border-b border-slate-50">
+          <div className="w-11 h-11 flex items-center justify-center flex-shrink-0">
+            <img 
+              src="/logo-innova.png" 
+              alt="Logo Innova Schools" 
+              className="w-full h-full object-contain drop-shadow-sm" 
+            />
+          </div>
       <div className="ml-3">
        <h1 className="text-sm font-black text-slate-800 leading-tight">Olimpiadas 360°</h1>
         <p className="text-[10px] font-bold text-slate-400">SMP PERÚ</p>
