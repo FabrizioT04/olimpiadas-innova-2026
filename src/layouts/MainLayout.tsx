@@ -13,7 +13,7 @@ export default function MainLayout() {
     const path = window.location.pathname;
     if (path.includes('arbitraje')) return 'arbitraje';
     if (path.includes('puntajes') || path.includes('medallero')) return 'medallero';
-    if (path.includes('galeria')) return 'galeria';
+    if (path.includes('momentos')) return 'momentos';
     // 2. AÑADIDO: Detectar la ruta de actividades al recargar la página
     if (path.includes('actividades')) return 'actividades';
     return 'fixture';
@@ -44,7 +44,7 @@ export default function MainLayout() {
         return <Fixture />;
       case 'medallero':
         return <Puntajes />;
-      case 'galeria':
+      case 'momentos':
         return <Galeria />;
       default:
         return <Fixture />;
@@ -149,7 +149,7 @@ export default function MainLayout() {
           </button>
 
           <button
-            onClick={() => handleTabChange('galeria')}
+            onClick={() => handleTabChange('momentos')}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
               activeTab === 'galeria'
                 ? 'bg-indigo-50 text-indigo-600 shadow-sm'
@@ -158,7 +158,7 @@ export default function MainLayout() {
           >
             <ImageIcon className="w-5 h-5" />
             Momentos y Fotos
-            {activeTab === 'galeria' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
+            {activeTab === 'momentos' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
           </button>
         </nav>
 
