@@ -1,46 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Mail, Lock, ShieldCheck, UserCheck, AlertCircle, LogOut } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, LogOut } from 'lucide-react';
 import { HOUSES, useArbitraje } from '../features/arbitraje/hooks/useArbitraje';
 
-// Lista de correos autorizados para el panel
-const CORREOS_AUTORIZADOS = [
-  'larry.delao@innova.edu.pe',
-  'fabriziotp0001@gmail.com',
-  'arbitro@innova.edu.pe',
-  'mesa@innova.edu.pe'
-];
-
 export default function PanelArbitro() {
-  const [emailInput, setEmailInput] = useState('');
   const [correoAutorizado, setCorreoAutorizado] = useState<string | null>(null);
   const [error, setError] = useState('');
-
-  // Mantener sesión guardada en el navegador
   useEffect(() => {
-    const guardado = localStorage.getItem('arbitro_autorizado');
-    if (guardado && CORREOS_AUTORIZADOS.includes(guardado)) {
-      setCorreoAutorizado(guardado);
-    }
-  }, []);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const emailLimpio = emailInput.trim().toLowerCase();
-
-    if (CORREOS_AUTORIZADOS.includes(emailLimpio)) {
-      setCorreoAutorizado(emailLimpio);
-      localStorage.setItem('arbitro_autorizado', emailLimpio);
-      setError('');
-    } else {
-      setError('Correo no autorizado. Solicita acceso al administrador.');
-    }
-  };
-
-  const handleLogout = () => {
-    setCorreoAutorizado(null);
     localStorage.removeItem('arbitro_autorizado');
-    setEmailInput('');
-  };
+    const controller = new AbortController();
+    fetch('/arbitraje/api/session', { signal: controller.signal, cache: 'no-store' })
+      .then(async response => {
+        if (!response.ok) throw new Error('No se pudo verificar tu sesión. Vuelve a ingresar o contacta al administrador.');
+        const data = await response.json();
+        if (typeof data.email !== 'string') throw new Error('Respuesta de sesión inválida.');
+        setCorreoAutorizado(data.email);
+      }).catch(error => { if (!controller.signal.aborted) setError(error.message); });
+    return () => controller.abort();
+  }, []);
+  const handleLogout = () => { window.location.href = '/cdn-cgi/access/logout'; };
 
   const {
     selectedHouse, setSelectedHouse,
@@ -48,65 +25,17 @@ export default function PanelArbitro() {
     category, setCategory,
     points, setPoints,
     activity, setActivity,
+    motivo, setMotivo,
     isSubmitting,
     enviarPuntaje
   } = useArbitraje();
 
-  // 1. Si NO está autorizado, muestra la pantalla de bloqueo
   if (!correoAutorizado) {
-    return (
-      <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden font-sans text-slate-800 p-4 md:p-8 flex flex-col items-center justify-center">
-        <div className="absolute top-0 left-10 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
-        <div className="absolute top-0 right-20 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
-        <div className="absolute -bottom-8 left-40 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
-
-        <div className="relative z-10 w-full max-w-md bg-white/80 backdrop-blur-2xl p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white/80">
-          <div className="text-center space-y-3 mb-6">
-            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner border border-indigo-100">
-              <Lock size={28} />
-            </div>
-            <span className="inline-block py-1 px-3 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold tracking-widest uppercase shadow-sm">
-              Innova Schools • Acceso Restringido
-            </span>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Panel de Arbitraje</h1>
-            <p className="text-slate-500 text-xs font-medium">
-              Ingresa tu correo autorizado para acceder al registro oficial de puntajes.
-            </p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Correo Electrónico</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-3.5 text-slate-400" size={18} />
-                <input
-                  type="email"
-                  required
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder="tucorreo@innova.edu.pe"
-                  className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-sm transition-all"
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="flex items-center gap-2.5 bg-red-50 text-red-700 p-3.5 rounded-2xl text-xs font-semibold border border-red-100">
-                <AlertCircle size={18} className="shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-4 px-6 rounded-2xl shadow-[0_8px_20px_rgb(79,70,229,0.25)] transition-all text-sm"
-            >
-              Verificar Credenciales
-            </button>
-          </form>
-        </div>
-      </div>
-    );
+    return <div className="max-w-lg mx-auto p-8 bg-white rounded-2xl text-center">
+      <h1 className="text-xl font-bold">Panel de arbitraje</h1>
+      <p className="my-4" role="status">{error || 'Verificando tu sesión…'}</p>
+      {error && <a className="text-blue-700 underline" href="/arbitraje">Volver a ingresar</a>}
+    </div>;
   }
 
   // 2. Si SÍ está autorizado, muestra tu bloque de código completo perfectamente
@@ -279,7 +208,13 @@ export default function PanelArbitro() {
                 />
               </div>
 
-              {/* Botón Seguro y Optimizado */}
+              <div>
+                <label htmlFor="motivo" className="block text-sm font-bold mb-2">Motivo del registro o corrección</label>
+                <textarea id="motivo" required minLength={3} maxLength={300} value={motivo}
+                  onChange={e => setMotivo(e.target.value)} className="w-full p-3 border rounded-xl"
+                  placeholder="Ej.: victoria de futsal o corrección del acta" />
+              </div>
+              {/* Confirmar operación */}
               <button 
                 type="submit" 
                 disabled={isSubmitting || !selectedHouse}

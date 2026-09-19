@@ -9,17 +9,21 @@
     "lint": "oxlint",
     "preview": "npm run build && vite preview",
     "deploy": "npm run build && wrangler deploy",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "test": "node --test tests/*.test.cjs",
+    "typecheck:api": "tsc -p tsconfig.functions.json"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "framer-motion": "^13.4.0",
+    "jose": "^6.2.12",
     "lucide-react": "^1.47.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.55.0",
+    "@cloudflare/workers-types": "^5.20260919.1",
     "@types/node": "^24.13.5",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
