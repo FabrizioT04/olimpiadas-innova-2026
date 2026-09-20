@@ -49,7 +49,7 @@ export default function Fixture() {
       const controller = new AbortController();
       active = controller;
       setLoading(true);
-      const timeout = window.setTimeout(() => controller.abort(), 20000);
+      const timeout = window.setTimeout(() => controller.abort(), 60000);
       try {
         const response = await fetch(WEB_APP_URL, { signal: controller.signal, cache: 'no-store' });
         if (!response.ok) throw new Error('No se pudo conectar con el fixture oficial.');
