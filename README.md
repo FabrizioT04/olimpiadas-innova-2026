@@ -1,5 +1,11 @@
 # React + TypeScript + Vite
 
+## Acceso público y arbitraje
+
+El sitio mantiene la consulta pública. El panel y las escrituras requieren Cloudflare Access.
+Ver [configuración, activación y pruebas de arbitraje](docs/ARBITRAJE.md).
+La activación requiere configurar Cloudflare y actualizar Apps Script; no basta con publicar el frontend.
+
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
 Currently, two official plugins are available:
