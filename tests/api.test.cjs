@@ -23,3 +23,9 @@ test('hosts alternativos no pueden usar la API de producción',async()=>{
   const {onRequest}=await modulePromise;
   assert.equal((await onRequest({request:new Request('https://preview.example.com/arbitraje/api/puntajes'),env})).status,403);
 });
+
+test('marcadores exige JWT igual que puntajes',async()=>{
+  const {onRequest}=await modulePromise;
+  const response=await onRequest({request:new Request('https://example.com/arbitraje/api/marcadores',{method:'POST',headers:{Origin:env.APP_ORIGIN,'Content-Type':'application/json'},body:'{}'}),env});
+  assert.equal(response.status,401);
+});
