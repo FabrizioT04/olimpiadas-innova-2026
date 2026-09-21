@@ -21,3 +21,15 @@ export function isEncuentro(value: unknown): value is Encuentro {
     && Array.isArray(p.houses) && p.houses.length === 2 && p.houses.every(h => Object.hasOwn(HOUSE_NAMES,h))
     && p.houses[0] !== p.houses[1] && (p.marcador === null || isMarcador(p.marcador));
 }
+
+// Selection follows the full official programme; scoring eligibility is separate.
+export interface Actividad extends Omit<Encuentro, 'houses'> {
+  id:string; houses:[string,string]|null; avisos:string[];
+}
+export function isActividad(value:unknown): value is Actividad {
+  if (!value || typeof value !== 'object') return false;
+  const p = value as Actividad;
+  return ['id','encuentroId','fecha','hora','deporte','categoria','enfrentamiento'].every(k => typeof (p as unknown as Record<string,unknown>)[k] === 'string')
+    && Array.isArray(p.avisos) && p.avisos.every(a => typeof a === 'string')
+    && typeof p.admiteMarcador === 'boolean';
+}
