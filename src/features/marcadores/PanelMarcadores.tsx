@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { FIXTURE_URL, HOUSE_NAMES, STATUS_NAMES, isEncuentro, isMarcador } from './model';
-import type { Encuentro, Marcador } from './model';
+import { FIXTURE_URL, HOUSE_NAMES, STATUS_NAMES, isActividad, isEncuentro, isMarcador } from './model';
+import type { Actividad, Marcador } from './model';
 
 interface Intent { id:string; encuentroId:string; version:number; a:number; b:number; estado:Marcador['estado']; motivo:string }
 const STORAGE = 'marcador-intento';
 export default function PanelMarcadores() {
-  const [matches,setMatches] = useState<Encuentro[]>([]);
+  const [matches,setMatches] = useState<Actividad[]>([]);
   const [selected,setSelected] = useState('');
   const [a,setA] = useState('0'), [b,setB] = useState('0');
   const [status,setStatus] = useState<Marcador['estado']>('pendiente');
@@ -16,9 +16,9 @@ export default function PanelMarcadores() {
     try { const raw = sessionStorage.getItem(STORAGE); return raw ? JSON.parse(raw) : null; } catch { return null; }
   });
   const sending = useRef(false);
-  const current = matches.find(p => p.encuentroId === selected);
-  function choose(p?: Encuentro) {
-    setSelected(p?.encuentroId || ''); setA(String(p?.marcador?.a ?? 0)); setB(String(p?.marcador?.b ?? 0));
+  const current = matches.find(p => p.id === selected);
+  function choose(p?: Actividad) {
+    setSelected(p?.id || ''); setA(String(p?.marcador?.a ?? 0)); setB(String(p?.marcador?.b ?? 0));
     setStatus(p?.marcador?.estado || 'pendiente'); setReason('');
   }
   async function load(signal?: AbortSignal) {
@@ -30,7 +30,7 @@ export default function PanelMarcadores() {
         throw new Error('Los marcadores aún no están habilitados. Completa la configuración del script.');
       if (signal?.aborted) return;
       setError('');
-      const next:Encuentro[] = data.partidos.filter(isEncuentro);
+      const next:Actividad[] = data.partidos.filter(isActividad);
       setMatches(next);
       // A fresh selection is required after loading, avoiding unnoticed version changes while editing.
       choose();
@@ -44,7 +44,7 @@ export default function PanelMarcadores() {
   }, []);
   async function save() {
     if (sending.current) return;
-    const intent:Intent|null = pending || (current ? {id:crypto.randomUUID(),encuentroId:current.encuentroId,version:current.marcador?.version || 0,
+    const intent:Intent|null = pending || (current && isEncuentro(current) ? {id:crypto.randomUUID(),encuentroId:current.encuentroId,version:current.marcador?.version || 0,
       a:Number(a),b:Number(b),estado:status,motivo:reason.trim()} : null);
     if (!intent) return;
     sending.current = true; setBusy(true); setError(''); setMessage('');
@@ -77,12 +77,18 @@ export default function PanelMarcadores() {
     <form onSubmit={e => {e.preventDefault(); void save();}} className="space-y-4">
       <fieldset disabled={busy || loading || !!pending} className="space-y-4 disabled:opacity-60">
         <label className="block text-sm font-medium">Encuentro
-          <select required value={selected} onChange={e => choose(matches.find(p => p.encuentroId === e.target.value))} className="block w-full border rounded-xl p-3 mt-1">
-            <option value="">Selecciona un partido</option>{matches.map(p => <option key={p.encuentroId} value={p.encuentroId}>{p.fecha} · {p.hora} · {p.deporte} · {p.categoria} · {p.enfrentamiento}</option>)}
+          <select required value={selected} onChange={e => choose(matches.find(p => p.id === e.target.value))} className="block w-full border rounded-xl p-3 mt-1">
+            <option value="">Selecciona un partido</option>{matches.map(p => <option key={p.id} value={p.id}>{p.fecha || 'Fecha por definir'} · {p.hora} · {p.deporte} · {p.categoria} · {p.enfrentamiento}</option>)}
           </select>
         </label>
-        {!loading && !matches.length && !error && <p className="text-sm text-slate-500">No hay encuentros con dos Houses definidas y datos completos.</p>}
-        {current && <><div className="grid grid-cols-2 gap-4">
+        {!loading && !matches.length && !error && <p className="text-sm text-slate-500">No hay actividades en el fixture oficial.</p>}
+        {current && !isEncuentro(current) && <div role="status" className="bg-amber-50 text-amber-900 p-3 rounded-lg space-y-2">
+          <p>Este encuentro está en la programación. No necesita un árbitro asignado para aparecer aquí.</p>
+          {!current.houses && <p>Equipos por definir o actividad sin enfrentamiento entre dos Houses. Completa los equipos en Sheets para registrar un marcador; los puntos de otras actividades se registran en el formulario de puntajes.</p>}
+          {current.avisos.map((aviso,i) => <p key={i}>{aviso}</p>)}
+          <p>Para habilitar el marcador, revisa que tenga fecha, disciplina y dos Houses distintas, sin avisos ni encuentros duplicados.</p>
+        </div>}
+        {current && isEncuentro(current) && <><div className="grid grid-cols-2 gap-4">
           <label className="text-sm font-medium">{HOUSE_NAMES[current.houses[0]]}<input aria-label="Marcador House A" type="number" min="0" max="999" step="1" required value={a} onChange={e=>setA(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"/></label>
           <label className="text-sm font-medium">{HOUSE_NAMES[current.houses[1]]}<input aria-label="Marcador House B" type="number" min="0" max="999" step="1" required value={b} onChange={e=>setB(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"/></label>
         </div><label className="block text-sm font-medium">Estado<select value={status} onChange={e=>setStatus(e.target.value as Marcador['estado'])} className="block w-full border rounded-xl p-3 mt-1">{Object.entries(STATUS_NAMES).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
@@ -91,6 +97,6 @@ export default function PanelMarcadores() {
         <button type="submit" disabled={status === 'pendiente' && (Number(a)!==0 || Number(b)!==0)} className="rounded-xl bg-blue-600 text-white px-5 py-3 disabled:opacity-50">{busy ? 'Guardando…' : 'Guardar marcador'}</button></>}
       </fieldset>
     </form>
-    <p className="text-xs text-slate-500">Si faltan equipos, complétalos en el fixture oficial. Después pulsa «Recargar partidos».</p>
+    <p className="text-xs text-slate-500">Se muestra toda la programación oficial, con o sin árbitro asignado. Si faltan equipos o datos, complétalos en Sheets y pulsa «Recargar partidos».</p>
   </section>;
 }
