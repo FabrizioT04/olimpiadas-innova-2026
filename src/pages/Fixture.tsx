@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Calendar, Clock, RefreshCw, Trophy } from 'lucide-react';
-import { FIXTURE_URL, HOUSE_NAMES, STATUS_NAMES, isMarcador } from '../features/marcadores/model';
+import { HOUSE_NAMES, STATUS_NAMES, isMarcador } from '../features/marcadores/model';
 import type { Marcador } from '../features/marcadores/model';
 
 interface Partido {
@@ -18,7 +18,8 @@ interface FixtureData {
   finalistas: Finalista[]; avisos: string[];
 }
 const SHEET_ID = '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg';
-const WEB_APP_URL = FIXTURE_URL;
+const WEB_APP_URL = '/api/fixture';
+const SNAPSHOT_KEY = 'fixture-publico-v1';
 const displayDate = (date: string) => date ? new Date(`${date}T12:00:00`).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha por definir';
 const matchup = (text: string) => text.trim() === 'VS' ? 'Por definir' : text;
 
@@ -36,8 +37,16 @@ function isFixture(value: unknown): value is FixtureData {
       && strings(p.puestos) && p.puestos.length === 4);
 }
 
+function lastFixture(): FixtureData | null {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || 'null');
+    return isFixture(value) ? value : null;
+  } catch { return null; }
+}
+
 export default function Fixture() {
-  const [data, setData] = useState<FixtureData | null>(null);
+  const [data, setData] = useState<FixtureData | null>(lastFixture);
+  const [stale, setStale] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('todos');
@@ -52,21 +61,34 @@ export default function Fixture() {
       const controller = new AbortController();
       active = controller;
       setLoading(true);
-      const timeout = window.setTimeout(() => controller.abort(), 60000);
+      let expired = false;
+      const timeout = window.setTimeout(() => {
+        expired = true;
+        controller.abort();
+        if (!disposed) {
+          active = null;
+          setLoading(false);
+          setStale(true);
+          setError('La consulta tardó demasiado. Intenta actualizar de nuevo.');
+        }
+      }, 30000);
       try {
         const response = await fetch(WEB_APP_URL, { signal: controller.signal, cache: 'no-store' });
         if (!response.ok) throw new Error('No se pudo conectar con el fixture oficial.');
         const result: unknown = await response.json();
         if (!isFixture(result)) throw new Error('El servicio del fixture todavía no devuelve las pestañas oficiales. Revisa su publicación.');
-        if (!disposed) { setData(result); setError(''); }
+        if (!disposed && !expired) {
+          setData(result); setError(''); setStale(false);
+          try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(result)); } catch { /* Storage may be unavailable. */ }
+        }
       } catch (err) {
-        if (!disposed) setError(err instanceof SyntaxError ? 'El servicio no devolvió la programación. Revisa que el script esté publicado y permita su lectura.'
+        if (!disposed && !expired) { setStale(true); setError(err instanceof SyntaxError ? 'El servicio no devolvió la programación. Intenta actualizar de nuevo.'
           : err instanceof TypeError ? 'No se pudo conectar con el fixture. Revisa tu conexión e intenta actualizar.'
-          : err instanceof Error && err.name !== 'AbortError' ? err.message : 'La consulta tardó demasiado. Intenta actualizar de nuevo.');
+          : err instanceof Error && err.name !== 'AbortError' ? err.message : 'La consulta tardó demasiado. Intenta actualizar de nuevo.'); }
       } finally {
         window.clearTimeout(timeout);
-        active = null;
-        if (!disposed) setLoading(false);
+        if (active === controller) active = null;
+        if (!disposed && !expired) setLoading(false);
       }
     }
     refresh.current = () => { void synchronize(); };
@@ -89,6 +111,7 @@ export default function Fixture() {
       <button onClick={() => refresh.current()} disabled={loading} className="flex items-center gap-2 rounded-xl bg-indigo-50 text-indigo-700 px-4 py-2 disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>{loading ? 'Consultando…' : 'Actualizar'}</button>
     </div>
     {error && <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">{error}{data && <p className="mt-1 font-semibold">Se conserva la última consulta; puede haber cambios todavía no reflejados.</p>}</div>}
+    {data && stale && !error && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Mostrando la última programación guardada mientras se comprueban las actualizaciones. Puede estar desactualizada.</p>}
     {data && <p className="text-xs text-slate-500">Última lectura: {new Date(data.actualizado).toLocaleString('es-PE')} · <a className="underline" href={`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`} target="_blank" rel="noreferrer">Ver hojas oficiales</a></p>}
     {data?.avisos.map(message => <p key={message} className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{message}</p>)}
     <div className="flex flex-wrap gap-3 items-center rounded-2xl bg-white border border-slate-200 p-3">

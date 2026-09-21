@@ -30,4 +30,6 @@ Se leen SEMANA 1, SEMANA 2, SEMANA 3, las pestañas de martes a viernes y Finali
 
 ## Verificación local
 
+La web pública consulta `/api/fixture` en Cloudflare Pages, usando `FIXTURE_SCRIPT_URL` como origen. Esta ruta es pública y de solo lectura; no necesita Cloudflare Access. Ante un fallo se repite la lectura una vez desde la URL original de Apps Script. La web conserva en el navegador la última programación válida y muestra su fecha y un aviso hasta confirmar una lectura nueva. Si es la primera visita y Google falla, se muestra el error sin inventar partidos. No se deben ampliar las rutas protegidas de Access a `/api/fixture`.
+
 `npm test` incluye casos de fechas, celdas combinadas, columnas reordenadas, bloques inferiores, finalistas, duplicados y rechazo de escrituras. `npm run build` comprueba la web. Para una vista previa local puede configurarse `VITE_FIXTURE_URL` con un JSON de prueba; no publicar esa configuración en producción.
