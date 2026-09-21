@@ -26,3 +26,34 @@ test('public fixture bounds retries, rejects writes and missing configuration',a
     assert.equal(calls,2);
   }finally{global.fetch=original;}
 });
+
+test('shared snapshot serves a new visitor without Google and stale snapshot survives upstream failure',async()=>{
+  const {onRequest}=await modulePromise,original=global.fetch;
+  const request=new Request('https://example.com/api/fixture');
+  let savedAt=Date.now(),calls=0;const background=[];
+  const cache={get:async()=>({savedAt,fixture}),put:async()=>{throw Error('Must not overwrite on failure');}};
+  global.fetch=async()=>{calls++;throw Error('Google down');};
+  try {
+    const fresh=await onRequest({request,env:{...env,FIXTURE_CACHE:cache},waitUntil:p=>background.push(p)});
+    assert.equal(fresh.status,200);assert.equal((await fresh.json()).desactualizado,false);assert.equal(calls,0);
+    savedAt-=60000;
+    const stale=await onRequest({request,env:{...env,FIXTURE_CACHE:cache},waitUntil:p=>background.push(p)});
+    const data=await stale.json();assert.equal(stale.status,200);assert.equal(data.desactualizado,true);
+    assert.equal(data.actualizado,fixture.actualizado);assert.equal(data.partidos[0].marcador.a,3);
+    await Promise.all(background);assert.equal(calls,2);
+  }finally{global.fetch=original;}
+});
+
+test('cold cache saves public-only data and KV failure still returns live programme',async()=>{
+  const {onRequest}=await modulePromise,original=global.fetch;
+  const request=new Request('https://example.com/api/fixture');let stored;
+  global.fetch=async()=>Response.json(fixture);
+  try {
+    const cache={get:async()=>null,put:async(key,value)=>{stored=JSON.parse(value);}};
+    assert.equal((await onRequest({request,env:{...env,FIXTURE_CACHE:cache}})).status,200);
+    assert.equal(stored.fixture.history,undefined);assert.equal(stored.fixture.partidos[0].marcador.email,undefined);
+    assert.ok(stored.savedAt<=Date.now());
+    cache.get=async()=>{throw Error('KV unavailable');};cache.put=async()=>{throw Error('KV unavailable');};
+    assert.equal((await onRequest({request,env:{...env,FIXTURE_CACHE:cache}})).status,200);
+  }finally{global.fetch=original;}
+});

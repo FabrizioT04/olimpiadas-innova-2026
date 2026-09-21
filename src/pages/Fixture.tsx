@@ -14,6 +14,7 @@ interface Finalista {
   primeroSegundo: string; puestos: string[]; origen: string; fila: number;
 }
 interface FixtureData {
+  desactualizado?: boolean;
   version: number; fuente: string; actualizado: string; partidos: Partido[];
   finalistas: Finalista[]; avisos: string[];
 }
@@ -78,7 +79,7 @@ export default function Fixture() {
         const result: unknown = await response.json();
         if (!isFixture(result)) throw new Error('El servicio del fixture todavía no devuelve las pestañas oficiales. Revisa su publicación.');
         if (!disposed && !expired) {
-          setData(result); setError(''); setStale(false);
+          setData(result); setError(''); setStale(result.desactualizado === true);
           try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(result)); } catch { /* Storage may be unavailable. */ }
         }
       } catch (err) {
@@ -111,7 +112,7 @@ export default function Fixture() {
       <button onClick={() => refresh.current()} disabled={loading} className="flex items-center gap-2 rounded-xl bg-indigo-50 text-indigo-700 px-4 py-2 disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>{loading ? 'Consultando…' : 'Actualizar'}</button>
     </div>
     {error && <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">{error}{data && <p className="mt-1 font-semibold">Se conserva la última consulta; puede haber cambios todavía no reflejados.</p>}</div>}
-    {data && stale && !error && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Mostrando la última programación guardada mientras se comprueban las actualizaciones. Puede estar desactualizada.</p>}
+    {data && stale && !error && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Mostrando la última programación disponible. Se está intentando actualizar; los resultados pueden haber cambiado. Revisa la fecha de última lectura.</p>}
     {data && <p className="text-xs text-slate-500">Última lectura: {new Date(data.actualizado).toLocaleString('es-PE')} · <a className="underline" href={`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`} target="_blank" rel="noreferrer">Ver hojas oficiales</a></p>}
     {data?.avisos.map(message => <p key={message} className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{message}</p>)}
     <div className="flex flex-wrap gap-3 items-center rounded-2xl bg-white border border-slate-200 p-3">

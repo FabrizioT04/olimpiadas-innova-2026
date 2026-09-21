@@ -1,4 +1,7 @@
-interface Env { FIXTURE_SCRIPT_URL?: string }
+interface Env { FIXTURE_SCRIPT_URL?: string; FIXTURE_CACHE?: KVNamespace }
+const CACHE_KEY = 'fixture-publico-v1';
+const FRESH_MS = 30000;
+const refreshes = new Map<string, Promise<ReturnType<typeof publicFixture>>>();
 const sourceId = '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg';
 const pick = (value: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.map(key => [key, value[key]]));
 
@@ -20,19 +23,46 @@ export function publicFixture(value: unknown) {
   };
 }
 
-export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
-  const headers = { 'Cache-Control': 'no-store' };
-  if (request.method !== 'GET') return Response.json({error:'Método no permitido.'}, {status:405, headers:{...headers, Allow:'GET'}});
-  if (!env.FIXTURE_SCRIPT_URL) return Response.json({error:'La programación no está configurada.'}, {status:503, headers});
+async function refreshFixture(env: Env) {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const url = new URL(env.FIXTURE_SCRIPT_URL);
-      // Each attempt starts from /exec, never from a previously redirected Google URL.
+      const url = new URL(env.FIXTURE_SCRIPT_URL!);
       url.searchParams.set('_consulta', `${Date.now()}-${attempt}`);
       const response = await fetch(url.toString(), {signal:AbortSignal.timeout(12000), redirect:'follow', cache:'no-store'});
       if (!response.ok) throw new Error('Upstream unavailable');
-      return Response.json(publicFixture(await response.json()), {headers});
+      const fixture = publicFixture(await response.json());
+      // KV failure must not discard a valid live response; snapshots never expire.
+      try { await env.FIXTURE_CACHE?.put(CACHE_KEY, JSON.stringify({savedAt:Date.now(), fixture})); } catch { console.warn('Fixture snapshot could not be saved'); }
+      return fixture;
     } catch { /* Retry the read once; this endpoint never writes to Sheets. */ }
   }
-  return Response.json({error:'Google no respondió correctamente. Intenta actualizar de nuevo.'}, {status:502, headers});
+  throw new Error('Fixture unavailable');
+}
+
+export const onRequest: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
+  const headers = { 'Cache-Control': 'no-store' };
+  if (request.method !== 'GET') return Response.json({error:'Método no permitido.'}, {status:405, headers:{...headers, Allow:'GET'}});
+  if (!env.FIXTURE_SCRIPT_URL) return Response.json({error:'La programación no está configurada.'}, {status:503, headers});
+  let cached: {savedAt:number; fixture:ReturnType<typeof publicFixture>} | null = null;
+  try {
+    const snapshot = await env.FIXTURE_CACHE?.get<{savedAt:number; fixture:unknown}>(CACHE_KEY, {type:'json', cacheTtl:30});
+    if (snapshot && Number.isFinite(snapshot.savedAt) && snapshot.savedAt <= Date.now()) {
+      cached = {savedAt:snapshot.savedAt, fixture:publicFixture(snapshot.fixture)};
+    }
+  } catch { /* A missing or damaged snapshot must not prevent a live read. */ }
+  if (cached && Date.now() - cached.savedAt < FRESH_MS) {
+    return Response.json({...cached.fixture, copiaCompartida:true, desactualizado:false}, {headers});
+  }
+  const refreshKey = env.FIXTURE_SCRIPT_URL;
+  let pending = refreshes.get(refreshKey);
+  if (!pending) {
+    pending = refreshFixture(env).finally(() => { refreshes.delete(refreshKey); });
+    refreshes.set(refreshKey, pending);
+  }
+  if (cached) {
+    waitUntil(pending.catch(() => {}));
+    return Response.json({...cached.fixture, copiaCompartida:true, desactualizado:true}, {headers});
+  }
+  try { return Response.json({...await pending, copiaCompartida:false, desactualizado:false}, {headers}); }
+  catch { return Response.json({error:'Google no respondió correctamente. Intenta actualizar de nuevo.'}, {status:502, headers}); }
 };
