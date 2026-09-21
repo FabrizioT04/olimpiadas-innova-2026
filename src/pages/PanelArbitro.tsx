@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2, ShieldCheck, UserCheck, LogOut } from 'lucide-react';
 import { HOUSES, useArbitraje } from '../features/arbitraje/hooks/useArbitraje';
+import PanelMarcadores from '../features/marcadores/PanelMarcadores';
 
 export default function PanelArbitro() {
   const [correoAutorizado, setCorreoAutorizado] = useState<string | null>(null);
@@ -69,6 +70,7 @@ export default function PanelArbitro() {
           </button>
         </div>
 
+        <PanelMarcadores />
         {/* Cabecera */}
         <div className="text-center mb-12">
           <span className="inline-block py-1.5 px-4 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold tracking-widest uppercase mb-4 shadow-sm border border-indigo-100">

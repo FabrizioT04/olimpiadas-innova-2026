@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Calendar, Clock, RefreshCw, Trophy } from 'lucide-react';
+import { FIXTURE_URL, HOUSE_NAMES, STATUS_NAMES, isMarcador } from '../features/marcadores/model';
+import type { Marcador } from '../features/marcadores/model';
 
 interface Partido {
   id: string; fecha: string; hora: string; deporte: string; enfrentamiento: string;
   categoria: string; arbitro: string; lugar: string; fase: string; bloque: string;
   seccion: string; origen: string; fila: number; avisos: string[];
+  marcador?: Marcador | null;
 }
 interface Finalista {
   id: string; deporte: string; categoria: string; terceroCuarto: string;
@@ -15,7 +18,7 @@ interface FixtureData {
   finalistas: Finalista[]; avisos: string[];
 }
 const SHEET_ID = '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg';
-const WEB_APP_URL = import.meta.env.VITE_FIXTURE_URL || 'https://script.google.com/macros/s/AKfycbw6v_-hQor-DMh7Mg2qtodwpuIiXIuCOqqtV3mY3Gs5ueqZBrDH8LORqa7RTMWhIH1uqw/exec';
+const WEB_APP_URL = FIXTURE_URL;
 const displayDate = (date: string) => date ? new Date(`${date}T12:00:00`).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha por definir';
 const matchup = (text: string) => text.trim() === 'VS' ? 'Por definir' : text;
 
@@ -97,12 +100,13 @@ export default function Fixture() {
     </div>
     {!data && <p className="py-12 text-center text-slate-500">{loading ? 'Leyendo la programación oficial…' : 'La programación no está disponible en este momento.'}</p>}
     {data && view === 'programacion' && <>
-      <p className="text-xs text-slate-500">Los horarios son los publicados en Sheets. Esta programación no confirma que un partido haya comenzado o terminado.</p>
+      <p className="text-xs text-slate-500">Los horarios son los publicados en Sheets. Los marcadores y estados aparecen cuando los registra un árbitro.</p>
       {!matches.length && <p className="py-8 text-center text-slate-500">No hay actividades publicadas para esta selección.</p>}
       {groups.map(date => <section key={date} className="space-y-3"><h2 className="font-bold text-lg text-slate-800 capitalize">{displayDate(date)}</h2>
         <div className="grid md:grid-cols-2 gap-4">{matches.filter(p => p.fecha === date).map(p => <article key={p.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
           <div className="flex justify-between gap-3"><span className="flex gap-2 text-blue-700 font-semibold"><Clock size={18}/>{p.hora}</span><span className="text-sm text-slate-500">Lugar: {p.lugar}</span></div>
           <h3 className="font-bold text-slate-800">{p.deporte}</h3><p className="font-medium text-slate-700">{p.enfrentamiento}</p>
+          {isMarcador(p.marcador) && <div className="rounded-xl bg-blue-50 p-3 text-center"><p className="text-xs font-semibold text-blue-700">{STATUS_NAMES[p.marcador.estado]}</p><p className="text-2xl font-bold text-slate-900">{p.marcador.a} – {p.marcador.b}</p><p className="text-xs text-slate-600">{HOUSE_NAMES[p.marcador.houseA]} / {HOUSE_NAMES[p.marcador.houseB]}</p></div>}
           <p className="text-sm text-slate-500">{p.categoria}{p.fase ? ` · ${p.fase}` : ''}</p>
           {p.bloque && <p className="text-xs text-slate-500">Bloque: {p.bloque}</p>}
           {p.arbitro && <p className="text-sm text-slate-600">Responsables: {p.arbitro}</p>}

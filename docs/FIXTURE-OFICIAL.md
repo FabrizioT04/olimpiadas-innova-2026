@@ -25,8 +25,8 @@ Se leen SEMANA 1, SEMANA 2, SEMANA 3, las pestañas de martes a viernes y Finali
 - Solo se eliminan repeticiones exactas entre pestañas. Si coinciden, se prefiere la pestaña diaria sobre el resumen semanal. Horarios o categorías diferentes permanecen visibles.
 - La web no inventa estados en vivo/finalizado, ganadores ni equipos. Los campos vacíos se muestran pendientes. Los marcadores y su edición son una fase posterior.
 - Ante una consulta fallida, conserva la última lectura en memoria con un aviso. En una primera carga fallida no muestra un calendario fijo como respaldo.
-- `doPost` rechaza escrituras; la edición de programación se realiza en las hojas oficiales. El proyecto de arbitraje y el medallero no cambian.
-- Los IDs se basan en pestaña y fila, solo para mostrar datos. No deben usarse como identificadores permanentes de marcadores si se insertan o reordenan filas.
+- La edición de programación se realiza en las hojas oficiales. Con `Marcadores.gs`, `doPost` acepta únicamente marcadores firmados por el servidor protegido; sin ese archivo rechaza escrituras. Ver `MARCADORES.md` para activar el registro privado. El medallero no cambia.
+- Los IDs de programación (`id`) se basan en pestaña y fila, solo para mostrar datos. La extensión de marcadores usa otro identificador (`encuentroId`) basado en los datos del encuentro; consulta `MARCADORES.md` antes de reprogramar un partido con resultado.
 
 ## Verificación local
 

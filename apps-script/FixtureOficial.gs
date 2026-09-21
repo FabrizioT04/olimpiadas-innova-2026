@@ -1,10 +1,9 @@
 // Proyecto de Apps Script del FIXTURE. No instalar en ArbitrajeSeguro.
-// Lectura solamente: conserva las hojas oficiales y sus celdas combinadas.
+// Conserva las hojas oficiales. Los marcadores se guardan en un archivo privado aparte.
 var FIXTURE_ID = '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg';
 var FIXTURE_YEAR = 2026;
 
-function doGet() {
-  try {
+function leerFixture_() {
     var book = SpreadsheetApp.openById(FIXTURE_ID);
     var sheets = book.getSheets().filter(function (s) {
       return /^(SEMANA\s+[123]|MARTES|MIERCOLES|JUEVES|VIERNES|FINALISTAS)/.test(norm(s.getName()));
@@ -23,14 +22,22 @@ function doGet() {
           return [m.getRow()-1, m.getColumn()-1, m.getNumRows(), m.getNumColumns()];
         }) };
     });
-    return fixtureJson(parseFixture(source));
+    return parseFixture(source);
+}
+
+function doGet() {
+  try {
+    var fixture = leerFixture_();
+    if (typeof enriquecerMarcadores_ === 'function') fixture = enriquecerMarcadores_(fixture);
+    return fixtureJson(fixture);
   } catch (err) {
     console.error(err);
     return fixtureJson({ error: 'No se pudo leer el fixture oficial. Revisa el acceso del script al archivo.' });
   }
 }
 
-function doPost() {
+function doPost(e) {
+  if (typeof guardarMarcador_ === 'function') return guardarMarcador_(e);
   return fixtureJson({ status: 'error', message: 'El fixture oficial es de solo lectura. Edita las pestañas de Google Sheets.' });
 }
 
