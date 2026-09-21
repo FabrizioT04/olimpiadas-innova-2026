@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Loader2, ShieldCheck, UserCheck, LogOut } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, LogOut, Trophy, Medal } from 'lucide-react';
 import { HOUSES, useArbitraje } from '../features/arbitraje/hooks/useArbitraje';
 import PanelMarcadores from '../features/marcadores/PanelMarcadores';
 
 export default function PanelArbitro() {
+  const [registro, setRegistro] = useState<'marcadores' | 'puntajes'>('marcadores');
   const [correoAutorizado, setCorreoAutorizado] = useState<string | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -70,22 +71,44 @@ export default function PanelArbitro() {
           </button>
         </div>
 
-        <PanelMarcadores />
         {/* Cabecera */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <span className="inline-block py-1.5 px-4 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold tracking-widest uppercase mb-4 shadow-sm border border-indigo-100">
             Innova Schools • San Martín de Porres
           </span>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 mb-4 pb-1">
             Control de Arbitraje
           </h1>
-          <p className="text-slate-500 font-medium text-sm md:text-base">Registro oficial de puntajes y validación en tiempo real</p>
+          <p className="text-slate-500 font-medium text-sm md:text-base">Resultados de partidos y puntos de las Houses en un solo lugar</p>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white/80 p-2 mb-6" role="group" aria-label="Tipo de registro">
+          {([
+            { id: 'marcadores', title: 'Marcadores por partido', description: 'Resultado y estado del encuentro', Icon: Trophy },
+            { id: 'puntajes', title: 'Puntos del medallero', description: 'Puntos y penalidades por House', Icon: Medal },
+          ] as const).map(({ id, title, description, Icon }) => (
+            <button key={id} type="button" aria-pressed={registro === id} aria-controls={`panel-${id}`}
+              onClick={() => setRegistro(id)}
+              className={`flex items-center gap-3 rounded-xl px-4 py-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${registro === id ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-indigo-50'}`}>
+              <Icon size={22} className="shrink-0" aria-hidden="true" />
+              <span><span className="block text-sm font-bold">{title}</span><span className={`block text-xs mt-1 ${registro === id ? 'text-indigo-100' : 'text-slate-500'}`}>{description}</span></span>
+            </button>
+          ))}
+        </div>
+
+        {/* Keep both forms mounted so switching views preserves unfinished entries and retries. */}
+        <div id="panel-marcadores" hidden={registro !== 'marcadores'}>
+          <PanelMarcadores />
+        </div>
+        <section id="panel-puntajes" hidden={registro !== 'puntajes'} aria-labelledby="titulo-puntajes">
+        <div className="mb-5 px-1">
+          <h2 id="titulo-puntajes" className="text-xl font-bold">Puntos del medallero</h2>
+          <p className="text-sm text-slate-500 mt-2">Selecciona una House para registrar puntos o penalidades.</p>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Columna Izquierda: Formulario */}
-          <div className="lg:col-span-7 bg-white/70 backdrop-blur-2xl p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/80">
+          <div className="lg:col-span-7 bg-white/70 backdrop-blur-2xl p-5 sm:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/80">
             <form onSubmit={enviarPuntaje} className="space-y-5">
               
               {/* House Seleccionada Visual */}
@@ -273,6 +296,7 @@ export default function PanelArbitro() {
           </div>
 
         </div>
+        </section>
       </div>
     </div>
   );
