@@ -38,6 +38,19 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'Sesión inválida o vencida. Vuelve a ingresar al panel.' }, 401);
   }
   if (url.pathname === '/arbitraje/api/session' && request.method === 'GET') return json({ email });
+  if (url.pathname === '/arbitraje/api/fixture') {
+    if (request.method !== 'GET') return json({ error: 'Método no permitido.' }, 405);
+    if (!env.FIXTURE_SCRIPT_URL) return json({ error: 'La consulta de partidos aún no está configurada.' }, 503);
+    try {
+      const upstream = await fetch(env.FIXTURE_SCRIPT_URL, { signal: AbortSignal.timeout(25000) });
+      if (!upstream.ok) throw new Error('upstream');
+      const result = await upstream.json() as { fuente?: string; partidos?: unknown[]; error?: string };
+      if (result.error || result.fuente !== '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg' || !Array.isArray(result.partidos)) throw new Error('fixture');
+      return json(result);
+    } catch {
+      return json({ error: 'No se pudo cargar la programación. Pulsa «Recargar partidos» para reintentar.' }, 502);
+    }
+  }
   const isMarker = url.pathname === '/arbitraje/api/marcadores';
   if (!isMarker && url.pathname !== '/arbitraje/api/puntajes') return json({ error: 'Ruta no encontrada.' }, 404);
   if (request.method !== 'POST') return json({ error: 'Método no permitido.' }, 405);

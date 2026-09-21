@@ -43,14 +43,14 @@ export default function PanelArbitro() {
   // 2. Si SÍ está autorizado, muestra tu bloque de código completo perfectamente
   return (
     <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden font-sans text-slate-800 p-4 md:p-8 flex flex-col items-center justify-center">
-      
+
       {/* Decoración de fondo */}
       <div className="absolute top-0 left-10 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
       <div className="absolute top-0 right-20 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
       <div className="absolute -bottom-8 left-40 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
 
       <div className="relative z-10 w-full max-w-5xl mt-4">
-        
+
         {/* Barra superior de sesión autorizada */}
         <div className="flex flex-col sm:flex-row items-center justify-between bg-white/80 backdrop-blur-xl px-6 py-3.5 rounded-2xl border border-slate-200 shadow-sm mb-8 gap-3">
           <div className="flex items-center gap-2.5">
@@ -106,11 +106,11 @@ export default function PanelArbitro() {
           <p className="text-sm text-slate-500 mt-2">Selecciona una House para registrar puntos o penalidades.</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* Columna Izquierda: Formulario */}
           <div className="lg:col-span-7 bg-white/70 backdrop-blur-2xl p-5 sm:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/80">
             <form onSubmit={enviarPuntaje} className="space-y-5">
-              
+
               {/* House Seleccionada Visual */}
               <div className="bg-gradient-to-r from-slate-50/80 to-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 transition-all">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center flex-shrink-0">
@@ -132,11 +132,11 @@ export default function PanelArbitro() {
 
               {/* Operación */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Operación</label>
+                <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1" htmlFor="operacion">Operación</label>
                 <div className="relative">
-                  <select 
+                  <select
                     className="w-full pl-4 pr-10 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 appearance-none shadow-sm transition-all"
-                    value={operation} onChange={(e) => setOperation(e.target.value)}
+                    id="operacion" name="operacion" value={operation} onChange={(e) => setOperation(e.target.value)}
                   >
                     <option value="">Selecciona la operación...</option>
                     <option value="sumar">✅ Sumar Puntos (Victoria / Reto)</option>
@@ -151,11 +151,11 @@ export default function PanelArbitro() {
               {/* Categoría y Actividad */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Categoría</label>
+                  <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1" htmlFor="categoria">Categoría</label>
                   <div className="relative">
-                    <select 
+                    <select
                       className="w-full pl-4 pr-10 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 appearance-none shadow-sm transition-all"
-                      value={category} onChange={(e) => setCategory(e.target.value)}
+                      id="categoria" name="categoria" value={category} onChange={(e) => setCategory(e.target.value)}
                     >
                       <option value="">Elige...</option>
                       <option value="promesas">Promesas (1º y 2º)</option>
@@ -169,13 +169,13 @@ export default function PanelArbitro() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Deporte / Reto</label>
+                  <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1" htmlFor="actividad">Deporte / Reto</label>
                   <div className="relative">
-                    <select 
+                    <select
                       className="w-full pl-4 pr-10 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 appearance-none shadow-sm transition-all"
-                      value={activity} onChange={(e) => setActivity(e.target.value)}
+                      id="actividad" name="actividad" value={activity} onChange={(e) => setActivity(e.target.value)}
                     >
                       <option value="">Elige el deporte o reto...</option>
                       <optgroup label="Deportes Principales">
@@ -224,12 +224,12 @@ export default function PanelArbitro() {
 
               {/* Puntos */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">Puntos a otorgar/restar</label>
-                <input 
-                  type="number" 
-                  placeholder="Ej: 100" 
+                <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1" htmlFor="puntos">Puntos a otorgar/restar</label>
+                <input
+                  type="number"
+                  placeholder="Ej: 100"
                   className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-sm transition-all placeholder:text-slate-300 placeholder:font-normal"
-                  value={points} onChange={(e) => setPoints(e.target.value)} 
+                  id="puntos" name="puntos" value={points} onChange={(e) => setPoints(e.target.value)}
                 />
               </div>
 
@@ -240,12 +240,12 @@ export default function PanelArbitro() {
                   placeholder="Ej.: victoria de futsal o corrección del acta" />
               </div>
               {/* Confirmar operación */}
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isSubmitting || !selectedHouse}
                 className={`w-full mt-4 font-bold py-4 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2
                   ${isSubmitting || !selectedHouse
-                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' 
+                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
                     : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-[0_8px_20px_rgb(79,70,229,0.25)] hover:shadow-[0_10px_25px_rgb(79,70,229,0.4)] hover:-translate-y-0.5'
                   }
                 `}
@@ -269,8 +269,8 @@ export default function PanelArbitro() {
                 type="button"
                 onClick={() => setSelectedHouse(house)}
                 className={`group relative flex flex-col items-center justify-center p-6 bg-white/90 backdrop-blur-sm rounded-[2rem] transition-all duration-300 min-h-[220px]
-                  ${selectedHouse?.id === house.id 
-                    ? 'border-0 ring-[3px] ring-indigo-500/40 scale-[1.03] shadow-[0_10px_30px_rgb(79,70,229,0.15)] z-10' 
+                  ${selectedHouse?.id === house.id
+                    ? 'border-0 ring-[3px] ring-indigo-500/40 scale-[1.03] shadow-[0_10px_30px_rgb(79,70,229,0.15)] z-10'
                     : 'border border-slate-100 hover:border-slate-200 hover:scale-[1.02] hover:shadow-lg shadow-sm'
                   }
                 `}
@@ -278,16 +278,16 @@ export default function PanelArbitro() {
                 {selectedHouse?.id === house.id && (
                   <div className="absolute top-4 right-4 w-2.5 h-2.5 bg-indigo-500 rounded-full shadow-[0_0_8px_rgb(99,102,241)]"></div>
                 )}
-                
+
                 <div className={`relative mb-6 transition-transform duration-500 ease-out ${selectedHouse?.id === house.id ? 'scale-110 -translate-y-2' : 'group-hover:scale-125 group-hover:-translate-y-3'}`}>
                   <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-2/3 h-4 bg-slate-900/10 blur-md rounded-full transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
-                  <img 
-                    src={house.img} 
-                    alt={house.name} 
-                    className="relative z-10 w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-2xl" 
+                  <img
+                    src={house.img}
+                    alt={house.name}
+                    className="relative z-10 w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-2xl"
                   />
                 </div>
-                
+
                 <span className={`font-black tracking-widest text-sm uppercase transition-colors absolute bottom-6 ${selectedHouse?.id === house.id ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-800'}`}>
                   {house.name}
                 </span>

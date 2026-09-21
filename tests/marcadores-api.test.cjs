@@ -9,6 +9,23 @@ const modulePromise=import('data:text/javascript;base64,'+Buffer.from(source).to
 const env={ACCESS_TEAM_DOMAIN:'test.cloudflareaccess.com',ACCESS_AUD:'test',APP_ORIGIN:'https://example.com',FIXTURE_SCRIPT_URL:'https://fixture.example.com/exec',APPS_SCRIPT_URL:'https://points.example.com/exec',ARBITRAJE_SECRET:'test-secret-'.repeat(5)};
 const body={id:'12345678-1234-1234-1234-123456789012',encuentroId:'a'.repeat(64),version:0,a:3,b:2,estado:'finalizado',motivo:'Partido terminado',email:'spoof@example.com',houseA:'blue'};
 const request=(data,origin=env.APP_ORIGIN)=>new Request(env.APP_ORIGIN+'/arbitraje/api/marcadores',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','Cf-Access-Jwt-Assertion':'stubbed-only-in-contract-test'},body:JSON.stringify(data)});
+
+test('authenticated fixture reads use the configured upstream and failures are retryable',async()=>{
+  const {onRequest}=await modulePromise,original=global.fetch;
+  const read=()=>new Request(env.APP_ORIGIN+'/arbitraje/api/fixture',{headers:{'Cf-Access-Jwt-Assertion':'stubbed-only-in-contract-test'}});
+  const fixture={fuente:'14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg',partidos:[{id:'1'}],marcadoresHabilitados:true};
+  try {
+    global.fetch=async(url,options)=>{assert.equal(url,env.FIXTURE_SCRIPT_URL);assert.ok(options.signal);return Response.json(fixture);};
+    const response=await onRequest({request:read(),env});
+    assert.equal(response.status,200);assert.deepEqual(await response.json(),fixture);
+    assert.equal(response.headers.get('Cache-Control'),'no-store');
+    global.fetch=async()=>{throw new Error('timeout');};
+    assert.equal((await onRequest({request:read(),env})).status,502);
+    global.fetch=async()=>Response.json({error:'unavailable'});
+    assert.equal((await onRequest({request:read(),env})).status,502);
+    assert.equal((await onRequest({request:read(),env:{...env,FIXTURE_SCRIPT_URL:''}})).status,503);
+  }finally{global.fetch=original;}
+});
 test('marker API signs verified identity, strips supplied Houses and uses fixture endpoint',async()=>{
   const {onRequest}=await modulePromise,original=global.fetch;
   global.fetch=async(url,options)=>{

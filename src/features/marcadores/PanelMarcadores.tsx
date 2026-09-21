@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FIXTURE_URL, HOUSE_NAMES, STATUS_NAMES, isActividad, isEncuentro, isMarcador } from './model';
+import { HOUSE_NAMES, STATUS_NAMES, isActividad, isEncuentro, isMarcador } from './model';
 import type { Actividad, Marcador } from './model';
 
 interface Intent { id:string; encuentroId:string; version:number; a:number; b:number; estado:Marcador['estado']; motivo:string }
@@ -22,20 +22,39 @@ export default function PanelMarcadores() {
     setStatus(p?.marcador?.estado || 'pendiente'); setReason('');
   }
   async function load(signal?: AbortSignal) {
+    const controller = new AbortController();
+    let expired = false;
+    const cancel = () => controller.abort();
+    signal?.addEventListener('abort', cancel, { once: true });
+    if (signal?.aborted) controller.abort();
+    const timeout = window.setTimeout(() => {
+      expired = true;
+      controller.abort();
+      if (!signal?.aborted) {
+        setError('La lectura tardó demasiado. Pulsa «Recargar partidos» para reintentar.');
+        setLoading(false);
+      }
+    }, 30000);
     try {
-      const response = await fetch(FIXTURE_URL,{cache:'no-store',signal:signal ? AbortSignal.any([signal,AbortSignal.timeout(65000)]) : AbortSignal.timeout(65000)});
-      if (!response.ok) throw new Error('No se pudo leer el fixture.');
+      const response = await fetch('/arbitraje/api/fixture',{cache:'no-store',signal:controller.signal});
+      if (response.redirected || response.status === 401 || response.status === 403) throw new Error('Tu sesión venció. Vuelve a ingresar al panel.');
+      if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('No se recibió la programación. Vuelve a ingresar al panel y reintenta.');
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'No se pudo leer el fixture.');
       if (data.fuente !== '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg' || data.marcadoresHabilitados !== true || !Array.isArray(data.partidos))
         throw new Error('Los marcadores aún no están habilitados. Completa la configuración del script.');
-      if (signal?.aborted) return;
+      if (signal?.aborted || expired) return;
       setError('');
       const next:Actividad[] = data.partidos.filter(isActividad);
       setMatches(next);
       // A fresh selection is required after loading, avoiding unnoticed version changes while editing.
       choose();
-    } catch (err) { if (!signal?.aborted) { setMatches([]); choose(); setError(err instanceof Error && err.name !== 'TimeoutError' ? err.message : 'La lectura tardó demasiado. Intenta cargar de nuevo.'); } }
-    finally { if (!signal?.aborted) setLoading(false); }
+    } catch (err) { if (!signal?.aborted && !expired) { setError(err instanceof Error ? err.message : 'No se pudo cargar la programación. Intenta de nuevo.'); } }
+    finally {
+      window.clearTimeout(timeout);
+      signal?.removeEventListener('abort', cancel);
+      if (!signal?.aborted && !expired) setLoading(false);
+    }
   }
   useEffect(() => {
     const controller = new AbortController();
