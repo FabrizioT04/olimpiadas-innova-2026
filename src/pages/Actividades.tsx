@@ -90,7 +90,7 @@ const getCategoryIcon = (category: string) => {
 export default function Actividades() {
   const [filtro, setFiltro] = useState('Todos');
   const areas = [...new Set([...actividadesData.map(a => a.category), ...basesOficiales.map(b => b.area)])];
-  return <div className="mx-auto max-w-7xl space-y-8 pb-12">
+  return <div translate="no" className="notranslate mx-auto max-w-7xl space-y-8 pb-12">
     <header>
       <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600"><Sparkles aria-hidden="true" size={16}/><span>Juegos y disciplinas</span></p>
       <h1 className="text-3xl font-black text-slate-800">Actividades y Reglas</h1>
