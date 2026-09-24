@@ -10,6 +10,21 @@ const env={ACCESS_TEAM_DOMAIN:'test.cloudflareaccess.com',ACCESS_AUD:'test',APP_
 const body={id:'12345678-1234-1234-1234-123456789012',encuentroId:'a'.repeat(64),version:0,a:3,b:2,estado:'finalizado',motivo:'Partido terminado',email:'spoof@example.com',houseA:'blue'};
 const request=(data,origin=env.APP_ORIGIN)=>new Request(env.APP_ORIGIN+'/arbitraje/api/marcadores',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','Cf-Access-Jwt-Assertion':'stubbed-only-in-contract-test'},body:JSON.stringify(data)});
 
+test('points rejection exposes only known diagnostics and preserves pending warning',async()=>{
+  const {onRequest}=await modulePromise,original=global.fetch;
+  const read=()=>new Request(env.APP_ORIGIN+'/arbitraje/api/puntajes',{method:'POST',headers:{Origin:env.APP_ORIGIN,'Content-Type':'application/json','Cf-Access-Jwt-Assertion':'stub'},body:JSON.stringify({id:body.id,house:'green',categoria:'juvenila',fila:25,operacion:'restar',puntos:100,motivo:'Corrección de prueba'})});
+  try {
+    for(const [diagnostico,pending] of [['Puntaje actual inválido',false],['private secret detail',false],['Celda no habilitada',true]]){
+      global.fetch=async()=>Response.json({success:false,diagnostico,pending});
+      const response=await onRequest({request:read(),env}),result=await response.json();
+      assert.equal(response.status,409);
+      if(pending) assert.match(result.error,/pendiente de revisión/);
+      else if(diagnostico==='Puntaje actual inválido') {assert.equal(result.diagnostico,diagnostico);assert.match(result.error,/guardado como texto/);}
+      else {assert.equal(result.diagnostico,undefined);assert.ok(!JSON.stringify(result).includes(diagnostico));}
+    }
+  }finally{global.fetch=original;}
+});
+
 test('authenticated fixture reads use the configured upstream and failures are retryable',async()=>{
   const {onRequest}=await modulePromise,original=global.fetch;
   const read=()=>new Request(env.APP_ORIGIN+'/arbitraje/api/fixture',{headers:{'Cf-Access-Jwt-Assertion':'stubbed-only-in-contract-test'}});

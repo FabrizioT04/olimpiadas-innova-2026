@@ -98,7 +98,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ timestamp, payload, signature }),
       signal: AbortSignal.timeout(isMarker ? 60000 : 25000) });
     if (!upstream.ok) throw new Error('upstream');
-    const result = await upstream.json() as { success?: boolean; error?: string; pending?: boolean; id?: string; nuevo?: number; code?: string; marcador?: unknown };
+    const result = await upstream.json() as { success?: boolean; error?: string; diagnostico?: string; pending?: boolean; id?: string; nuevo?: number; code?: string; marcador?: unknown };
     if (isMarker) {
       if (result.success === true && result.id === data.id && result.marcador) return json({success:true,id:result.id,marcador:result.marcador});
       const errors: Record<string,string> = { CONFLICT:'Otro árbitro actualizó este encuentro. Recarga antes de guardar.',
@@ -106,9 +106,22 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
         NOT_CONFIGURED:'El registro de marcadores aún no está configurado.', ID_REUSED:'Identificador ya usado. Recarga el encuentro.' };
       return json({error:errors[result.code || ''] || 'No se confirmó el registro del marcador.',code:result.code || 'REJECTED'},409);
     }
+    const pointErrors = new Map<string, string>([
+      ['No autorizado', 'Apps Script rechazó la autorización. Revisa que la clave del servidor y la del script coincidan y que la URL corresponda a la implementación correcta.'],
+      ['Datos inválidos', 'Apps Script rechazó los datos enviados. Revisa la configuración de categorías y actividades.'],
+      ['Hoja no encontrada', 'No se encontró la hoja «Sábana» en el archivo conectado a Apps Script.'],
+      ['Identificador reutilizado con otros datos', 'El identificador ya pertenece a otro registro. Revisa el historial antes de volver a enviar.'],
+      ['Celda no habilitada', 'La celda de destino contiene una fórmula o está marcada en negro. No se puede modificar desde el panel.'],
+      ['Puntaje actual inválido', 'La celda de destino debe contener un número entero no negativo o estar vacía. Revisa si el puntaje está guardado como texto.'],
+      ['Puntaje fuera de rango', 'El puntaje resultante está fuera del rango admitido.'],
+      ['Error interno: consultar registros de ejecución', 'Apps Script encontró un error interno. Revisa el registro de la última ejecución de doPost.'],
+    ]);
+    const diagnostic = typeof result.diagnostico === 'string' && pointErrors.has(result.diagnostico)
+      ? result.diagnostico : undefined;
     if (result.success !== true) return json({ error: result.pending
       ? 'Operación pendiente de revisión. No repitas el registro con otro identificador.'
-      : 'No se pudo registrar. Revisa la celda y la configuración.', pending: result.pending === true }, 409);
+      : (pointErrors.get(diagnostic || '') || 'No se pudo registrar. Revisa la celda y la configuración.'),
+      diagnostico: diagnostic, pending: result.pending === true }, 409);
     return json({ success: true, id: result.id, nuevo: result.nuevo });
   } catch {
     return json({ error: 'No se pudo confirmar el guardado. Reintenta sin cambiar los datos para evitar duplicados.' }, 502);
