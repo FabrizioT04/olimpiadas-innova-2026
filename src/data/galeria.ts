@@ -10,7 +10,7 @@ export interface FotoGaleria {
 // Añadir aquí únicamente fotografías listas para publicarse.
 export const fotosGaleria: FotoGaleria[] = [13, 12, 11, 8, 7, 2].map(numero => ({
   id: `sana-convivencia-${numero}`,
-  titulo: `Sana convivencia · ${numero}`,
+  titulo: 'Asamblea de sana convivencia',
   descripcion: 'Un momento de nuestra asamblea de sana convivencia.',
   album: 'convivencia',
   url: `/galeria/sana-convivencia/sana-convivencia-${numero}.webp`,
