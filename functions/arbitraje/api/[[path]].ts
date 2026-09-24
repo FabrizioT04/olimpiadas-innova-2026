@@ -63,17 +63,18 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     }
   }
   const isMarker = url.pathname === '/arbitraje/api/marcadores';
-  if (!isMarker && url.pathname !== '/arbitraje/api/puntajes') return json({ error: 'Ruta no encontrada.' }, 404);
-  if (request.method !== 'POST') return json({ error: 'Método no permitido.' }, 405);
-  if (request.headers.get('Origin') !== env.APP_ORIGIN ||
-      !request.headers.get('Content-Type')?.startsWith('application/json')) {
+  const isProbe = url.pathname === '/arbitraje/api/comprobar-auth';
+  if (!isMarker && !isProbe && url.pathname !== '/arbitraje/api/puntajes') return json({ error: 'Ruta no encontrada.' }, 404);
+  if (request.method !== (isProbe ? 'GET' : 'POST')) return json({ error: 'Método no permitido.' }, 405);
+  if (!isProbe && (request.headers.get('Origin') !== env.APP_ORIGIN ||
+      !request.headers.get('Content-Type')?.startsWith('application/json'))) {
     return json({ error: 'Solicitud no permitida.' }, 403);
   }
   const scriptUrl = isMarker ? env.FIXTURE_SCRIPT_URL : env.APPS_SCRIPT_URL;
   if (!scriptUrl || !env.ARBITRAJE_SECRET || env.ARBITRAJE_SECRET.length < 32) {
     return json({ error: 'El registro aún no está configurado.' }, 503);
   }
-  const raw = await request.text();
+  const raw = isProbe ? '{}' : await request.text();
   if (raw.length > 4096) return json({ error: 'Solicitud demasiado grande.' }, 413);
   let data;
   try { data = JSON.parse(raw); } catch { return json({ error: 'Datos inválidos.' }, 400); }
@@ -86,7 +87,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {
     return json({ error: 'Revisa el encuentro, los marcadores (0–999) y el motivo.' }, 400);
   }
-  if (!isMarker && (!data || !['white', 'blue', 'orange', 'green'].includes(data.house) ||
+  if (!isMarker && !isProbe && (!data || !['white', 'blue', 'orange', 'green'].includes(data.house) ||
       !['promesas', 'infantil', 'junior', 'juvenila', 'juvenilb'].includes(data.categoria) ||
       !['sumar', 'restar'].includes(data.operacion) || !rows.includes(data.fila) ||
       !Number.isSafeInteger(data.puntos) || data.puntos < 1 || data.puntos > 10000 ||
@@ -94,7 +95,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {
     return json({ error: 'Revisa la actividad, los puntos y el motivo (3–300 caracteres).' }, 400);
   }
-  const payload = JSON.stringify(isMarker
+  const payload = JSON.stringify(isProbe ? { action: 'diagnostico-autorizacion' } : isMarker
     ? { action: 'marcador', id: data.id, email, encuentroId: data.encuentroId, version: data.version,
         a: data.a, b: data.b, estado: data.estado, motivo: data.motivo.trim() }
     : { id: data.id, email, house: data.house, categoria: data.categoria,
@@ -110,6 +111,19 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       signal: AbortSignal.timeout(isMarker ? 60000 : 25000) });
     if (!upstream.ok) throw new Error('upstream');
     const result = await upstream.json() as { success?: boolean; error?: string; diagnostico?: string; pending?: boolean; id?: string; nuevo?: number; code?: string; marcador?: unknown };
+    if (isProbe) {
+      const messages: Record<string, string> = {
+        AUTH_OK: 'La autorización funciona. Esta comprobación no registra puntos.',
+        AUTH_CONFIG: 'La clave de Apps Script está ausente o es demasiado corta.',
+        AUTH_PAYLOAD: 'El contenido firmado no tiene el formato esperado.',
+        AUTH_TIMESTAMP: 'La fecha enviada no tiene el formato esperado.',
+        AUTH_EXPIRED: 'La fecha de la solicitud supera el margen de dos minutos.',
+        AUTH_SIGNATURE_FORMAT: 'La firma no tiene el formato esperado.',
+        AUTH_SIGNATURE_MISMATCH: 'La firma calculada por Apps Script no coincide con la enviada.',
+      };
+      const code = typeof result.diagnostico === 'string' && Object.hasOwn(messages, result.diagnostico) ? result.diagnostico : 'DIAGNOSTICO_NO_DISPONIBLE';
+      return json({ codigo: code, mensaje: messages[code] || 'La implementación todavía no devuelve los nuevos diagnósticos. Comprueba la versión publicada.' });
+    }
     if (isMarker) {
       if (result.success === true && result.id === data.id && result.marcador) return json({success:true,id:result.id,marcador:result.marcador});
       const errors: Record<string,string> = { CONFLICT:'Otro árbitro actualizó este encuentro. Recarga antes de guardar.',
