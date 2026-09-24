@@ -8,7 +8,7 @@ const icons = [Images, Trophy, Leaf, PartyPopper];
 function Imagen({ foto, ampliada = false }: { foto: FotoGaleria; ampliada?: boolean }) {
   const [error, setError] = useState(false);
   return error ? <div className="flex h-full min-h-48 items-center justify-center gap-2 bg-slate-100 p-8 text-slate-500"><Camera aria-hidden="true" size={24} /> Foto no disponible</div> :
-    <img src={foto.url} alt={foto.descripcion || foto.titulo} loading={ampliada ? 'eager' : 'lazy'} onError={() => setError(true)} className={ampliada ? 'max-h-[65vh] w-full object-contain' : 'h-full w-full object-cover transition-transform duration-300 group-hover:scale-105'} />;
+    <img src={foto.portada || foto.url} alt={foto.descripcion || foto.titulo} loading={ampliada ? 'eager' : 'lazy'} onError={() => setError(true)} className={ampliada ? 'max-h-[65vh] w-full object-contain' : 'h-full w-full object-cover transition-transform duration-300 group-hover:scale-105'} />;
 }
 
 export default function Galeria() {
@@ -32,7 +32,7 @@ export default function Galeria() {
         <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-200"><Camera size={17} aria-hidden="true" /> Olimpiadas 360° · 2026</p>
         <h1 className="text-3xl font-black tracking-tight sm:text-5xl">Momentos que compartimos</h1>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-indigo-100">Cada equipo, cada esfuerzo y cada celebración forman parte de nuestras olimpiadas. Este es el espacio para recordarlos juntos.</p>
-        <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm"><Images size={16} aria-hidden="true" /> {fotosGaleria.length ? `${fotosGaleria.length} fotos publicadas` : 'Estamos preparando los primeros álbumes'}</p>
+        <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm"><Images size={16} aria-hidden="true" /> {fotosGaleria.length ? `${fotosGaleria.filter(f => f.tipo !== 'video').length} fotos y ${fotosGaleria.filter(f => f.tipo === 'video').length} videos publicados` : 'Estamos preparando los primeros álbumes'}</p>
       </div>
     </header>
 
@@ -43,14 +43,14 @@ export default function Galeria() {
         return <button key={a.id} onClick={() => { setAlbum(a.id); setBusqueda(''); }} aria-pressed={album === a.id} className={`rounded-2xl border bg-white p-5 text-left transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-indigo-600 ${album === a.id ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
           <span className={`mb-4 inline-flex rounded-xl bg-gradient-to-br ${a.color} p-3 text-white`}><Icon aria-hidden="true" size={23} /></span>
           <h3 className="text-lg font-bold text-slate-800">{a.titulo}</h3><p className="mt-1 text-sm text-slate-500">{a.descripcion}</p>
-          <p className="mt-4 text-xs font-semibold text-indigo-600">{cantidad ? `${cantidad} fotos` : 'Próximamente'}</p>
+          <p className="mt-4 text-xs font-semibold text-indigo-600">{cantidad ? `${cantidad} momentos` : 'Próximamente'}</p>
         </button>;
       })}</div>
     </section>
 
     <section aria-labelledby="fotos-titulo" className="space-y-5">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div><h2 id="fotos-titulo" className="text-xl font-bold text-slate-800">{album === 'todos' ? 'Todas las fotos' : albumesGaleria.find(a => a.id === album)?.titulo}</h2>
+        <div><h2 id="fotos-titulo" className="text-xl font-bold text-slate-800">{album === 'todos' ? 'Fotos y videos' : albumesGaleria.find(a => a.id === album)?.titulo}</h2>
           {album !== 'todos' && <button onClick={() => setAlbum('todos')} className="mt-1 text-sm font-medium text-indigo-600 underline underline-offset-4">Ver todos los álbumes</button>}</div>
         {fotosGaleria.length > 0 && <div className="relative"><label htmlFor="buscar-foto" className="sr-only">Buscar fotos por título o descripción</label><Search aria-hidden="true" size={18} className="absolute left-3 top-3 text-slate-400"/><input id="buscar-foto" type="search" value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar un momento…" className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm sm:w-64" /></div>}
       </div>
@@ -59,11 +59,11 @@ export default function Galeria() {
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">{busqueda ? 'Prueba con otro título o actividad.' : 'Aquí compartiremos las fotografías de las olimpiadas a medida que se publiquen.'}</p>
         {busqueda && <button onClick={() => setBusqueda('')} className="mt-4 font-semibold text-indigo-600">Limpiar búsqueda</button>}
       </div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{fotos.map(f => <button key={f.id} onClick={() => setSeleccionada(f)} aria-label={`Ampliar foto: ${f.titulo}`} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:shadow-lg focus-visible:outline-2 focus-visible:outline-indigo-600">
-        <div className="aspect-[4/3] overflow-hidden bg-slate-100"><Imagen foto={f}/></div><div className="p-5"><p className="text-xs font-semibold text-indigo-600">{albumesGaleria.find(a => a.id === f.album)?.titulo}</p><h3 className="mt-1 font-bold text-slate-800">{f.titulo}</h3><p className="mt-2 text-sm text-slate-500">{f.descripcion}</p>{f.fecha && <time dateTime={f.fecha} className="mt-3 block text-xs text-slate-500">{new Date(`${f.fecha}T12:00:00`).toLocaleDateString('es-PE')}</time>}</div>
+        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100"><Imagen foto={f}/>{f.tipo === 'video' && <span className="absolute inset-0 flex items-center justify-center"><span className="rounded-full bg-slate-950/80 px-5 py-3 font-semibold text-white">▶ Reproducir video</span></span>}</div><div className="p-5"><p className="text-xs font-semibold text-indigo-600">{albumesGaleria.find(a => a.id === f.album)?.titulo}</p><h3 className="mt-1 font-bold text-slate-800">{f.titulo}</h3><p className="mt-2 text-sm text-slate-500">{f.descripcion}</p>{f.fecha && <time dateTime={f.fecha} className="mt-3 block text-xs text-slate-500">{new Date(`${f.fecha}T12:00:00`).toLocaleDateString('es-PE')}</time>}</div>
       </button>)}</div>}
     </section>
     <dialog ref={dialog} onCancel={cerrar} onClose={() => setSeleccionada(null)} aria-labelledby="foto-titulo" className="fixed inset-0 m-auto max-h-[92vh] w-[min(94vw,1000px)] overflow-y-auto rounded-2xl bg-white p-0 shadow-2xl backdrop:bg-slate-950/80">
-      {seleccionada && <><div className="flex items-center justify-between gap-4 p-4"><h2 id="foto-titulo" className="font-bold text-slate-800">{seleccionada.titulo}</h2><button autoFocus onClick={cerrar} aria-label="Cerrar foto" className="rounded-full p-2 hover:bg-slate-100"><X /></button></div><Imagen key={seleccionada.id} foto={seleccionada} ampliada/><div className="space-y-3 p-5"><p className="text-sm text-slate-600">{seleccionada.descripcion}</p><a href={seleccionada.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600">Abrir imagen original <ArrowUpRight size={16} aria-hidden="true"/></a></div></>}
+      {seleccionada && <><div className="flex items-center justify-between gap-4 p-4"><h2 id="foto-titulo" className="font-bold text-slate-800">{seleccionada.titulo}</h2><button autoFocus onClick={cerrar} aria-label="Cerrar foto" className="rounded-full p-2 hover:bg-slate-100"><X /></button></div>{seleccionada.tipo === 'video' ? <video key={seleccionada.id} controls playsInline preload="none" poster={seleccionada.portada} className="max-h-[65vh] w-full bg-black" aria-label={seleccionada.titulo}><source src={seleccionada.url} type="video/mp4" />Tu navegador no puede reproducir este video.</video> : <Imagen key={seleccionada.id} foto={seleccionada} ampliada/>}<div className="space-y-3 p-5"><p className="text-sm text-slate-600">{seleccionada.descripcion}</p><a href={seleccionada.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600">{seleccionada.tipo === 'video' ? 'Abrir video' : 'Abrir imagen'} <ArrowUpRight size={16} aria-hidden="true"/></a></div></>}
     </dialog>
   </div>;
 }
