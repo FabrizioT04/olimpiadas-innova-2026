@@ -4,7 +4,7 @@ import { albumesGaleria, fotosGaleria } from '../data/galeria';
 import type { FotoGaleria } from '../data/galeria';
 
 const normalizar = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-const carpetasEco = [{ id: 'asamblea', titulo: 'Asamblea' }, { id: 'mariquitas', titulo: 'Mariquitas' }, { id: 'carteles', titulo: 'Elaboración de carteles' }] as const;
+const carpetasEco = [{ id: 'asamblea', titulo: 'Asamblea' }, { id: 'mariquitas', titulo: 'Maraquitas' }, { id: 'carteles', titulo: 'Elaboración de carteles' }] as const;
 const icons = { convivencia: Images, deportes: Trophy, 'eco-house': Leaf, encuentros: PartyPopper };
 const albumesDisponibles = albumesGaleria.filter(a => fotosGaleria.some(f => f.album === a.id));
 function Imagen({ foto, ampliada = false }: { foto: FotoGaleria; ampliada?: boolean }) {
@@ -49,7 +49,7 @@ export default function Galeria() {
         const Icon = icons[a.id]; const cantidad = fotosGaleria.filter(f => f.album === a.id).length;
         return <button key={a.id} onClick={() => abrirAlbum(a.id)} aria-pressed={album === a.id} className={`rounded-2xl border bg-white p-5 text-left transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-indigo-600 ${album === a.id ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
           <span className={`mb-4 inline-flex rounded-xl bg-gradient-to-br ${a.color} p-3 text-white`}><Icon aria-hidden="true" size={23} /></span>
-          <h3 className="text-lg font-bold text-slate-800">{a.titulo}</h3><p className="mt-1 text-sm text-slate-500">{a.descripcion}</p>
+          <h3 translate={a.id === 'convivencia' ? 'no' : undefined} className={`text-lg font-bold text-slate-800 ${a.id === 'convivencia' ? 'notranslate' : ''}`}>{a.titulo}</h3><p className="mt-1 text-sm text-slate-500">{a.descripcion}</p>
           <p className="mt-4 text-xs font-semibold text-indigo-600">{cantidad ? `${cantidad} momentos` : 'Próximamente'}</p>
         </button>;
       })}</div>
@@ -57,7 +57,7 @@ export default function Galeria() {
 
     <section aria-labelledby="fotos-titulo" className="space-y-5">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div><h2 id="fotos-titulo" className="text-xl font-bold text-slate-800">{subseccion ? carpetasEco.find(c => c.id === subseccion)?.titulo : album === 'todos' ? 'Fotos y videos' : albumesGaleria.find(a => a.id === album)?.titulo}</h2>
+        <div><h2 id="fotos-titulo" translate={album === 'convivencia' ? 'no' : undefined} className={`text-xl font-bold text-slate-800 ${album === 'convivencia' ? 'notranslate' : ''}`}>{subseccion ? carpetasEco.find(c => c.id === subseccion)?.titulo : album === 'todos' ? 'Fotos y videos' : albumesGaleria.find(a => a.id === album)?.titulo}</h2>
           {album !== 'todos' && <button onClick={() => abrirAlbum(subseccion ? 'eco-house' : 'todos')} className="mt-1 text-sm font-medium text-indigo-600 underline underline-offset-4">{subseccion ? 'Volver a Eco House' : 'Ver todos los álbumes'}</button>}</div>
         {!(album === 'eco-house' && !subseccion) && fotosGaleria.length > 0 && <div className="relative"><label htmlFor="buscar-foto" className="sr-only">Buscar fotos por título o descripción</label><Search aria-hidden="true" size={18} className="absolute left-3 top-3 text-slate-400"/><input id="buscar-foto" type="search" value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar un momento…" className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm sm:w-64" /></div>}
       </div>
@@ -76,7 +76,7 @@ export default function Galeria() {
       </button>)}</div>}
     </section>
     <dialog ref={dialog} onCancel={cerrar} onClose={() => setSeleccionada(null)} aria-labelledby="foto-titulo" className="fixed inset-0 m-auto max-h-[92vh] w-[min(94vw,1000px)] overflow-y-auto rounded-2xl bg-white p-0 shadow-2xl backdrop:bg-slate-950/80">
-      {seleccionada && <><div className="flex items-center justify-between gap-4 p-4"><h2 id="foto-titulo" className="font-bold text-slate-800">{seleccionada.titulo}</h2><button autoFocus onClick={cerrar} aria-label="Cerrar foto" className="rounded-full p-2 hover:bg-slate-100"><X /></button></div>{seleccionada.tipo === 'video' ? <video key={seleccionada.id} controls playsInline preload="none" poster={seleccionada.portada} className="max-h-[65vh] w-full bg-black" aria-label={seleccionada.titulo}><source src={seleccionada.url} type="video/mp4" />Tu navegador no puede reproducir este video.</video> : <Imagen key={seleccionada.id} foto={seleccionada} ampliada/>}<div className="space-y-3 p-5"><a href={seleccionada.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600">{seleccionada.tipo === 'video' ? 'Abrir video' : 'Abrir imagen'} <ArrowUpRight size={16} aria-hidden="true"/></a></div></>}
+      {seleccionada && <><div className="flex items-center justify-between gap-4 p-4"><h2 id="foto-titulo" translate={seleccionada.album === 'convivencia' ? 'no' : undefined} className={`font-bold text-slate-800 ${seleccionada.album === 'convivencia' ? 'notranslate' : ''}`}>{seleccionada.titulo}</h2><button autoFocus onClick={cerrar} aria-label="Cerrar foto" className="rounded-full p-2 hover:bg-slate-100"><X /></button></div>{seleccionada.tipo === 'video' ? <video key={seleccionada.id} controls playsInline preload="none" poster={seleccionada.portada} className="max-h-[65vh] w-full bg-black" aria-label={seleccionada.titulo}><source src={seleccionada.url} type="video/mp4" />Tu navegador no puede reproducir este video.</video> : <Imagen key={seleccionada.id} foto={seleccionada} ampliada/>}<div className="space-y-3 p-5"><a href={seleccionada.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600">{seleccionada.tipo === 'video' ? 'Abrir video' : 'Abrir imagen'} <ArrowUpRight size={16} aria-hidden="true"/></a></div></>}
     </dialog>
   </div>;
 }

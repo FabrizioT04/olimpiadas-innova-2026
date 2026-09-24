@@ -115,7 +115,7 @@ export default function Fixture() {
 
   return <div className="space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <div><h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2"><Calendar className="text-blue-600"/>Fixture oficial</h1>
+      <div><h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2"><Calendar className="text-blue-600"/><span><span translate="no" className="notranslate">Fixture</span> oficial</span></h1>
         <p className="text-sm text-slate-500">Programación de las hojas oficiales. Se consulta cada 30 segundos mientras esta página está abierta.</p></div>
       <button onClick={() => refresh.current()} disabled={loading} className="flex items-center gap-2 rounded-xl bg-indigo-50 text-indigo-700 px-4 py-2 disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>{loading ? 'Consultando…' : 'Actualizar'}</button>
     </div>

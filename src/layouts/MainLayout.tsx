@@ -131,7 +131,7 @@ export default function MainLayout() {
             }`}
           >
             <CalendarDays className="w-5 h-5" />
-            Fixture
+            <span translate="no" className="notranslate">Fixture</span>
             {activeTab === 'fixture' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
           </button>
 
