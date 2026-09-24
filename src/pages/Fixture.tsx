@@ -23,6 +23,14 @@ const WEB_APP_URL = '/api/fixture';
 const SNAPSHOT_KEY = 'fixture-publico-v1';
 const displayDate = (date: string) => date ? new Date(`${date}T12:00:00`).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha por definir';
 const matchup = (text: string) => text.trim() === 'VS' ? 'Por definir' : text;
+const categoryWithGrades = (category: string) => {
+  const grades: Record<string, string> = {
+    promesas: '1.º y 2.º grado', infantil: '3.º y 4.º grado',
+    junior: '5.º y 6.º grado', juvenila: '7.º y 8.º grado', juvenilb: '9.º, 10.º y 11.º grado',
+  };
+  const key = category.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '');
+  return grades[key] ? `${category} · ${grades[key]}` : category;
+};
 
 function isFixture(value: unknown): value is FixtureData {
   if (!value || typeof value !== 'object') return false;
@@ -131,7 +139,8 @@ export default function Fixture() {
           <div className="flex justify-between gap-3"><span className="flex gap-2 text-blue-700 font-semibold"><Clock size={18}/>{p.hora}</span><span className="text-sm text-slate-500">Lugar: {p.lugar}</span></div>
           <h3 className="font-bold text-slate-800">{p.deporte}</h3><p className="font-medium text-slate-700">{p.enfrentamiento}</p>
           {isMarcador(p.marcador) && <div className="rounded-xl bg-blue-50 p-3 text-center"><p className="text-xs font-semibold text-blue-700">{STATUS_NAMES[p.marcador.estado]}</p><p className="text-2xl font-bold text-slate-900">{p.marcador.a} – {p.marcador.b}</p><p className="text-xs text-slate-600">{HOUSE_NAMES[p.marcador.houseA]} / {HOUSE_NAMES[p.marcador.houseB]}</p></div>}
-          <p className="text-sm text-slate-500">{p.categoria}{p.fase ? ` · ${p.fase}` : ''}</p>
+          <p className="text-sm font-medium text-slate-700">{categoryWithGrades(p.categoria)}</p>
+          {p.fase && <p className="text-sm text-slate-500">{p.fase}</p>}
           {p.bloque && <p className="text-xs text-slate-500">Bloque: {p.bloque}</p>}
           {p.arbitro && <p className="text-sm text-slate-600">Responsables: {p.arbitro}</p>}
           {p.avisos.map(a => <p key={a} className="text-sm text-amber-800 bg-amber-50 rounded p-2">{a}</p>)}
@@ -143,7 +152,7 @@ export default function Fixture() {
       <p className="text-sm text-slate-500">Cruces y puestos registrados en la pestaña Finalistas.</p>
       {!data.finalistas.length && <p>No hay finalistas publicados.</p>}
       <div className="grid md:grid-cols-2 gap-4">{data.finalistas.map(p => <article key={p.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-        <h2 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{p.deporte}</h2><p className="text-sm text-slate-600">{p.categoria}</p>
+        <h2 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{p.deporte}</h2><p className="text-sm text-slate-600">{categoryWithGrades(p.categoria)}</p>
         <p className="text-sm">1.º y 2.º: {matchup(p.primeroSegundo)}</p><p className="text-sm">3.º y 4.º: {matchup(p.terceroCuarto)}</p>
         <ol className="grid grid-cols-2 gap-2 text-sm">{p.puestos.map((team,i) => <li key={i} className="rounded bg-slate-50 p-2">{i+1}.º: {team || 'Por definir'}</li>)}</ol>
       </article>)}</div>
