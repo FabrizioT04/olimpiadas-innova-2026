@@ -1,3 +1,4 @@
+import { basesOficiales } from '../data/bases';
 import { useState } from 'react';
 import { 
   BookOpen, Calculator, Users, MessageSquare, Palette, 
@@ -87,6 +88,7 @@ const getCategoryIcon = (category: string) => {
 };
 
 export default function Actividades() {
+  const [areaBases, setAreaBases] = useState<string | null>(null);
   const [filtro, setFiltro] = useState('Todos');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -131,6 +133,25 @@ export default function Actividades() {
         </div>
       </div>
 
+      <section aria-labelledby="bases-titulo" className="mb-10 rounded-3xl border border-slate-200 bg-white p-5 sm:p-8">
+        <h2 id="bases-titulo" className="text-2xl font-bold text-slate-800">Bases oficiales</h2>
+        <p className="mt-2 text-sm text-slate-500">Escoge un área o actividad para consultar sus documentos completos.</p>
+        <div className="mt-5 flex flex-wrap gap-3" aria-label="Áreas de las bases oficiales">
+          {[...new Set(basesOficiales.map(b => b.area))].map(area => <button key={area} onClick={() => setAreaBases(area)} aria-pressed={areaBases === area} className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${areaBases === area ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 text-slate-700 hover:bg-indigo-50'}`}>{area}</button>)}
+        </div>
+        {areaBases && <div className="mt-6">
+          <h3 className="mb-4 text-lg font-bold text-slate-800">{areaBases}</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{basesOficiales.filter(b => b.area === areaBases).map(base => <article key={base.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <BookOpen aria-hidden="true" className="mb-3 text-indigo-600"/>
+            <h4 className="font-bold text-slate-800">{base.titulo}</h4><p className="mt-1 text-xs text-slate-500">Documento PDF</p>
+            <div className="mt-5 flex flex-wrap gap-4 text-sm font-semibold text-indigo-600">
+              <a href={base.url} target="_blank" rel="noreferrer" aria-label={`Ver PDF: ${base.titulo}`} className="underline underline-offset-4">Ver PDF</a>
+              <a href={base.url} download aria-label={`Descargar: ${base.titulo}`} className="underline underline-offset-4">Descargar</a>
+            </div>
+          </article>)}</div>
+        </div>}
+      </section>
+      <h2 className="mb-5 text-xl font-bold text-slate-800">Explora las actividades</h2>
       {/* Grid de Tarjetas (Estilo Limpio y Luminoso) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {actividadesFiltradas.map((act) => (
