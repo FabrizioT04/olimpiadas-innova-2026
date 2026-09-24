@@ -38,6 +38,17 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'Sesión inválida o vencida. Vuelve a ingresar al panel.' }, 401);
   }
   if (url.pathname === '/arbitraje/api/session' && request.method === 'GET') return json({ email });
+  if (url.pathname === '/arbitraje/api/diagnostico-auth') {
+    if (request.method !== 'GET') return json({ error: 'Método no permitido.' }, 405);
+    const secret = env.ARBITRAJE_SECRET || '';
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret));
+    return json({
+      claveConfigurada: secret.length >= 32,
+      espaciosEnExtremos: secret !== secret.trim(),
+      huella: secret ? Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('').slice(0, 16) : null,
+      urlCorrecta: env.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbyVCfzMa_iJEEHn8Hs1KBUBtkk6DfhT58UK77a2QdscxIiH8EbnU8_4NcaYG5Dz4ttjsA/exec',
+    });
+  }
   if (url.pathname === '/arbitraje/api/fixture') {
     if (request.method !== 'GET') return json({ error: 'Método no permitido.' }, 405);
     if (!env.FIXTURE_SCRIPT_URL) return json({ error: 'La consulta de partidos aún no está configurada.' }, 503);
