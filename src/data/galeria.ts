@@ -3,6 +3,7 @@ export interface FotoGaleria {
   titulo: string;
   descripcion: string;
   album: 'deportes' | 'eco-house' | 'encuentros' | 'convivencia';
+  subseccion?: 'mariquitas' | 'carteles' | 'asamblea';
   url: string;
   fecha?: string;
   tipo?: 'video';
@@ -18,19 +19,24 @@ export const fotosGaleria: FotoGaleria[] = [13, 12, 11, 8, 7, 2].map(numero => (
   url: `/galeria/sana-convivencia/sana-convivencia-${numero}.webp`,
 }));
 fotosGaleria.push(
+  ...Array.from({ length: 4 }, (_, i): FotoGaleria => ({
+    id: `eco-asamblea-${i + 1}`, titulo: 'Asamblea Eco House',
+    descripcion: 'Asamblea de Eco House.', album: 'eco-house', subseccion: 'asamblea',
+    url: `/galeria/eco-house/asamblea-${i + 1}.webp`,
+  })),
   ...Array.from({ length: 5 }, (_, i): FotoGaleria => ({
     id: `maraquitas-${i + 1}`, titulo: 'Maraquitas con creatividad',
     descripcion: 'Actividad de Eco House de primero y segundo grado.',
-    album: 'eco-house', url: `/galeria/eco-house/maraquitas-${i + 1}.webp`,
+    album: 'eco-house', subseccion: 'mariquitas', url: `/galeria/eco-house/maraquitas-${i + 1}.webp`,
   })),
   { id: 'maraquitas-video', titulo: 'Maraquitas en acción',
     descripcion: 'Video de la actividad de primero y segundo grado.',
-    album: 'eco-house', tipo: 'video', url: '/galeria/eco-house/maraquitas.mp4',
+    album: 'eco-house', subseccion: 'mariquitas', tipo: 'video', url: '/galeria/eco-house/maraquitas.mp4',
     portada: '/galeria/eco-house/maraquitas-portada.webp' },
   ...Array.from({ length: 19 }, (_, i): FotoGaleria => ({
     id: `carteles-${i + 1}`, titulo: 'Creamos carteles sostenibles',
     descripcion: 'Actividad de Eco House de tercero y cuarto grado.',
-    album: 'eco-house', url: `/galeria/eco-house/carteles-${i + 1}.webp`,
+    album: 'eco-house', subseccion: 'carteles', url: `/galeria/eco-house/carteles-${i + 1}.webp`,
   })),
 );
 export const albumesGaleria = [

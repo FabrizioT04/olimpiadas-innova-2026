@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Search, X, Images, ArrowUpRight, Trophy, Leaf, PartyPopper } from 'lucide-react';
+import { Camera, Search, X, Images, ArrowUpRight, Trophy, Leaf, PartyPopper, Folder } from 'lucide-react';
 import { albumesGaleria, fotosGaleria } from '../data/galeria';
 import type { FotoGaleria } from '../data/galeria';
 
 const normalizar = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const carpetasEco = [{ id: 'asamblea', titulo: 'Asamblea' }, { id: 'mariquitas', titulo: 'Mariquitas' }, { id: 'carteles', titulo: 'Elaboración de carteles' }] as const;
 const icons = [Images, Trophy, Leaf, PartyPopper];
 function Imagen({ foto, ampliada = false }: { foto: FotoGaleria; ampliada?: boolean }) {
   const [error, setError] = useState(false);
@@ -13,6 +14,7 @@ function Imagen({ foto, ampliada = false }: { foto: FotoGaleria; ampliada?: bool
 
 export default function Galeria() {
   const [album, setAlbum] = useState('todos');
+  const [subseccion, setSubseccion] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState('');
   const [seleccionada, setSeleccionada] = useState<FotoGaleria | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -23,7 +25,11 @@ export default function Galeria() {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = overflow; };
   }, [seleccionada]);
-  const fotos = fotosGaleria.filter(f => (album === 'todos' || f.album === album) && normalizar(`${f.titulo} ${f.descripcion}`).includes(normalizar(busqueda.trim())));
+  const abrirAlbum = (id: string) => { setAlbum(id); setSubseccion(null); setBusqueda(''); };
+  const mostrarCarpetas = (album === 'todos' || album === 'eco-house') && !subseccion;
+  const fotos = fotosGaleria.filter(f => (album === 'todos' ? f.album !== 'eco-house' : f.album === album)
+    && (album !== 'eco-house' || f.subseccion === subseccion)
+    && normalizar(`${f.titulo} ${f.descripcion}`).includes(normalizar(busqueda.trim())));
   const cerrar = () => { dialog.current?.close(); setSeleccionada(null); };
   return <div className="mx-auto max-w-7xl space-y-8 pb-12">
     <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-950 via-indigo-800 to-blue-600 px-6 py-10 text-white sm:p-12">
@@ -40,7 +46,7 @@ export default function Galeria() {
       <div className="mb-4 flex items-baseline justify-between gap-4"><h2 id="albumes-titulo" className="text-xl font-bold text-slate-800">Explora los álbumes</h2><span className="text-sm text-slate-500">Nuestra comunidad en imágenes</span></div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{albumesGaleria.map((a, i) => {
         const Icon = icons[i]; const cantidad = fotosGaleria.filter(f => f.album === a.id).length;
-        return <button key={a.id} onClick={() => { setAlbum(a.id); setBusqueda(''); }} aria-pressed={album === a.id} className={`rounded-2xl border bg-white p-5 text-left transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-indigo-600 ${album === a.id ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
+        return <button key={a.id} onClick={() => abrirAlbum(a.id)} aria-pressed={album === a.id} className={`rounded-2xl border bg-white p-5 text-left transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-indigo-600 ${album === a.id ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
           <span className={`mb-4 inline-flex rounded-xl bg-gradient-to-br ${a.color} p-3 text-white`}><Icon aria-hidden="true" size={23} /></span>
           <h3 className="text-lg font-bold text-slate-800">{a.titulo}</h3><p className="mt-1 text-sm text-slate-500">{a.descripcion}</p>
           <p className="mt-4 text-xs font-semibold text-indigo-600">{cantidad ? `${cantidad} momentos` : 'Próximamente'}</p>
@@ -50,11 +56,17 @@ export default function Galeria() {
 
     <section aria-labelledby="fotos-titulo" className="space-y-5">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div><h2 id="fotos-titulo" className="text-xl font-bold text-slate-800">{album === 'todos' ? 'Fotos y videos' : albumesGaleria.find(a => a.id === album)?.titulo}</h2>
-          {album !== 'todos' && <button onClick={() => setAlbum('todos')} className="mt-1 text-sm font-medium text-indigo-600 underline underline-offset-4">Ver todos los álbumes</button>}</div>
-        {fotosGaleria.length > 0 && <div className="relative"><label htmlFor="buscar-foto" className="sr-only">Buscar fotos por título o descripción</label><Search aria-hidden="true" size={18} className="absolute left-3 top-3 text-slate-400"/><input id="buscar-foto" type="search" value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar un momento…" className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm sm:w-64" /></div>}
+        <div><h2 id="fotos-titulo" className="text-xl font-bold text-slate-800">{subseccion ? carpetasEco.find(c => c.id === subseccion)?.titulo : album === 'todos' ? 'Fotos y videos' : albumesGaleria.find(a => a.id === album)?.titulo}</h2>
+          {album !== 'todos' && <button onClick={() => abrirAlbum(subseccion ? 'eco-house' : 'todos')} className="mt-1 text-sm font-medium text-indigo-600 underline underline-offset-4">{subseccion ? 'Volver a Eco House' : 'Ver todos los álbumes'}</button>}</div>
+        {!(album === 'eco-house' && !subseccion) && fotosGaleria.length > 0 && <div className="relative"><label htmlFor="buscar-foto" className="sr-only">Buscar fotos por título o descripción</label><Search aria-hidden="true" size={18} className="absolute left-3 top-3 text-slate-400"/><input id="buscar-foto" type="search" value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar un momento…" className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm sm:w-64" /></div>}
       </div>
-      {!fotos.length ? <div role="status" className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+      {mostrarCarpetas && <div className="space-y-4">
+        {album === 'todos' && <h3 className="text-lg font-bold text-slate-800">Espíritu Eco House</h3>}
+        <div className="grid gap-4 sm:grid-cols-2">{carpetasEco.map(c => <button key={c.id} onClick={() => { setAlbum('eco-house'); setSubseccion(c.id); setBusqueda(''); }} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 text-left transition hover:border-emerald-500 hover:shadow-md focus-visible:outline-2 focus-visible:outline-emerald-600">
+          <Folder aria-hidden="true" className="text-emerald-600" size={32}/><span className="font-bold text-slate-800">{c.titulo}</span><ArrowUpRight aria-hidden="true" className="ml-auto text-slate-400" size={20}/>
+        </button>)}</div>
+      </div>}
+      {album === 'eco-house' && !subseccion ? null : !fotos.length ? <div role="status" className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
         <Camera aria-hidden="true" size={34} className="mx-auto mb-4 text-indigo-400"/><h3 className="text-lg font-bold text-slate-800">{busqueda ? 'No encontramos fotos con esa búsqueda' : 'Los recuerdos están por llegar'}</h3>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">{busqueda ? 'Prueba con otro título o actividad.' : 'Aquí compartiremos las fotografías de las olimpiadas a medida que se publiquen.'}</p>
         {busqueda && <button onClick={() => setBusqueda('')} className="mt-4 font-semibold text-indigo-600">Limpiar búsqueda</button>}
