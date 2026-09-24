@@ -144,7 +144,7 @@ export default function MainLayout() {
             }`}
           >
             <Medal className="w-5 h-5" />
-            Puntaje Oficial
+            <span translate="no" className="notranslate">Puntaje Oficial</span>
             {activeTab === 'medallero' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
           </button>
 

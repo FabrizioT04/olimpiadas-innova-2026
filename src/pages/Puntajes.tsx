@@ -91,7 +91,7 @@ export default function Puntajes() {
 
   if (cargando) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
+      <div translate="no" className="notranslate flex flex-col items-center justify-center min-h-screen">
         <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
         <p className="text-slate-500 font-bold animate-pulse">Sincronizando con la base de datos...</p>
       </div>
@@ -101,7 +101,7 @@ export default function Puntajes() {
   const maxPoints = rankings[0]?.points || 1;
 
   return (
-    <div className="relative overflow-hidden p-4 md:p-8 flex flex-col items-center min-h-full w-full max-w-4xl mx-auto">
+    <div translate="no" className="notranslate relative overflow-hidden p-4 md:p-8 flex flex-col items-center min-h-full w-full max-w-4xl mx-auto">
       
       {/* Cabecera */}
       <div className="text-center mb-12 mt-4">
