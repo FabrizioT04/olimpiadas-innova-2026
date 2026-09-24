@@ -22,7 +22,7 @@ const SHEET_ID = '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg';
 const WEB_APP_URL = '/api/fixture';
 const SNAPSHOT_KEY = 'fixture-publico-v1';
 const displayDate = (date: string) => date ? new Date(`${date}T12:00:00`).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha por definir';
-const matchup = (text: string) => text.trim() === 'VS' ? 'Por definir' : text;
+const matchup = (text: string) => !text.trim() || text.trim().toUpperCase() === 'VS' ? 'Por definir' : text;
 const categoryWithGrades = (category: string) => {
   const grades: Record<string, string> = {
     promesas: '1.º y 2.º grado', infantil: '3.º y 4.º grado',
@@ -149,7 +149,7 @@ export default function Fixture() {
       </section>)}
     </>}
     {data && view === 'finalistas' && <div className="space-y-4">
-      <p className="text-sm text-slate-500">Cruces y puestos registrados en la pestaña Finalistas.</p>
+      <p className="text-sm text-slate-500">Cruces y puestos registrados en las hojas oficiales de finalistas. Los pendientes aparecen como «Por definir».</p>
       {!data.finalistas.length && <p>No hay finalistas publicados.</p>}
       <div className="grid md:grid-cols-2 gap-4">{data.finalistas.map(p => <article key={p.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
         <h2 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{p.deporte}</h2><p className="text-sm text-slate-600">{categoryWithGrades(p.categoria)}</p>
