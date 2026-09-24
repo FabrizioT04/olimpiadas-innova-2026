@@ -2,7 +2,7 @@ import { basesOficiales } from '../data/bases';
 import { useState } from 'react';
 import { 
   BookOpen, Calculator, Users, MessageSquare, Palette, 
-  ChevronDown, ChevronUp, Clock, Flag, PenTool, Sparkles
+  ChevronDown, Clock, Flag, PenTool, Sparkles
 } from 'lucide-react';
 
 const actividadesData = [
@@ -88,146 +88,48 @@ const getCategoryIcon = (category: string) => {
 };
 
 export default function Actividades() {
-  const [areaBases, setAreaBases] = useState<string | null>(null);
   const [filtro, setFiltro] = useState('Todos');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const categorias = ['Todos', 'Comunicación', 'Matemática', 'DPSC', 'Inglés', 'Arte'];
-
-  const actividadesFiltradas = filtro === 'Todos' 
-    ? actividadesData 
-    : actividadesData.filter(a => a.category === filtro);
-
-  const toggleRules = (id: string) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
-
-  return (
-    <div className="max-w-7xl mx-auto pb-12">
-      
-      {/* Cabecera Clave de Diseño */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-        <div>
-          <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs uppercase tracking-wider mb-1">
-            <Sparkles className="w-4 h-4" /> Juegos y Disciplinas
-          </div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-800">Actividades y Reglas</h1>
-          <p className="text-sm text-slate-500">Consulta los lineamientos, integrantes y reglamentos de cada competencia.</p>
-        </div>
-
-        {/* Botones de Filtro - Mismo estilo que Galería */}
-        <div className="flex flex-wrap gap-2">
-          {categorias.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setFiltro(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                filtro === cat
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <section aria-labelledby="bases-titulo" className="mb-10 rounded-3xl border border-slate-200 bg-white p-5 sm:p-8">
-        <h2 id="bases-titulo" className="text-2xl font-bold text-slate-800">Bases oficiales</h2>
-        <p className="mt-2 text-sm text-slate-500">Escoge un área o actividad para consultar sus documentos completos.</p>
-        <div className="mt-5 flex flex-wrap gap-3" aria-label="Áreas de las bases oficiales">
-          {[...new Set(basesOficiales.map(b => b.area))].map(area => <button key={area} onClick={() => setAreaBases(area)} aria-pressed={areaBases === area} className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${areaBases === area ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 text-slate-700 hover:bg-indigo-50'}`}>{area}</button>)}
-        </div>
-        {areaBases && <div className="mt-6">
-          <h3 className="mb-4 text-lg font-bold text-slate-800">{areaBases}</h3>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{basesOficiales.filter(b => b.area === areaBases).map(base => <article key={base.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <BookOpen aria-hidden="true" className="mb-3 text-indigo-600"/>
-            <h4 className="font-bold text-slate-800">{base.titulo}</h4><p className="mt-1 text-xs text-slate-500">Documento PDF</p>
-            <div className="mt-5 flex flex-wrap gap-4 text-sm font-semibold text-indigo-600">
+  const areas = [...new Set([...actividadesData.map(a => a.category), ...basesOficiales.map(b => b.area)])];
+  return <div className="mx-auto max-w-7xl space-y-8 pb-12">
+    <header>
+      <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600"><Sparkles aria-hidden="true" size={16}/><span>Juegos y disciplinas</span></p>
+      <h1 className="text-3xl font-black text-slate-800">Actividades y Reglas</h1>
+      <p className="mt-2 text-sm text-slate-500">Encuentra las actividades y sus bases oficiales reunidas por área.</p>
+    </header>
+    <nav aria-label="Filtrar por área" className="flex flex-wrap gap-2">
+      {['Todos', ...areas].map(area => <button key={area} onClick={() => setFiltro(area)} aria-pressed={filtro === area} className={`rounded-xl border px-4 py-3 text-sm font-bold transition ${filtro === area ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-indigo-50'}`}><span>{area}</span></button>)}
+    </nav>
+    <div className="space-y-8">{areas.filter(area => filtro === 'Todos' || filtro === area).map(area => {
+      const documentos = basesOficiales.filter(b => b.area === area);
+      const actividades = actividadesData.filter(a => a.category === area);
+      return <section key={area} aria-label={area} className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7">
+        <h2 className="mb-5 flex items-center gap-3 text-2xl font-bold text-slate-800"><span className="text-indigo-600">{getCategoryIcon(area)}</span><span>{area}</span></h2>
+        <div className="mb-6">
+          <h3 className="mb-3 text-sm font-bold text-slate-700">Bases oficiales</h3>
+          {documentos.length ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{documentos.map(base => <article key={base.id} className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
+            <h4 className="font-bold text-slate-800">{base.titulo}</h4>
+            <div className="mt-3 flex flex-wrap gap-4 text-sm font-semibold text-indigo-600">
               <a href={base.url} target="_blank" rel="noreferrer" aria-label={`Ver PDF: ${base.titulo}`} className="underline underline-offset-4">Ver PDF</a>
               <a href={base.url} download aria-label={`Descargar: ${base.titulo}`} className="underline underline-offset-4">Descargar</a>
             </div>
+          </article>)}</div> : <p className="text-sm text-slate-500">El documento oficial de esta área aún no está disponible.</p>}
+        </div>
+        {actividades.length > 0 && <div>
+          <h3 className="mb-4 text-sm font-bold text-slate-700">Actividades</h3>
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{actividades.map(act => <article key={act.id} className="flex flex-col rounded-2xl border border-slate-200 p-5">
+            <h4 className="text-xl font-bold text-slate-800">{act.title}</h4>
+            <p className="mt-2 text-xs font-bold text-indigo-600">{act.grades}</p>
+            <p className="my-4 flex-1 text-sm leading-relaxed text-slate-500">{act.description}</p>
+            <div className="mb-5 flex flex-wrap gap-2">{act.tags.map((tag, i) => { const Icon = tag.icon; return <span key={i} className="flex items-center gap-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600"><Icon aria-hidden="true" size={14}/><span>{tag.text}</span></span>; })}</div>
+            <details className="group/reglas border-t border-slate-100 pt-4">
+              <summary className="flex cursor-pointer list-none items-center justify-center gap-2 rounded-xl bg-slate-50 p-3 text-sm font-bold text-indigo-600 focus-visible:outline-2 focus-visible:outline-indigo-600 [&::-webkit-details-marker]:hidden">
+                <ChevronDown aria-hidden="true" size={16} className="transition-transform group-open/reglas:rotate-180"/><span>Leer reglamento</span>
+              </summary>
+              <div className="mt-3 rounded-xl bg-indigo-50/50 p-4 text-sm text-slate-700"><p className="whitespace-pre-line leading-relaxed">{act.rules}</p></div>
+            </details>
           </article>)}</div>
         </div>}
-      </section>
-      <h2 className="mb-5 text-xl font-bold text-slate-800">Explora las actividades</h2>
-      {/* Grid de Tarjetas (Estilo Limpio y Luminoso) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {actividadesFiltradas.map((act) => (
-          <div 
-            key={act.id} 
-            className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] hover:shadow-xl transition-all duration-300 group flex flex-col h-full"
-          >
-            
-            {/* Ícono y Etiqueta Superior */}
-            <div className="flex items-start justify-between mb-5">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-indigo-100 transition-all duration-300">
-                {getCategoryIcon(act.category)}
-              </div>
-              <span className="bg-slate-50 border border-slate-100 text-slate-500 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                {act.category}
-              </span>
-            </div>
-
-            {/* Título y Grados */}
-            <h3 className="text-xl font-bold text-slate-800 mb-2 leading-tight group-hover:text-indigo-600 transition-colors">
-              {act.title}
-            </h3>
-            
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full w-fit mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
-              {act.grades}
-            </div>
-
-            {/* Descripción */}
-            <p className="text-sm text-slate-500 mb-6 flex-1 leading-relaxed">
-              {act.description}
-            </p>
-
-            {/* Etiquetas / Características */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              {act.tags.map((tag, idx) => {
-                const TagIcon = tag.icon;
-                return (
-                  <span key={idx} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg">
-                    <TagIcon className="w-3.5 h-3.5 text-slate-400" /> {tag.text}
-                  </span>
-                );
-              })}
-            </div>
-
-            {/* Botón de Reglas Desplegable */}
-            <div className="mt-auto border-t border-slate-100 pt-4">
-              <button 
-                onClick={() => toggleRules(act.id)}
-                className={`w-full flex items-center justify-center gap-2 text-sm font-bold transition-colors py-2.5 rounded-xl border ${
-                  expandedId === act.id 
-                    ? 'bg-indigo-50 text-indigo-700 border-indigo-100' 
-                    : 'bg-slate-50 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 border-slate-100 hover:border-indigo-100'
-                }`}
-              >
-                {expandedId === act.id ? (
-                  <><ChevronUp className="w-4 h-4" /> Ocultar reglas</>
-                ) : (
-                  <><ChevronDown className="w-4 h-4" /> Leer reglamento</>
-                )}
-              </button>
-
-              {/* Contenido Acordeón de reglas */}
-              {expandedId === act.id && (
-                <div className="mt-3 p-4 bg-indigo-50/40 rounded-xl border border-indigo-100/50 text-sm text-slate-700">
-                  <p className="whitespace-pre-line leading-relaxed font-medium">
-                    {act.rules}
-                  </p>
-                </div>
-              )}
-            </div>
-
-          </div>
-        ))}
-      </div>
-
-    </div>
-  );
+      </section>;
+    })}</div>
+  </div>;
 }
