@@ -1,4 +1,134 @@
-// Variante solo doPost: no instalar junto a CodigoCompletoDiagnostico.gs. Conservar un solo doPost por proyecto.
+// =========================================================================
+// --- 📡 ENRUTADOR INTERACTIVO RECALIBRADO PARA HISTORIAL EN VIVO ---
+// =========================================================================
+function doGet(e) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
+
+  let pagina = e.parameter.page || 'retos';
+  pagina = pagina.toLowerCase().trim();
+
+  if (pagina === 'api_puntos') {
+    const dataPuntajesCompleto = obtenerPuntajesCasasReales();
+    
+    // Capturamos el nombre de la función que manda la web (por defecto 'procesarPodio')
+    const callback = e.parameter.callback || 'procesarPodio';
+    
+    // Envolvemos el JSON dentro de la función de texto plano ultra compatible
+    const textoJSONP = callback + "(" + JSON.stringify(dataPuntajesCompleto) + ");";
+    
+    return ContentService.createTextOutput(textoJSONP)
+                         .setMimeType(ContentService.MimeType.JAVASCRIPT); // Forzamos tipo JS
+  }
+  // Mantenemos tus subpáginas internas intactas para que no pierdas tus vistas
+  if (pagina === 'puntajes' || pagina === 'reglamento') {
+    const template = HtmlService.createTemplateFromFile('PuntajesReglamento');
+    return template.evaluate().setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } else if (pagina === 'categorias') {
+    const template = HtmlService.createTemplateFromFile('CategoriasVista');
+    return template.evaluate().setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } else if (pagina === 'fechas' || pagina === 'cronograma') {
+    const template = HtmlService.createTemplateFromFile('FechasCronograma');
+    return template.evaluate().setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } else if (pagina === 'fixture' || pagina === 'partidos') {
+    const template = HtmlService.createTemplateFromFile('FixtureRecreos');
+    return template.evaluate().setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } else {
+    const template = HtmlService.createTemplateFromFile('Index');
+    return template.evaluate().setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+}
+
+function obtenerDatosOlimpiadas() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const hojas = ss.getSheets();
+    
+    let hojaSeleccionada = hojas[0];
+    for (let i = 0; i < hojas.length; i++) {
+      let nombreLimpio = hojas[i].getName().toLowerCase().trim();
+      if (nombreLimpio.includes("white")) {
+        hojaSeleccionada = hojas[i];
+        break;
+      }
+    }
+    
+    const rango = hojaSeleccionada.getDataRange();
+    const valores = rango.getValues();
+    
+    return { matriz: valores.map(f => f.map(c => c !== null && c !== undefined ? String(c).trim() : "")) };
+  } catch(e) {
+    return { error: "Error de lectura en retos: " + e.toString() };
+  }
+}
+
+// --- 📊 LECTURA LIMPIA FIJADA A LA CELDA I36 (SIN REGRESIÓN DE NÚMEROS FALSOS) ---
+function obtenerPuntajesCasasReales() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    let totalWhite = 0;
+    let totalBlue = 0;
+    let totalOrange = 0;
+    let totalGreen = 0;
+
+    const hojaW = ss.getSheetByName("White");
+    const hojaB = ss.getSheetByName("Blue");
+    const hojaO = ss.getSheetByName("Orange");
+    const hojaG = ss.getSheetByName("Green");
+
+    if (hojaW) { let val = parseInt(hojaW.getRange("I36").getValue(), 10); if (!isNaN(val)) totalWhite = val; }
+    if (hojaB) { let val = parseInt(hojaB.getRange("I36").getValue(), 10); if (!isNaN(val)) totalBlue = val; }
+    if (hojaO) { let val = parseInt(hojaO.getRange("I36").getValue(), 10); if (!isNaN(val)) totalOrange = val; }
+    if (hojaG) { let val = parseInt(hojaG.getRange("I36").getValue(), 10); if (!isNaN(val)) totalGreen = val; }
+
+    const hojaSabana = ss.getSheetByName("Sábana");
+    const historialReal = [];
+    
+    if (hojaSabana) {
+      const ultimaFila = hojaSabana.getLastRow();
+      // Si el appendRow ya registró movimientos más abajo de la fila 40
+      if (ultimaFila > 40) {
+        const inicioLectura = Math.max(41, ultimaFila - 4);
+        const cantidadFilas = (ultimaFila - inicioLectura) + 1;
+        
+        // Leemos las columnas: Fecha (A), Operacion (B), Puntos (C), Actividad (D)
+        const rangoHistorial = hojaSabana.getRange(inicioLectura, 1, cantidadFilas, 4).getValues();
+        
+        // Recorremos de la más nueva a la más antigua
+        for (let i = rangoHistorial.length - 1; i >= 0; i--) {
+          historialReal.push({
+            operacion: String(rangoHistorial[i][1]).toLowerCase().trim(),
+            puntos: parseInt(rangoHistorial[i][2], 10) || 0,
+            juego: String(rangoHistorial[i][3])
+          });
+        }
+      }
+    }
+    return {
+      white: totalWhite,
+      blue: totalBlue,
+      orange: totalOrange,
+      green: totalGreen,
+      movimientos: historialReal
+    };
+    
+  } catch(e) {
+    return { white: 0, blue: 0, orange: 0, green: 0, movimientos: [], error: e.toString() };
+  }
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+// =========================================================
+// --- 📥 INYECCIÓN EN CALIENTE EN MATRIZ DE CATEGORÍAS ---
+// =========================================================
+
 function doPost(e) {
   var lock = LockService.getScriptLock();
   try {

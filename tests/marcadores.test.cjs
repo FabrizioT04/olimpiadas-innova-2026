@@ -11,7 +11,7 @@ function setup(){
  const lock={waitLock:()=>{assert.equal(locked,false);locked=true;},hasLock:()=>locked,releaseLock:()=>{locked=false;}};
  const c=vm.createContext({console,LockService:{getScriptLock:()=>lock},PropertiesService:{getScriptProperties:()=>({getProperty:k=>props[k]})},
  SpreadsheetApp:{getActiveSpreadsheet:()=>book,openById:id=>{assert.equal(id,'private');return {getSheetByName:()=>store};},flush:()=>{if(failFlush)throw Error('flush failed');}},
- Utilities:{DigestAlgorithm:{SHA_256:'sha256'},computeDigest:(_,s)=>[...crypto.createHash('sha256').update(s).digest()],computeHmacSha256Signature:(s,k)=>[...crypto.createHmac('sha256',k).update(s).digest()]},
+ Utilities:{Charset:{UTF_8:"UTF-8"},DigestAlgorithm:{SHA_256:'sha256'},computeDigest:(_,s)=>[...crypto.createHash('sha256').update(s).digest()],computeHmacSha256Signature:(s,k)=>[...crypto.createHmac('sha256',k).update(s).digest()]},
  ContentService:{MimeType:{JSON:'json'},createTextOutput:s=>({setMimeType:()=>JSON.parse(s)})},
  UrlFetchApp:{fetch:()=>{if(!available)throw Error('fixture unavailable');return {getResponseCode:()=>200,getContentText:()=>JSON.stringify(c.enriquecerMarcadores_(c.leerFixture_()))};}}});
  for(const name of ['FixtureOficial','Marcadores','ResultadoUnificado','ArbitrajeSeguro'])vm.runInContext(fs.readFileSync('apps-script/'+name+'.gs','utf8'),c);
