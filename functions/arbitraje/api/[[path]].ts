@@ -70,8 +70,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       !request.headers.get('Content-Type')?.startsWith('application/json'))) {
     return json({ error: 'Solicitud no permitida.' }, 403);
   }
-  const scriptUrl = isMarker ? env.FIXTURE_SCRIPT_URL : env.APPS_SCRIPT_URL;
-  if (!scriptUrl || !env.ARBITRAJE_SECRET || env.ARBITRAJE_SECRET.length < 32) {
+  const scriptUrl = env.APPS_SCRIPT_URL;
+  if (!scriptUrl || (isMarker && !env.FIXTURE_SCRIPT_URL) || !env.ARBITRAJE_SECRET || env.ARBITRAJE_SECRET.length < 32) {
     return json({ error: 'El registro aún no está configurado.' }, 503);
   }
   const raw = isProbe ? '{}' : await request.text();
@@ -83,9 +83,13 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       !Number.isSafeInteger(data.version) || data.version < 0 ||
       !Number.isSafeInteger(data.a) || data.a < 0 || data.a > 999 || !Number.isSafeInteger(data.b) || data.b < 0 || data.b > 999 ||
       !['pendiente','en-juego','finalizado'].includes(data.estado) || (data.estado === 'pendiente' && (data.a !== 0 || data.b !== 0)) ||
+      !Number.isSafeInteger(data.puntosA) || data.puntosA < 0 || data.puntosA > 10000 ||
+      !Number.isSafeInteger(data.puntosB) || data.puntosB < 0 || data.puntosB > 10000 ||
+      (data.estado !== 'finalizado' && (data.puntosA !== 0 || data.puntosB !== 0)) ||
+      (data.estado === 'finalizado' && (!rows.includes(data.fila) || !['promesas','infantil','junior','juvenila','juvenilb'].includes(data.categoria))) ||
       typeof data.motivo !== 'string' || data.motivo.trim().length < 3 || data.motivo.length > 300 ||
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {
-    return json({ error: 'Revisa el encuentro, los marcadores (0–999) y el motivo.' }, 400);
+    return json({ error: 'Revisa el encuentro, los marcadores (0–999), los puntos (0–10000), la categoría, la actividad y el motivo.' }, 400);
   }
   if (!isMarker && !isProbe && (!data || !['white', 'blue', 'orange', 'green'].includes(data.house) ||
       !['promesas', 'infantil', 'junior', 'juvenila', 'juvenilb'].includes(data.categoria) ||
@@ -96,8 +100,10 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'Revisa la actividad, los puntos y el motivo (3–300 caracteres).' }, 400);
   }
   const payload = JSON.stringify(isProbe ? { action: 'diagnostico-autorizacion' } : isMarker
-    ? { action: 'marcador', id: data.id, email, encuentroId: data.encuentroId, version: data.version,
-        a: data.a, b: data.b, estado: data.estado, motivo: data.motivo.trim() }
+    ? { action: 'resultado', id: data.id, email, encuentroId: data.encuentroId, version: data.version,
+        a: data.a, b: data.b, estado: data.estado, motivo: data.motivo.trim(),
+        puntosA:data.puntosA,puntosB:data.puntosB,fila:data.estado === 'finalizado' ? data.fila : null,
+        categoria:data.estado === 'finalizado' ? data.categoria : '',fixtureUrl:env.FIXTURE_SCRIPT_URL }
     : { id: data.id, email, house: data.house, categoria: data.categoria,
         operacion: data.operacion, fila: data.fila, puntos: data.puntos, motivo: data.motivo.trim() });
   const timestamp = Date.now();
@@ -125,11 +131,17 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       return json({ codigo: code, mensaje: messages[code] || 'La implementación todavía no devuelve los nuevos diagnósticos. Comprueba la versión publicada.' });
     }
     if (isMarker) {
-      if (result.success === true && result.id === data.id && result.marcador) return json({success:true,id:result.id,marcador:result.marcador});
+      if (result.success === true && result.id === data.id && result.marcador && (result.marcador as {integrado?:boolean}).integrado === true) return json({success:true,id:result.id,marcador:result.marcador});
       const errors: Record<string,string> = { CONFLICT:'Otro árbitro actualizó este encuentro. Recarga antes de guardar.',
         FIXTURE_CHANGED:'El encuentro cambió o aún no tiene dos Houses definidas. Recarga el fixture.',
-        NOT_CONFIGURED:'El registro de marcadores aún no está configurado.', ID_REUSED:'Identificador ya usado. Recarga el encuentro.' };
-      return json({error:errors[result.code || ''] || 'No se confirmó el registro del marcador.',code:result.code || 'REJECTED'},409);
+        NOT_CONFIGURED:'Falta configurar el registro unificado en el script de puntajes.', ID_REUSED:'Identificador ya usado. Recarga el encuentro.',
+        UPDATE_REQUIRED:'Actualiza los scripts de puntajes y fixture antes de usar el registro unificado.',
+        OTHER_PENDING:'Hay otro resultado pendiente de confirmación. Completa su reintento antes de guardar.',
+        REVIEW_REQUIRED:'Los puntos cambiaron directamente en Sheets durante un guardado pendiente. Solicita una revisión; no crees otro registro.',
+        CELL_INVALID:'La actividad y categoría elegidas no tienen una celda habilitada para ambas Houses.',
+        INSUFFICIENT_POINTS:'La corrección dejaría puntos negativos. Revisa los ajustes anteriores en Sheets.',
+        INVALID:'Revisa los datos del resultado y los puntos.', FIXTURE_UNAVAILABLE:'No se pudo consultar el fixture. Reintenta el mismo guardado.' };
+      return json({error:errors[result.code || ''] || 'No se confirmó el resultado completo. Reintenta el mismo guardado.',code:result.code || 'UNCONFIRMED',pending:result.pending},409);
     }
     const pointErrors = new Map<string, string>([
       ['No autorizado', 'Apps Script rechazó la autorización. Revisa que la clave del servidor y la del script coincidan y que la URL corresponda a la implementación correcta.'],
@@ -152,3 +164,4 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'No se pudo confirmar el guardado. Reintenta sin cambiar los datos para evitar duplicados.' }, 502);
   }
 };
+

@@ -7,6 +7,7 @@ export default function PanelArbitro() {
   const [registro, setRegistro] = useState<'marcadores' | 'puntajes'>('marcadores');
   const [correoAutorizado, setCorreoAutorizado] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [resultLocked,setResultLocked] = useState(false);
   useEffect(() => {
     localStorage.removeItem('arbitro_autorizado');
     const controller = new AbortController();
@@ -84,11 +85,11 @@ export default function PanelArbitro() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white/80 p-2 mb-6" role="group" aria-label="Tipo de registro">
           {([
-            { id: 'marcadores', title: 'Marcadores por partido', description: 'Resultado y estado del encuentro', Icon: Trophy },
-            { id: 'puntajes', title: 'Puntos del medallero', description: 'Puntos y penalidades por House', Icon: Medal },
+            { id: 'marcadores', title: 'Resultado del partido', description: 'Marcador y puntos en una operación', Icon: Trophy },
+            { id: 'puntajes', title: 'Retos y ajustes', description: 'Otros puntos y penalidades por House', Icon: Medal },
           ] as const).map(({ id, title, description, Icon }) => (
             <button key={id} type="button" aria-pressed={registro === id} aria-controls={`panel-${id}`}
-              onClick={() => setRegistro(id)}
+              disabled={resultLocked || isSubmitting} onClick={() => setRegistro(id)}
               className={`flex items-center gap-3 rounded-xl px-4 py-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${registro === id ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-indigo-50'}`}>
               <Icon size={22} className="shrink-0" aria-hidden="true" />
               <span><span className="block text-sm font-bold">{title}</span><span className={`block text-xs mt-1 ${registro === id ? 'text-indigo-100' : 'text-slate-500'}`}>{description}</span></span>
@@ -98,12 +99,12 @@ export default function PanelArbitro() {
 
         {/* Keep both forms mounted so switching views preserves unfinished entries and retries. */}
         <div id="panel-marcadores" hidden={registro !== 'marcadores'}>
-          <PanelMarcadores />
+          <PanelMarcadores onLockedChange={setResultLocked} />
         </div>
         <section id="panel-puntajes" hidden={registro !== 'puntajes'} aria-labelledby="titulo-puntajes">
         <div className="mb-5 px-1">
-          <h2 id="titulo-puntajes" className="text-xl font-bold">Puntos del medallero</h2>
-          <p className="text-sm text-slate-500 mt-2">Selecciona una House para registrar puntos o penalidades.</p>
+          <h2 id="titulo-puntajes" className="text-xl font-bold">Retos, penalidades y ajustes</h2>
+          <p className="text-sm text-slate-500 mt-2">Selecciona una House para registrar retos o penalidades. Los puntos de un partido se guardan en «Resultado del partido».</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
@@ -139,7 +140,7 @@ export default function PanelArbitro() {
                     id="operacion" name="operacion" value={operation} onChange={(e) => setOperation(e.target.value)}
                   >
                     <option value="">Selecciona la operación...</option>
-                    <option value="sumar">✅ Sumar Puntos (Victoria / Reto)</option>
+                    <option value="sumar">✅ Sumar puntos (Reto / Ajuste)</option>
                     <option value="restar">❌ Restar Puntos (Penalidad)</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
@@ -301,3 +302,4 @@ export default function PanelArbitro() {
     </div>
   );
 }
+

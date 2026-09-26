@@ -17,7 +17,7 @@ function setup() {
       } }) }) }) };
   const context = vm.createContext({ console, LockService: { getScriptLock: () => ({ waitLock() {}, hasLock: () => true, releaseLock() {} }) },
     PropertiesService: { getScriptProperties: () => ({ getProperty: () => secret }) },
-    Utilities: { computeHmacSha256Signature: (s,k) => [...crypto.createHmac('sha256',k).update(s).digest()],
+    Utilities: { Charset:{UTF_8:"UTF-8"}, computeHmacSha256Signature: (s,k) => [...crypto.createHmac('sha256',k).update(s).digest()],
       DigestAlgorithm: { SHA_256: 'sha256' }, computeDigest: (a,s) => [...crypto.createHash(a).update(s).digest()] },
     SpreadsheetApp: { flush() {}, getActiveSpreadsheet: () => ({ getSheetByName: n => n === 'Sábana' ? { getRange: () => cell } : history }) },
     ContentService: { MimeType: { JSON: 'json' }, createTextOutput: s => ({ setMimeType: () => JSON.parse(s) }) } });

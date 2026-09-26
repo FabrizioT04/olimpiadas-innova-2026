@@ -149,6 +149,10 @@ function doPost(e) {
     if (data && data.action === 'diagnostico-autorizacion') {
       return arbitrajeJson_({success:true, diagnostico:'AUTH_OK', revision:'auth-v2'});
     }
+    if (data.action === 'resultado') {
+      if (typeof guardarResultado_ !== 'function') return arbitrajeJson_({success:false,code:'UPDATE_REQUIRED'});
+      return guardarResultado_(data,envelope.payload,lock);
+    }
     var columns = {
       white: { promesas: 'D', infantil: 'E', junior: 'F', juvenila: 'G', juvenilb: 'H' },
       blue: { promesas: 'J', infantil: 'K', junior: 'L', juvenila: 'M', juvenilb: 'N' },
@@ -164,6 +168,7 @@ function doPost(e) {
         typeof data.motivo !== 'string' || data.motivo.trim().length < 3 || data.motivo.length > 300 ||
         typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id)) throw new Error('Datos inválidos');
     lock.waitLock(20000);
+    if (typeof resultadoPendiente_ === 'function' && resultadoPendiente_()) return arbitrajeJson_({success:false,pending:true,error:'Completa el resultado pendiente antes de registrar otros puntos.'});
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName('Sábana');
     if (!sheet) throw new Error('Hoja no encontrada');
@@ -234,6 +239,7 @@ function arbitrajeJson_(value) {
 function arbitrajeTexto_(value) {
   return /^[=+\-@]/.test(value) ? "'" + value : value;
 }
+
 
 
 
