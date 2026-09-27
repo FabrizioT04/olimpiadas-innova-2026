@@ -1,20 +1,28 @@
-// Reemplazar el doPost existente por este archivo. Conservar doGet y sus helpers.
-// ARBITRAJE_SECRET: propiedad del script, igual al secreto del servidor Cloudflare.
+// Variante solo doPost: no instalar junto a CodigoCompletoDiagnostico.gs. Conservar un solo doPost por proyecto.
 function doPost(e) {
   var lock = LockService.getScriptLock();
   try {
     var envelope = JSON.parse(e.postData.contents);
     var secret = PropertiesService.getScriptProperties().getProperty('ARBITRAJE_SECRET');
-    if (!secret || secret.length < 32 || typeof envelope.payload !== 'string' ||
-        envelope.payload.length > 4096 || !Number.isSafeInteger(envelope.timestamp) ||
-        Math.abs(Date.now() - envelope.timestamp) > 120000) throw new Error('No autorizado');
-    var expected = Utilities.computeHmacSha256Signature(envelope.timestamp + '.' + envelope.payload, secret)
+    if (!secret || secret.length < 32) throw new Error('AUTH_CONFIG');
+    if (!envelope || typeof envelope.payload !== 'string' || envelope.payload.length > 4096) throw new Error('AUTH_PAYLOAD');
+    if (!Number.isSafeInteger(envelope.timestamp)) throw new Error('AUTH_TIMESTAMP');
+    if (Math.abs(Date.now() - envelope.timestamp) > 120000) throw new Error('AUTH_EXPIRED');
+    var expected = Utilities.computeHmacSha256Signature(envelope.timestamp + '.' + envelope.payload, secret, Utilities.Charset.UTF_8)
       .map(function(b) { return ('0' + ((b + 256) % 256).toString(16)).slice(-2); }).join('');
-    if (typeof envelope.signature !== 'string' || envelope.signature.length !== expected.length) throw new Error('No autorizado');
+    if (typeof envelope.signature !== 'string' || !/^[0-9a-f]{64}$/.test(envelope.signature)) throw new Error('AUTH_SIGNATURE_FORMAT');
     var difference = 0;
     for (var i = 0; i < expected.length; i++) difference |= expected.charCodeAt(i) ^ envelope.signature.charCodeAt(i);
-    if (difference !== 0) throw new Error('No autorizado');
+    if (difference !== 0) throw new Error('AUTH_SIGNATURE_MISMATCH');
     var data = JSON.parse(envelope.payload);
+    // Sonda autenticada: termina antes de abrir Sheets o adquirir el bloqueo.
+    if (data && data.action === 'diagnostico-autorizacion') {
+      return arbitrajeJson_({success:true, diagnostico:'AUTH_OK', revision:'auth-v2'});
+    }
+    if (data.action === 'resultado') {
+      if (typeof guardarResultado_ !== 'function') return arbitrajeJson_({success:false,code:'UPDATE_REQUIRED'});
+      return guardarResultado_(data,envelope.payload,lock);
+    }
     var columns = {
       white: { promesas: 'D', infantil: 'E', junior: 'F', juvenila: 'G', juvenilb: 'H' },
       blue: { promesas: 'J', infantil: 'K', junior: 'L', juvenila: 'M', juvenilb: 'N' },
@@ -30,6 +38,7 @@ function doPost(e) {
         typeof data.motivo !== 'string' || data.motivo.trim().length < 3 || data.motivo.length > 300 ||
         typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id)) throw new Error('Datos inválidos');
     lock.waitLock(20000);
+    if (typeof resultadoPendiente_ === 'function' && resultadoPendiente_()) return arbitrajeJson_({success:false,pending:true,error:'Completa el resultado pendiente antes de registrar otros puntos.'});
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName('Sábana');
     if (!sheet) throw new Error('Hoja no encontrada');
@@ -64,10 +73,34 @@ function doPost(e) {
     history.getRange(historyRow,12).setValue('CONFIRMADO');
     SpreadsheetApp.flush();
     return arbitrajeJson_({success:true,id:data.id,nuevo:next});
-  } catch (_) {
-    return arbitrajeJson_({success:false,error:'Solicitud rechazada o no confirmada'});
-  } finally {
-    if (lock.hasLock()) lock.releaseLock();
+  } catch (error) {
+  var mensaje = error && error.message
+    ? error.message
+    : String(error);
+
+  console.error(error && error.stack ? error.stack : mensaje);
+
+  var erroresConocidos = [
+    'No autorizado',
+    'AUTH_CONFIG', 'AUTH_PAYLOAD', 'AUTH_TIMESTAMP', 'AUTH_EXPIRED',
+    'AUTH_SIGNATURE_FORMAT', 'AUTH_SIGNATURE_MISMATCH',
+    'Datos inválidos',
+    'Hoja no encontrada',
+    'Identificador reutilizado con otros datos',
+    'Celda no habilitada',
+    'Puntaje actual inválido',
+    'Puntaje fuera de rango'
+  ];
+
+  return arbitrajeJson_({
+    success: false,
+    error: 'Solicitud rechazada o no confirmada',
+    diagnostico: erroresConocidos.includes(mensaje)
+      ? mensaje
+      : 'Error interno: consultar registros de ejecución'
+  });
+} finally {
+  if (lock.hasLock()) lock.releaseLock();
   }
 }
 function arbitrajeJson_(value) {
@@ -76,3 +109,7 @@ function arbitrajeJson_(value) {
 function arbitrajeTexto_(value) {
   return /^[=+\-@]/.test(value) ? "'" + value : value;
 }
+
+
+
+
