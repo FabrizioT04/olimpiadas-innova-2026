@@ -11,7 +11,6 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
   const [status,setStatus] = useState<Marcador['estado']>('pendiente');
   const [reason,setReason] = useState('');
   const [puntosA,setPuntosA] = useState(''), [puntosB,setPuntosB] = useState('');
-  const [fila,setFila] = useState(''), [categoria,setCategoria] = useState('');
   const [busy,setBusy] = useState(false), [loading,setLoading] = useState(true);
   const [error,setError] = useState(''), [message,setMessage] = useState('');
   const [pending,setPending] = useState<Intent|null>(() => {
@@ -20,14 +19,13 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
   const sending = useRef(false);
   useEffect(() => { onLockedChange(busy || !!pending); }, [busy,pending,onLockedChange]);
   const current = matches.find(p => p.id === selected);
+  const {fila,categoria} = destinoSugerido(current);
+  const destinoValido = !!fila && !!categoria;
   function choose(p?: Actividad) {
     setSelected(p?.id || ''); setA(String(p?.marcador?.a ?? 0)); setB(String(p?.marcador?.b ?? 0));
     setStatus(p?.marcador?.estado || 'pendiente'); setReason('');
     setPuntosA(p?.marcador?.integrado ? String(p.marcador.puntosA) : '');
     setPuntosB(p?.marcador?.integrado ? String(p.marcador.puntosB) : '');
-    const suggestion=destinoSugerido(p);
-    setFila(p?.marcador?.fila ? String(p.marcador.fila) : suggestion.fila);
-    setCategoria(p?.marcador?.categoria || suggestion.categoria);
   }
   async function load(signal?: AbortSignal) {
     const controller = new AbortController();
@@ -71,6 +69,10 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
   }, []);
   async function save() {
     if (sending.current) return;
+    if (!pending && status === 'finalizado' && !destinoValido) {
+      setError('La categoría o actividad del encuentro debe configurarse en la hoja de puntajes antes de guardar.');
+      return;
+    }
     const intent:Intent|null = pending || (current && isEncuentro(current) ? {id:crypto.randomUUID(),encuentroId:current.encuentroId,version:current.marcador?.version || 0,
       a:Number(a),b:Number(b),estado:status,motivo:reason.trim(),
       puntosA:status==='finalizado'?Number(puntosA):0,puntosB:status==='finalizado'?Number(puntosB):0,
@@ -129,14 +131,15 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
             <label>Puntos para {HOUSE_NAMES[current.houses[0]]}<input aria-label="Puntos House A" type="number" min="0" max="10000" step="1" required value={puntosA} onChange={e=>setPuntosA(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"/></label>
             <label>Puntos para {HOUSE_NAMES[current.houses[1]]}<input aria-label="Puntos House B" type="number" min="0" max="10000" step="1" required value={puntosB} onChange={e=>setPuntosB(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"/></label>
           </div>
-          <label className="block">Categoría del puntaje<select required value={categoria} onChange={e=>setCategoria(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"><option value="">Selecciona la categoría</option>{Object.entries(CATEGORIAS).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
-          <label className="block">Actividad del puntaje<select required value={fila} onChange={e=>setFila(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"><option value="">Selecciona la actividad</option>{Object.entries(ACTIVIDADES).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
-          <p className="text-xs">Confirma la categoría y actividad de la hoja oficial. Si la disciplina no existe en la lista, debe configurarse antes de registrar sus puntos.</p>
+          <div>Categoría del puntaje<p className="block w-full border rounded-xl p-3 mt-1 bg-slate-100 font-medium">{CATEGORIAS[categoria as keyof typeof CATEGORIAS] || current.categoria || 'Por definir'}</p></div>
+          <div>Actividad del puntaje<p className="block w-full border rounded-xl p-3 mt-1 bg-slate-100 font-medium">{ACTIVIDADES[fila] || current.deporte || 'Por definir'}</p></div>
+          <p className="text-xs">La categoría y la actividad se toman del encuentro seleccionado y no se pueden cambiar aquí.</p>
+          {!destinoValido && <p role="alert" className="text-amber-900">Este encuentro aún no tiene una categoría o actividad configurada en la hoja de puntajes. Debe completarse antes de guardar el resultado final.</p>}
           {current.marcador && !current.marcador.integrado && <p className="text-amber-900">Este marcador es anterior al registro unificado. Los puntos que escribas se añadirán al total; revisa antes si ya fueron otorgados manualmente.</p>}
         </div>}
         {current.marcador?.integrado && status !== 'finalizado' && <p className="text-amber-900">Al reabrir este encuentro se retirarán los puntos que le habías otorgado mediante este formulario.</p>}
         <label className="block text-sm font-medium">Motivo del registro o corrección<input required minLength={3} maxLength={300} value={reason} onChange={e=>setReason(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"/></label>
-        <button type="submit" disabled={status === 'pendiente' && (Number(a)!==0 || Number(b)!==0)} className="rounded-xl bg-blue-600 text-white px-5 py-3 disabled:opacity-50">{busy ? 'Guardando…' : 'Guardar resultado y puntos'}</button></>}
+        <button type="submit" disabled={(status === 'pendiente' && (Number(a)!==0 || Number(b)!==0)) || (status === 'finalizado' && !destinoValido)} className="rounded-xl bg-blue-600 text-white px-5 py-3 disabled:opacity-50">{busy ? 'Guardando…' : 'Guardar resultado y puntos'}</button></>}
       </fieldset>
     </form>
     <p className="text-xs text-slate-500">Se muestra toda la programación oficial, con o sin árbitro asignado. Si faltan equipos o datos, complétalos en Sheets y pulsa «Recargar partidos».</p>
