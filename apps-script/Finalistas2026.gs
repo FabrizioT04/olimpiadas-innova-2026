@@ -23,8 +23,11 @@ function parseFinalistas2026_(sheets) {
     var rows = sheet.values.map(function(row) { return row.slice(); });
     sheet.merges.forEach(function(m) {
       // Solo heredar la disciplina; los cruces y puestos se leen de su propia fila.
-      if (m[1] !== 0 || m[3] !== 1) return;
-      for (var r = m[0]; r < m[0]+m[2]; r++) rows[r][0] = sheet.values[m[0]][0];
+      if (m[1] !== 0 || m[3] !== 1 || !sheet.values[m[0]]) return;
+      // Una combinación puede extenderse más allá de las filas con datos.
+      for (var r = m[0]; r < Math.min(m[0]+m[2], rows.length); r++) {
+        if (rows[r]) rows[r][0] = sheet.values[m[0]][0];
+      }
     });
     rows.forEach(function(row, r) {
       var category = clean(row[1]);
