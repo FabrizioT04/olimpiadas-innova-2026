@@ -59,3 +59,34 @@ test('unconfigured storage retains static fallback and disables management',asyn
  assert.deepEqual(await (await api.publicContent()).json(),{fotos:[],mascotas:{}});
  assert.equal((await api.manageContent(new Request(origin),{APP_ORIGIN:origin},'staff@example.com')).status,503);
 });
+
+test('delete removes draft metadata and R2 image, stale revisions cannot delete',async()=>{
+ const api=await modulePromise,s=setup();const data=await upload(api,s),id=data.items[0].id;
+ assert.equal((await api.manageContent(request('empty',{action:'delete',id}),s.env,'staff@example.com')).status,409);
+ assert.ok(s.objects.has('imagenes/'+id+'.webp'));
+ const response=await api.manageContent(request(data.revision,{action:'delete',id}),s.env,'staff@example.com');
+ assert.equal(response.status,200);assert.equal((await response.json()).items.length,0);
+ assert.equal(s.objects.has('imagenes/'+id+'.webp'),false);
+ assert.equal((await api.imageResponse(s.bucket,id,true)).status,404);
+});
+test('active photos and mascots cannot be deleted; hidden photos and old mascots can',async()=>{
+ const api=await modulePromise;
+ for(const kind of ['foto','mascota']) {
+  const s=setup();let data=await upload(api,s,kind==='foto'?query:'?action=upload&kind=mascota&house=dolphins&title=Mascota');const id=data.items[0].id;
+  data=await (await api.manageContent(request(data.revision,{action:'publish',id}),s.env,'staff@example.com')).json();
+  assert.equal((await api.manageContent(request(data.revision,{action:'delete',id}),s.env,'staff@example.com')).status,409);
+  assert.ok(s.objects.has('imagenes/'+id+'.webp'));
+  data=await (await api.manageContent(request(data.revision,kind==='foto'?{action:'hide',id}:{action:'restore-default',house:'dolphins'}),s.env,'staff@example.com')).json();
+  assert.equal((await api.manageContent(request(data.revision,{action:'delete',id}),s.env,'staff@example.com')).status,200);
+  assert.equal(s.objects.has('imagenes/'+id+'.webp'),false);
+ }
+});
+test('conflicting delete never removes image bytes; storage failure is reported as partial cleanup',async()=>{
+ const api=await modulePromise,s=setup();const data=await upload(api,s),id=data.items[0].id;
+ const put=s.bucket.put;s.bucket.put=async()=>null;
+ assert.equal((await api.manageContent(request(data.revision,{action:'delete',id}),s.env,'staff@example.com')).status,409);
+ assert.ok(s.objects.has('imagenes/'+id+'.webp'));
+ s.bucket.put=put;s.bucket.delete=async()=>{throw Error('R2 down');};
+ const result=await (await api.manageContent(request(data.revision,{action:'delete',id}),s.env,'staff@example.com')).json();
+ assert.ok(result.warning);assert.equal(result.pendingDeletion,id);assert.equal(result.items.length,0);
+});

@@ -54,7 +54,7 @@ export default function AdminContenido() {
     try {
       const response = await fetch(endpoint + query, { method: 'POST', headers: { 'Content-Type': contentType, 'If-Match': catalog.revision }, body });
       const data = await response.json(); if (!response.ok) throw Error(data.error || 'No se pudo guardar. Recarga para comprobar el estado.');
-      setCatalog(data); setNotice(query ? 'Borrador guardado. Revisa la imagen y pulsa Publicar cuando esté lista.' : 'Cambio guardado.');
+      setCatalog(data); setNotice(data.warning || (query ? 'Borrador guardado. Revisa la imagen y pulsa Publicar cuando esté lista.' : 'Cambio guardado.'));
       if (query) { setBlob(null); if (input.current) input.current.value = ''; }
       setConfirmation(null); window.dispatchEvent(new Event('contenido-publicado'));
     } catch (e) { setError(e instanceof Error ? e.message : 'Error de conexión. Recarga para comprobar el estado antes de repetir.'); }
@@ -86,7 +86,10 @@ export default function AdminContenido() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[...catalog.items].reverse().map(item => {
         const published = item.kind === 'foto' ? item.published : catalog.mascotas[item.house] === item.id;
         return <article key={item.id} className="overflow-hidden rounded-2xl border border-slate-200"><img src={`${endpoint}?preview=${item.id}`} alt={item.title} loading="lazy" className="aspect-[4/3] w-full bg-slate-50 object-contain" /><div className="space-y-3 p-4"><p className="font-bold">{item.title}</p><p className="text-sm text-slate-500">{published ? 'Publicada' : 'Sin publicar'}{item.kind === 'foto' && item.subseccion ? ` · ${folders.find(f => f.id === item.subseccion)?.title || item.subseccion}` : ''}</p>
-        {published && item.kind === 'foto' ? <button disabled={busy} className="text-red-700 underline" onClick={() => { if (window.confirm('¿Ocultar esta foto de la galería pública?')) void send(JSON.stringify({ action: 'hide', id: item.id })); }}>Ocultar foto</button> : !published && <button disabled={busy} className="font-bold text-indigo-700 underline" onClick={() => setConfirmation(item)}>Revisar y publicar</button>}</div></article>;
+        {published && item.kind === 'foto' ? <button disabled={busy} className="text-red-700 underline" onClick={() => { if (window.confirm('¿Ocultar esta foto de la galería pública?')) void send(JSON.stringify({ action: 'hide', id: item.id })); }}>Ocultar foto</button> : !published && <button disabled={busy} className="font-bold text-indigo-700 underline" onClick={() => setConfirmation(item)}>Revisar y publicar</button>}
+        {!published && <button disabled={busy} className="block text-red-700 underline disabled:opacity-40" onClick={() => { if (window.confirm(`¿Eliminar definitivamente «${item.title}»? Esta acción no se puede deshacer.`)) void send(JSON.stringify({ action: 'delete', id: item.id })); }}>Eliminar</button>}
+        {published && <p className="text-xs text-slate-500">{item.kind === 'mascota' ? 'Para eliminarla, reemplaza esta mascota o restaura la original.' : 'Oculta esta foto para poder eliminarla.'}</p>}
+        </div></article>;
       })}</div>
     </div>
     {!!Object.keys(catalog.mascotas).length && <div className="space-y-3 border-t border-slate-200 pt-5"><h3 className="font-bold">Restaurar mascotas originales</h3>{HOUSES.filter(h => catalog.mascotas[h.id]).map(h => <button key={h.id} disabled={busy} className="mr-4 text-indigo-700 underline" onClick={() => { if (window.confirm(`¿Restaurar la mascota original de ${h.name}?`)) void send(JSON.stringify({ action: 'restore-default', house: h.id })); }}>{h.name}</button>)}</div>}

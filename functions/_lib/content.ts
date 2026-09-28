@@ -59,15 +59,25 @@ export async function manageContent(request:Request,env:ContentEnv,email:string)
   }
   if(!request.headers.get('Content-Type')?.startsWith('application/json'))return json({error:'Formato no permitido.'},415);
   const body=JSON.parse(new TextDecoder().decode(await limitedBody(request,2048))) as {action:string;id:string;house:string};
+  let deletedId:string|undefined;
   if(body.action==='restore-default') {if(!houses.includes(body.house))return json({error:'House inválida.'},400);delete data.mascotas[body.house];}
   else {
    const item=data.items.find(i=>i.id===body.id);if(!item)return json({error:'Imagen no encontrada.'},404);
    if(body.action==='publish'){if(item.kind==='foto')item.published=true;else data.mascotas[item.house]=item.id;}
    else if(body.action==='hide'&&item.kind==='foto')item.published=false;
+   else if(body.action==='delete') {
+    if(item.kind==='mascota'&&data.mascotas[item.house]===item.id)return json({error:'Reemplaza la mascota activa o restaura la original antes de eliminarla.'},409);
+    if(item.kind==='foto'&&item.published)return json({error:'Oculta la foto antes de eliminarla.'},409);
+    deletedId=item.id;data.items=data.items.filter(i=>i.id!==item.id);
+   }
    else return json({error:'Acción inválida.'},400);
    item.updatedBy=email;
   }
   if(!await save(bucket,data,etag))return json({error:'Otra persona actualizó el contenido. Recarga antes de continuar.'},409);
+  if(deletedId) {
+   try { await bucket.delete('imagenes/'+deletedId+'.webp'); }
+   catch { return json({...data,warning:'La imagen se retiró del panel, pero no se pudo borrar el archivo del almacenamiento. Contacta al administrador.',pendingDeletion:deletedId}); }
+  }
   return json(data);
  }catch(e){return json({error:e instanceof Error&&e.message==='SIZE'?'La imagen supera el tamaño permitido.':'No se pudo completar la operación. Recarga para comprobar su estado.'},e instanceof Error&&e.message==='SIZE'?413:500);}
 }
