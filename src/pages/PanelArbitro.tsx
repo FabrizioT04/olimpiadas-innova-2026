@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Loader2, ShieldCheck, UserCheck, LogOut, Trophy, Medal } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, LogOut, Trophy, Medal, Images } from 'lucide-react';
 import { HOUSES, useArbitraje } from '../features/arbitraje/hooks/useArbitraje';
 import PanelMarcadores from '../features/marcadores/PanelMarcadores';
 
+import AdminContenido from '../features/contenido/AdminContenido';
+import { useContenido } from '../features/contenido/useContenido';
+
 export default function PanelArbitro() {
-  const [registro, setRegistro] = useState<'marcadores' | 'puntajes'>('marcadores');
+  const { mascotas } = useContenido();
+  const [registro, setRegistro] = useState<'marcadores' | 'puntajes' | 'contenido'>('marcadores');
   const [correoAutorizado, setCorreoAutorizado] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [resultLocked,setResultLocked] = useState(false);
@@ -83,10 +87,11 @@ export default function PanelArbitro() {
           <p className="text-slate-500 font-medium text-sm md:text-base">Resultados de partidos y puntos de las Houses en un solo lugar</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white/80 p-2 mb-6" role="group" aria-label="Tipo de registro">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-white/80 p-2 mb-6" role="group" aria-label="Tipo de registro">
           {([
             { id: 'marcadores', title: 'Resultado del partido', description: 'Marcador y puntos en una operación', Icon: Trophy },
-            { id: 'puntajes', title: 'Retos y ajustes', description: 'Otros puntos y penalidades por House', Icon: Medal },
+            { id: 'contenido', title: 'Fotos y mascotas', description: 'Subir, revisar y publicar imágenes', Icon: Images },
+            { id: 'puntajes', title: 'Retos y ajustes', description: 'Otros puntos y penalidades por House', Icon: Medal, Images },
           ] as const).map(({ id, title, description, Icon }) => (
             <button key={id} type="button" aria-pressed={registro === id} aria-controls={`panel-${id}`}
               disabled={resultLocked || isSubmitting} onClick={() => setRegistro(id)}
@@ -98,6 +103,7 @@ export default function PanelArbitro() {
         </div>
 
         {/* Keep both forms mounted so switching views preserves unfinished entries and retries. */}
+        {registro === 'contenido' && <div id="panel-contenido"><AdminContenido /></div>}
         <div id="panel-marcadores" hidden={registro !== 'marcadores'}>
           <PanelMarcadores onLockedChange={setResultLocked} />
         </div>
@@ -116,7 +122,7 @@ export default function PanelArbitro() {
               <div className="bg-gradient-to-r from-slate-50/80 to-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 transition-all">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center flex-shrink-0">
                   {selectedHouse ? (
-                    <img src={selectedHouse.img} alt={selectedHouse.name} className="w-full h-full object-contain drop-shadow-md transition-all duration-300" />
+                    <img src={mascotas[selectedHouse.id] || selectedHouse.img} onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = selectedHouse.img; }} alt={selectedHouse.name} className="w-full h-full object-contain drop-shadow-md transition-all duration-300" />
                   ) : (
                     <div className="w-16 h-16 rounded-full bg-slate-100 shadow-inner flex items-center justify-center border border-slate-200 border-dashed">
                       <span className="text-3xl text-slate-300">🎯</span>
@@ -283,7 +289,7 @@ export default function PanelArbitro() {
                 <div className={`relative mb-6 transition-transform duration-500 ease-out ${selectedHouse?.id === house.id ? 'scale-110 -translate-y-2' : 'group-hover:scale-125 group-hover:-translate-y-3'}`}>
                   <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-2/3 h-4 bg-slate-900/10 blur-md rounded-full transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
                   <img
-                    src={house.img}
+                    src={mascotas[house.id] || house.img} onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = house.img; }}
                     alt={house.name}
                     className="relative z-10 w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-2xl"
                   />

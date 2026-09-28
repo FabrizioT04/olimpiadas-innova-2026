@@ -1,12 +1,13 @@
+import { useContenido } from '../features/contenido/useContenido';
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Search, X, Images, ArrowUpRight, Trophy, Leaf, PartyPopper, Folder } from 'lucide-react';
-import { albumesGaleria, fotosGaleria } from '../data/galeria';
+import { albumesGaleria, fotosGaleria as fotosOriginales } from '../data/galeria';
 import type { FotoGaleria } from '../data/galeria';
 
 const normalizar = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const carpetasEco = [{ id: 'asamblea', titulo: 'Asamblea' }, { id: 'mariquitas', titulo: 'Maraquitas' }, { id: 'carteles', titulo: 'Elaboración de carteles' }] as const;
 const icons = { convivencia: Images, deportes: Trophy, 'eco-house': Leaf, encuentros: PartyPopper };
-const albumesDisponibles = albumesGaleria.filter(a => fotosGaleria.some(f => f.album === a.id));
+
 function Imagen({ foto, ampliada = false }: { foto: FotoGaleria; ampliada?: boolean }) {
   const [error, setError] = useState(false);
   return error ? <div className="flex h-full min-h-48 items-center justify-center gap-2 bg-slate-100 p-8 text-slate-500"><Camera aria-hidden="true" size={24} /> Foto no disponible</div> :
@@ -14,6 +15,9 @@ function Imagen({ foto, ampliada = false }: { foto: FotoGaleria; ampliada?: bool
 }
 
 export default function Galeria() {
+  const { fotos: fotosNuevas } = useContenido();
+  const fotosGaleria = [...fotosOriginales, ...fotosNuevas];
+  const albumesDisponibles = albumesGaleria.filter(a => fotosGaleria.some(f => f.album === a.id));
   const [album, setAlbum] = useState('todos');
   const [subseccion, setSubseccion] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState('');

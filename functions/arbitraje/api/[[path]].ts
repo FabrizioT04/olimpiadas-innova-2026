@@ -1,6 +1,8 @@
+import { manageContent } from '../../_lib/content';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 interface Env {
+  CONTENT_BUCKET?: R2Bucket;
   ACCESS_TEAM_DOMAIN: string;
   ACCESS_AUD: string;
   APP_ORIGIN: string;
@@ -37,6 +39,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   } catch {
     return json({ error: 'Sesión inválida o vencida. Vuelve a ingresar al panel.' }, 401);
   }
+  if (url.pathname === '/arbitraje/api/contenido') return manageContent(request,env,email);
   if (url.pathname === '/arbitraje/api/session' && request.method === 'GET') return json({ email });
   if (url.pathname === '/arbitraje/api/diagnostico-auth') {
     if (request.method !== 'GET') return json({ error: 'Método no permitido.' }, 405);

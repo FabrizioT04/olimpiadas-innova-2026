@@ -1,9 +1,11 @@
+import { useContenido } from '../features/contenido/useContenido';
 import { Trophy, Flame, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HOUSES } from '../features/arbitraje/hooks/useArbitraje';
 
 export default function Puntajes() {
+  const { mascotas } = useContenido();
   const [rankings, setRankings] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
 
@@ -144,7 +146,7 @@ export default function Puntajes() {
 
               {/* Escudo con tamaño bien grande (w-40 h-40 en móvil / w-44 h-44 en PC) */}
               <div className="flex-shrink-0 w-40 h-40 sm:w-44 sm:h-44 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:-translate-y-1">
-                 <img src={team.house?.img} alt={team.house?.name} className="w-full h-full object-contain drop-shadow-xl" />
+                 <img src={mascotas[team.house?.id || ""] || team.house?.img} onError={e => { e.currentTarget.onerror = null; if (team.house) e.currentTarget.src = team.house.img; }} alt={team.house?.name} className="w-full h-full object-contain drop-shadow-xl" />
               </div>
 
               {/* Detalles */}
