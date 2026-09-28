@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import type { FotoGaleria } from '../../data/galeria';
+import type { FotoGaleria, AlbumGaleria } from '../../data/galeria';
 
 export function useContenido() {
-  const [data, setData] = useState<{ fotos: FotoGaleria[]; mascotas: Record<string, string> }>({ fotos: [], mascotas: {} });
+  const [data, setData] = useState<{ albumes?: AlbumGaleria[]; fotos: FotoGaleria[]; mascotas: Record<string, string> }>({ fotos: [], mascotas: {} });
   useEffect(() => {
     const controller = new AbortController();
     const refresh = async () => {

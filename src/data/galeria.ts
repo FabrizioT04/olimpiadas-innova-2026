@@ -2,7 +2,7 @@ export interface FotoGaleria {
   id: string;
   titulo: string;
   descripcion: string;
-  album: 'deportes' | 'eco-house' | 'encuentros' | 'convivencia';
+  album: string;
   subseccion?: 'mariquitas' | 'carteles' | 'asamblea';
   url: string;
   fecha?: string;
@@ -45,3 +45,6 @@ export const albumesGaleria = [
   { id: 'eco-house', titulo: 'Espíritu Eco House', descripcion: 'Creatividad y proyectos de nuestras Houses.', color: 'from-emerald-600 to-teal-800' },
   { id: 'encuentros', titulo: 'Juntos celebramos', descripcion: 'Encuentros, barras y momentos de celebración.', color: 'from-orange-500 to-rose-700' },
 ] as const;
+
+export interface AlbumGaleria { id: string; titulo: string; descripcion: string }
+export const combinarAlbumes = (nuevos: AlbumGaleria[] = []) => [...albumesGaleria, ...nuevos.map(a => ({ ...a, color: "from-violet-600 to-indigo-700" }))];

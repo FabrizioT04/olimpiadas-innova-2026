@@ -90,3 +90,25 @@ test('conflicting delete never removes image bytes; storage failure is reported 
  const result=await (await api.manageContent(request(data.revision,{action:'delete',id}),s.env,'staff@example.com')).json();
  assert.ok(result.warning);assert.equal(result.pendingDeletion,id);assert.equal(result.items.length,0);
 });
+
+test('custom albums persist, accept photos, and become public only after publication',async()=>{
+ const api=await modulePromise,s=setup();
+ const response=await api.manageContent(request('empty',{action:'create-album',titulo:'Ceremonia',descripcion:'Nuestros momentos'}),s.env,'staff@example.com');
+ assert.equal(response.status,200);let data=await response.json();const album=data.albumes[0];
+ assert.deepEqual((await (await api.publicContent(s.bucket)).json()).albumes,[]);
+ data=await upload(api,s,'?action=upload&kind=foto&album='+album.id+'&title=Ceremonia');
+ assert.equal(data.items[0].album,album.id);
+ await api.manageContent(request(data.revision,{action:'publish',id:data.items[0].id}),s.env,'staff@example.com');
+ assert.deepEqual((await (await api.publicContent(s.bucket)).json()).albumes,[album]);
+});
+test('album creation rejects invalid names, duplicates, wrong origin and stale writes',async()=>{
+ const api=await modulePromise,s=setup();
+ for(const titulo of ['', 'ab', '<script>', 'x'.repeat(81)])assert.equal((await api.manageContent(request('empty',{action:'create-album',titulo}),s.env,'staff@example.com')).status,400);
+ assert.equal((await api.manageContent(request('empty',{action:'create-album',titulo:'SANA CONVIVENCIA'}),s.env,'staff@example.com')).status,409);
+ assert.equal((await api.manageContent(request('empty',{action:'create-album',titulo:'Nuevo'},'',{Origin:'https://evil.test'}),s.env,'staff@example.com')).status,403);
+ const results=await Promise.all([1,2].map(()=>api.manageContent(request('empty',{action:'create-album',titulo:'Nuevo'}),s.env,'staff@example.com')));
+ assert.deepEqual(results.map(r=>r.status).sort(),[200,409]);
+ const {data}=await api.catalog(s.bucket);
+ assert.equal((await api.manageContent(request(data.revision,{action:'create-album',titulo:'  NUEVO  '}),s.env,'staff@example.com')).status,409);
+ assert.equal(data.albumes.length,1);
+});

@@ -1,6 +1,7 @@
 export interface ContentEnv { CONTENT_BUCKET?: R2Bucket; APP_ORIGIN: string }
 export interface Item { id:string; kind:'foto'|'mascota'; album:string; subseccion:string; house:string; title:string; published:boolean; created:string; author:string; updatedBy?:string }
-interface Catalog { revision:string; items:Item[]; mascotas:Record<string,string> }
+interface Album { id:string; titulo:string; descripcion:string }
+interface Catalog { albumes?:Album[]; revision:string; items:Item[]; mascotas:Record<string,string> }
 const key='catalogo.json';
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
 const houses=['dolphins','seagulls','eagles','horses'];
@@ -24,6 +25,7 @@ export async function publicContent(bucket?:R2Bucket) {
  if(!bucket)return json({fotos:[],mascotas:{}});
  const {data}=await catalog(bucket);
  return json({fotos:data.items.filter(i=>i.kind==='foto'&&i.published).map(i=>({id:i.id,titulo:i.title,descripcion:i.title,album:i.album,subseccion:i.subseccion||undefined,url:'/api/media/'+i.id})),
+ albumes:(data.albumes||[]).filter(a=>data.items.some(i=>i.kind==='foto'&&i.published&&i.album===a.id)),
  mascotas:Object.fromEntries(Object.entries(data.mascotas).map(([h,id])=>[h,'/api/media/'+id]))});
 }
 async function limitedBody(request:Request,max:number) {
@@ -48,7 +50,7 @@ export async function manageContent(request:Request,env:ContentEnv,email:string)
    if(data.items.length>=1000)return json({error:'Se alcanzó el límite de imágenes. Contacta al administrador.'},409);
    if(request.headers.get('Content-Type')!=='image/webp')return json({error:'Solo se aceptan imágenes WebP procesadas.'},415);
    const kind=url.searchParams.get('kind'),album=url.searchParams.get('album')||'',subseccion=url.searchParams.get('subseccion')||'',house=url.searchParams.get('house')||'',title=(url.searchParams.get('title')||'').trim();
-   if(!['foto','mascota'].includes(kind||'')||title.length<3||title.length>120 || (kind==='mascota'&&!houses.includes(house)) || (kind==='foto'&&(!albums.includes(album)||(album==='eco-house'?!['asamblea','mariquitas','carteles'].includes(subseccion):subseccion!==''))))return json({error:'Revisa el álbum, la House y el nombre de la imagen.'},400);
+   if(!['foto','mascota'].includes(kind||'')||title.length<3||title.length>120 || (kind==='mascota'&&!houses.includes(house)) || (kind==='foto'&&(![...albums,...(data.albumes||[]).map(a=>a.id)].includes(album)||(album==='eco-house'?!['asamblea','mariquitas','carteles'].includes(subseccion):subseccion!==''))))return json({error:'Revisa el álbum, la House y el nombre de la imagen.'},400);
    const bytes=await limitedBody(request,4*1024*1024);
    const ascii=(start:number,end:number)=>String.fromCharCode(...bytes.slice(start,end));
    if(bytes.length<20||ascii(0,4)!=='RIFF'||ascii(8,12)!=='WEBP'||!['VP8 ','VP8L','VP8X'].includes(ascii(12,16)))return json({error:'La imagen no es un WebP válido.'},400);
@@ -58,9 +60,19 @@ export async function manageContent(request:Request,env:ContentEnv,email:string)
    return json(data);
   }
   if(!request.headers.get('Content-Type')?.startsWith('application/json'))return json({error:'Formato no permitido.'},415);
-  const body=JSON.parse(new TextDecoder().decode(await limitedBody(request,2048))) as {action:string;id:string;house:string};
+  const body=JSON.parse(new TextDecoder().decode(await limitedBody(request,2048))) as {action:string;id:string;house:string;titulo?:unknown;descripcion?:unknown};
   let deletedId:string|undefined;
-  if(body.action==='restore-default') {if(!houses.includes(body.house))return json({error:'House inválida.'},400);delete data.mascotas[body.house];}
+  if(body.action==='create-album') {
+   const titulo=typeof body.titulo==='string'?body.titulo.trim().replace(/\s+/g,' '):'';
+   const descripcion=typeof body.descripcion==='string'?body.descripcion.trim():'';
+   if(titulo.length<3||titulo.length>80||descripcion.length>240||/[<>\x00-\x1f]/.test(titulo+descripcion))return json({error:'Usa un nombre de 3 a 80 caracteres y una descripción de hasta 240 caracteres, sin etiquetas.'},400);
+   const normalize=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+   const existing=['Sana convivencia','En la cancha','Espíritu Eco House','Juntos celebramos',...(data.albumes||[]).map(a=>a.titulo)];
+   if(existing.some(name=>normalize(name)===normalize(titulo)))return json({error:'Ya existe un álbum con ese nombre.'},409);
+   if((data.albumes||[]).length>=100)return json({error:'Se alcanzó el límite de 100 álbumes nuevos.'},409);
+   data.albumes=[...(data.albumes||[]),{id:'album-'+crypto.randomUUID(),titulo,descripcion}];
+  }
+  else if(body.action==='restore-default') {if(!houses.includes(body.house))return json({error:'House inválida.'},400);delete data.mascotas[body.house];}
   else {
    const item=data.items.find(i=>i.id===body.id);if(!item)return json({error:'Imagen no encontrada.'},404);
    if(body.action==='publish'){if(item.kind==='foto')item.published=true;else data.mascotas[item.house]=item.id;}

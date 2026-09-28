@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { HOUSES } from '../arbitraje/hooks/useArbitraje';
-import { albumesGaleria } from '../../data/galeria';
+import { combinarAlbumes, type AlbumGaleria } from '../../data/galeria';
 
 interface Item { id: string; kind: 'foto' | 'mascota'; title: string; album: string; subseccion: string; house: string; published: boolean }
-interface Catalog { revision: string; items: Item[]; mascotas: Record<string, string> }
+interface Catalog { albumes?: AlbumGaleria[]; revision: string; items: Item[]; mascotas: Record<string, string> }
 const endpoint = '/arbitraje/api/contenido';
 const folders = [{ id: 'asamblea', title: 'Asamblea' }, { id: 'mariquitas', title: 'Maraquitas' }, { id: 'carteles', title: 'Elaboración de carteles' }];
 const control = 'w-full rounded-xl border border-slate-300 bg-white p-3';
@@ -27,6 +27,10 @@ async function prepare(file: File) {
 
 export default function AdminContenido() {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [creatingAlbum, setCreatingAlbum] = useState(false);
+  const [albumTitle, setAlbumTitle] = useState('');
+  const [albumDescription, setAlbumDescription] = useState('');
+  const albumesGaleria = combinarAlbumes(catalog?.albumes);
   const [kind, setKind] = useState<'foto' | 'mascota'>('foto');
   const [album, setAlbum] = useState('convivencia');
   const [folder, setFolder] = useState('asamblea');
@@ -57,6 +61,7 @@ export default function AdminContenido() {
       setCatalog(data); setNotice(data.warning || (query ? 'Borrador guardado. Revisa la imagen y pulsa Publicar cuando esté lista.' : 'Cambio guardado.'));
       if (query) { setBlob(null); if (input.current) input.current.value = ''; }
       setConfirmation(null); window.dispatchEvent(new Event('contenido-publicado'));
+      return data as Catalog;
     } catch (e) { setError(e instanceof Error ? e.message : 'Error de conexión. Recarga para comprobar el estado antes de repetir.'); }
     finally { setBusy(false); }
   };
@@ -71,7 +76,14 @@ export default function AdminContenido() {
     {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">{error}</p>}
     {notice && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-emerald-800">{notice}</p>}
     <button type="button" disabled={busy} onClick={load} className="text-indigo-700 underline disabled:opacity-50">{busy ? 'Procesando…' : 'Recargar contenido'}</button>
-    {catalog && <><fieldset disabled={busy} className="space-y-4 disabled:opacity-60">
+    {catalog && <><button type="button" disabled={busy} onClick={() => setCreatingAlbum(!creatingAlbum)} aria-expanded={creatingAlbum} className="rounded-xl border border-indigo-600 px-4 py-2 font-semibold text-indigo-700 disabled:opacity-50">{creatingAlbum ? 'Cancelar nuevo álbum' : '+ Crear álbum'}</button>
+    {creatingAlbum && <form className="space-y-4 rounded-2xl border border-indigo-100 bg-indigo-50 p-4" onSubmit={async e => {
+      e.preventDefault();
+      const result = await send(JSON.stringify({ action: 'create-album', titulo: albumTitle, descripcion: albumDescription }));
+      const created = result?.albumes?.at(-1);
+      if (created) { setAlbum(created.id); setKind('foto'); setCreatingAlbum(false); setAlbumTitle(''); setAlbumDescription(''); setNotice('Álbum creado. Ya puedes subir fotos; aparecerá en la galería al publicar la primera.'); }
+    }}><h3 className="font-bold">Nuevo álbum</h3><label className="block">Nombre<input autoFocus required minLength={3} maxLength={80} disabled={busy} className={control} value={albumTitle} onChange={e => setAlbumTitle(e.target.value)} /></label><label className="block">Descripción (opcional)<textarea maxLength={240} disabled={busy} className={control} value={albumDescription} onChange={e => setAlbumDescription(e.target.value)} /></label><p className="text-sm text-slate-600">Será visible para los visitantes cuando publiques su primera foto.</p><button disabled={busy} className="rounded-xl bg-indigo-600 px-5 py-3 font-bold text-white disabled:opacity-50">Crear álbum</button></form>}
+    <fieldset disabled={busy} className="space-y-4 disabled:opacity-60">
       <div className="grid gap-4 sm:grid-cols-2"><label>Tipo de imagen<select className={control} value={kind} onChange={e => setKind(e.target.value as typeof kind)}><option value="foto">Foto para un álbum</option><option value="mascota">Mascota de una House</option></select></label>
       {kind === 'foto' ? <label>Álbum<select className={control} value={album} onChange={e => setAlbum(e.target.value)}>{albumesGaleria.map(a => <option key={a.id} value={a.id}>{a.titulo}</option>)}</select></label> : <label>House<select className={control} value={house} onChange={e => setHouse(e.target.value)}>{HOUSES.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select></label>}
       {kind === 'foto' && album === 'eco-house' && <label>Sección<select className={control} value={folder} onChange={e => setFolder(e.target.value)}>{folders.map(f => <option key={f.id} value={f.id}>{f.title}</option>)}</select></label>}</div>
