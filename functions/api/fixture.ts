@@ -41,6 +41,7 @@ async function refreshFixture(env: Env) {
 
 export const onRequest: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
   const headers = { 'Cache-Control': 'no-store' };
+  const freshRequested = new URL(request.url).searchParams.get('actualizar') === '1';
   if (request.method !== 'GET') return Response.json({error:'Método no permitido.'}, {status:405, headers:{...headers, Allow:'GET'}});
   if (!env.FIXTURE_SCRIPT_URL) return Response.json({error:'La programación no está configurada.'}, {status:503, headers});
   let cached: {savedAt:number; fixture:ReturnType<typeof publicFixture>} | null = null;
@@ -50,7 +51,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, waitUntil })
       cached = {savedAt:snapshot.savedAt, fixture:publicFixture(snapshot.fixture)};
     }
   } catch { /* A missing or damaged snapshot must not prevent a live read. */ }
-  if (cached && Date.now() - cached.savedAt < FRESH_MS) {
+  if (!freshRequested && cached && Date.now() - cached.savedAt < FRESH_MS) {
     return Response.json({...cached.fixture, copiaCompartida:true, desactualizado:false}, {headers});
   }
   const refreshKey = env.FIXTURE_SCRIPT_URL;
@@ -59,10 +60,13 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, waitUntil })
     pending = refreshFixture(env).finally(() => { refreshes.delete(refreshKey); });
     refreshes.set(refreshKey, pending);
   }
-  if (cached) {
+  if (cached && !freshRequested) {
     waitUntil(pending.catch(() => {}));
     return Response.json({...cached.fixture, copiaCompartida:true, desactualizado:true}, {headers});
   }
   try { return Response.json({...await pending, copiaCompartida:false, desactualizado:false}, {headers}); }
-  catch { return Response.json({error:'Google no respondió correctamente. Intenta actualizar de nuevo.'}, {status:502, headers}); }
+  catch {
+    if (cached) return Response.json({...cached.fixture, copiaCompartida:true, desactualizado:true}, {headers});
+    return Response.json({error:'Google no respondió correctamente. Intenta actualizar de nuevo.'}, {status:502, headers});
+  }
 };

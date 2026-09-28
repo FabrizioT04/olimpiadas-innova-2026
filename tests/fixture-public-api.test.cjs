@@ -57,3 +57,24 @@ test('cold cache saves public-only data and KV failure still returns live progra
     assert.equal((await onRequest({request,env:{...env,FIXTURE_CACHE:cache}})).status,200);
   }finally{global.fetch=original;}
 });
+
+test('manual refresh bypasses a fresh snapshot and waits for new data',async()=>{
+ const {onRequest}=await modulePromise,original=global.fetch;let resolve,stored;
+ global.fetch=()=>new Promise(r=>{resolve=r;});
+ const cache={get:async()=>({savedAt:Date.now(),fixture}),put:async(k,v)=>{stored=JSON.parse(v);}};
+ try {
+  let finished=false;
+  const response=onRequest({request:new Request('https://example.com/api/fixture?actualizar=1'),env:{...env,FIXTURE_CACHE:cache}}).then(r=>{finished=true;return r;});
+  await new Promise(r=>setImmediate(r));assert.equal(finished,false);
+  resolve(Response.json({...fixture,partidos:[{id:'one',marcador:{version:2,a:0,b:0}}]}));
+  const data=await(await response).json();assert.equal(data.partidos[0].marcador.a,0);assert.equal(data.desactualizado,false);assert.equal(data.copiaCompartida,false);assert.equal(stored.fixture.partidos[0].marcador.version,2);
+ }finally{global.fetch=original;}
+});
+test('manual refresh retains snapshot only when live fetch fails',async()=>{
+ const {onRequest}=await modulePromise,original=global.fetch;let calls=0;
+ global.fetch=async()=>{calls++;throw Error('offline');};
+ try {
+  const response=await onRequest({request:new Request('https://example.com/api/fixture?actualizar=1'),env:{...env,FIXTURE_CACHE:{get:async()=>({savedAt:Date.now(),fixture})}}});
+  const data=await response.json();assert.equal(calls,2);assert.equal(data.desactualizado,true);assert.equal(data.partidos[0].marcador.a,3);
+ }finally{global.fetch=original;}
+});

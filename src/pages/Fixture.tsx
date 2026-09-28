@@ -65,7 +65,7 @@ export default function Fixture() {
   useEffect(() => {
     let disposed = false;
     let active: AbortController | null = null;
-    async function synchronize() {
+    async function synchronize(freshRequested = false) {
       if (active) return;
       const controller = new AbortController();
       active = controller;
@@ -82,7 +82,7 @@ export default function Fixture() {
         }
       }, 30000);
       try {
-        const response = await fetch(WEB_APP_URL, { signal: controller.signal, cache: 'no-store' });
+        const response = await fetch(freshRequested ? `${WEB_APP_URL}?actualizar=1` : WEB_APP_URL, { signal: controller.signal, cache: 'no-store' });
         if (!response.ok) throw new Error('No se pudo conectar con el fixture oficial.');
         const result: unknown = await response.json();
         if (!isFixture(result)) throw new Error('El servicio del fixture todavía no devuelve las pestañas oficiales. Revisa su publicación.');
@@ -100,7 +100,7 @@ export default function Fixture() {
         if (!disposed && !expired) setLoading(false);
       }
     }
-    refresh.current = () => { void synchronize(); };
+    refresh.current = () => { void synchronize(true); };
     void synchronize();
     const interval = window.setInterval(() => { if (!document.hidden) void synchronize(); }, 30000);
     const onVisible = () => { if (!document.hidden) void synchronize(); };
