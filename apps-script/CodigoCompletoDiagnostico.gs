@@ -14,8 +14,8 @@ function doGet(e) {
   if (pagina === 'api_puntos') {
     const dataPuntajesCompleto = obtenerPuntajesCasasReales();
     
-    // Capturamos el nombre de la función que manda la web (por defecto 'procesarPodio')
-    const callback = e.parameter.callback || 'procesarPodio';
+    // Callback fijo: nunca insertar código recibido mediante la URL.
+    const callback = 'procesarPodio';
     
     // Envolvemos el JSON dentro de la función de texto plano ultra compatible
     const textoJSONP = callback + "(" + JSON.stringify(dataPuntajesCompleto) + ");";
