@@ -32,9 +32,21 @@ test('corrections apply differences, preserve independent points and reject stal
  const r=s.send({id:crypto.randomUUID(),version:1,puntosA:80,puntosB:50});assert.equal(r.success,true);assert.equal(s.cells.E8.value,100);assert.equal(s.cells.W8.value,50);assert.equal(s.journal.length,3);
  const reopen=s.send({id:crypto.randomUUID(),version:2,estado:'en-juego',puntosA:0,puntosB:0,fila:null,categoria:''});assert.equal(reopen.success,true);assert.equal(s.cells.E8.value,20);assert.equal(s.cells.W8.value,0);
 });
-test('changing the destination reverses old cells and credits the new cells',()=>{
- const s=setup();s.send();assert.equal(s.send({id:crypto.randomUUID(),version:1,categoria:'junior',fila:9}).success,true);
- assert.equal(s.cells.E8.value,0);assert.equal(s.cells.W8.value,0);assert.equal(s.cells.F9.value,100);assert.equal(s.cells.X9.value,25);
+test('rejects a valid but unrelated destination without changing any scores',()=>{
+ const s=setup();s.send();
+ for(const patch of [{categoria:'junior'},{fila:9},{categoria:'junior',fila:9}]){
+  const r=s.send({id:crypto.randomUUID(),version:1,...patch});assert.equal(r.code,'INVALID');assert.equal(r.pending,false);
+ }
+ assert.equal(s.journal.length,2);assert.equal(s.cells.E8.value,100);assert.equal(s.cells.W8.value,25);
+});
+test('normalizes official labels and rejects unmapped disciplines before writing',()=>{
+ const s=setup();assert.equal(s.c.resultadoDestino_({categoria:'Juvenil A',deporte:' BÁSQUET '}).fila,12);
+ s.match.deporte='Tenis de mesa';const id=s.c.marcadorId_(s.match);
+ assert.equal(s.send({encuentroId:id}).code,'INVALID');assert.equal(s.journal.length,1);
+});
+test('retry completes the original plan even if official destination subsequently changes',()=>{
+ const s=setup();s.fail('W8');assert.equal(s.send().pending,true);s.fail('');s.match.deporte='Vóley';s.match.categoria='Junior';
+ assert.equal(s.send().success,true);assert.equal(s.cells.E8.value,100);assert.equal(s.cells.W8.value,25);
 });
 test('failure after first House is recoverable and blocks other results and manual writes',()=>{
  const s=setup();s.fail('W8');const r=s.send();assert.equal(r.success,false);assert.equal(r.pending,true);assert.equal(s.cells.E8.value,100);assert.equal(s.cells.W8.value,0);

@@ -64,6 +64,17 @@ function resultadoCompletar_(sheet,index,record) {
   record[17] = 'CONFIRMADO';
   return arbitrajeJson_({success:true,id:record[0],marcador:resultadoPublico_(record)});
 }
+// El destino se obtiene del encuentro oficial, nunca solo del formulario.
+function resultadoDestino_(match) {
+  function normalizar(value) { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,''); }
+  var categorias = ['promesas','infantil','junior','juvenila','juvenilb'];
+  var actividades = {8:'Futsal',9:'Vóley',10:'Pasabola',11:'Balonmano',12:'Básquet',13:'Coneball',14:'Carrera 25 metros',15:'Carrera de relevos',16:'Carrera de resistencia',17:'Bádminton',18:'Salta soga',19:'Carrera de Michi',20:'Aros musicales',21:'Carrera de canaletas',22:'Comelones',23:'Revienta globos',24:'La cuchara y el limón',25:'Carrera de ganchos',26:'Carrera de tres piernas',27:'Matemática',28:'Comunicación',29:'DPSC',30:'Inglés',31:'Arte',34:'Barras',35:'Drill',36:'Sana convivencia',37:'Eco House'};
+  var categoria = categorias.find(function(c) { return normalizar(match.categoria).startsWith(c); });
+  var fila = Object.keys(actividades).find(function(r) { return normalizar(actividades[r]) === normalizar(match.deporte); });
+  if (!categoria || !fila) throw new Error('INVALID');
+  return {categoria:categoria, fila:Number(fila)};
+}
+
 function guardarResultado_(d,raw,lock) {
   var prepared = false;
   try {
@@ -99,6 +110,10 @@ function guardarResultado_(d,raw,lock) {
     var matches = fixture.partidos.filter(function(p){return p.encuentroId === d.encuentroId;});
     if (matches.length !== 1 || matches[0].admiteMarcador !== true) throw new Error('FIXTURE_CHANGED');
     var match = matches[0], houses = match.houses;
+    if (d.estado === 'finalizado') {
+      var destino = resultadoDestino_(match);
+      if (d.categoria !== destino.categoria || d.fila !== destino.fila) throw new Error('INVALID');
+    }
     if (!Array.isArray(houses) || houses.length !== 2 || houses[0] === houses[1]) throw new Error('FIXTURE_CHANGED');
     lock.waitLock(20000);
     rows = resultadoRows_(sheet);

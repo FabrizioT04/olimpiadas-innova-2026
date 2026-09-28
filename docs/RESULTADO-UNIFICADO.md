@@ -22,7 +22,7 @@ Coordinar la actualización sin registros en curso. No cambiar las URLs de las i
 
 ## Correcciones y recuperación
 
-Cada nueva versión contiene los puntos **totales del encuentro**, no una cantidad adicional. La operación resta la contribución anterior y suma la nueva; los otros puntos de las celdas se conservan. Si cambia la actividad o categoría, también se revierten las celdas anteriores. Al reabrir un encuentro finalizado se retiran sus puntos integrados. No se permiten totales negativos ni escrituras en fórmulas o celdas negras.
+Cada nueva versión contiene los puntos **totales del encuentro**, no una cantidad adicional. La operación resta la contribución anterior y suma la nueva; los otros puntos de las celdas se conservan. La categoría y actividad deben coincidir con el encuentro oficial: el servidor rechaza otro destino antes de escribir. Si un registro anterior tenía un destino incorrecto, una corrección al destino oficial revierte su contribución anterior. Al reabrir un encuentro finalizado se retiran sus puntos integrados. No se permiten totales negativos ni escrituras en fórmulas o celdas negras.
 
 La hoja privada `Marcadores` conserva sus primeras 13 columnas y añade `PuntosA`, `PuntosB`, `FilaPuntaje`, `CategoriaPuntaje`, `EstadoRegistro` y `PlanRecuperacion`. El plan registra valores anteriores y finales antes de escribir en la Sábana. Un fallo deja la operación pendiente y bloquea otras escrituras mediante esta API hasta completarla. El reintento usa el mismo ID y plan, incluso si el fixture cambió después. El fixture solo muestra versiones confirmadas.
 
@@ -34,8 +34,12 @@ Si se perdió la pestaña y su reintento, un administrador puede ejecutar `recup
 
 Los marcadores antiguos siguen visibles, sin puntos integrados. No se puede deducir si sus puntos ya se dieron manualmente: la interfaz lo advierte antes de sumar. Verificar estos casos antes de migrarlos.
 
-La categoría y actividad se sugieren solo por coincidencias conocidas y el profesor las confirma. No se inventan filas para disciplinas ausentes de la Sábana; por ejemplo, tenis de mesa necesita un destino oficial definido antes de asignar sus puntos. Los encuentros sin equipos o datos completos siguen seleccionables con avisos.
+La categoría y actividad se derivan de coincidencias conocidas con el encuentro oficial y se validan también en Apps Script. No se inventan filas para disciplinas ausentes de la Sábana; por ejemplo, tenis de mesa necesita un destino oficial definido antes de asignar sus puntos. Los encuentros sin equipos o datos completos siguen seleccionables con avisos.
 
 ## Verificación
 
 Pruebas de firma, origen, identidad, versiones, diferencia de puntos, cambio de destino, reapertura, cero puntos, fallos entre Houses, confirmación interrumpida, recuperación administrativa y bloqueo de ediciones externas. Se conservan las pruebas del fixture público, respaldo KV y API protegida. La vista previa local usa datos simulados y no escribe en Google Sheets.
+
+## Instalación de la validación de destino
+
+Actualizar `ResultadoUnificado.gs` en el proyecto de **PUNTAJES** y publicar una nueva versión de su implementación existente, conservando URL y propiedades. Publicar GitHub/Cloudflare por sí solo no actualiza Apps Script. Los reintentos pendientes siguen el plan ya registrado; la validación del destino se aplica a nuevas operaciones finalizadas.
