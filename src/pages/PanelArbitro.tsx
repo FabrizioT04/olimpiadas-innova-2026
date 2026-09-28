@@ -90,8 +90,8 @@ export default function PanelArbitro() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-white/80 p-2 mb-6" role="group" aria-label="Tipo de registro">
           {([
             { id: 'marcadores', title: 'Resultado del partido', description: 'Marcador y puntos en una operación', Icon: Trophy },
+            { id: 'puntajes', title: 'Retos y ajustes', description: 'Otros puntos y penalidades por House', Icon: Medal },
             { id: 'contenido', title: 'Fotos y mascotas', description: 'Subir, revisar y publicar imágenes', Icon: Images },
-            { id: 'puntajes', title: 'Retos y ajustes', description: 'Otros puntos y penalidades por House', Icon: Medal, Images },
           ] as const).map(({ id, title, description, Icon }) => (
             <button key={id} type="button" aria-pressed={registro === id} aria-controls={`panel-${id}`}
               disabled={resultLocked || isSubmitting} onClick={() => setRegistro(id)}
