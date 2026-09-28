@@ -1,6 +1,12 @@
 interface Env { FIXTURE_SCRIPT_URL?: string; FIXTURE_CACHE?: KVNamespace }
 const CACHE_KEY = 'fixture-publico-v1';
 const FRESH_MS = 30000;
+const MIN_REFRESH_MS = 10000;
+const FAILURE_COOLDOWN_MS = 30000;
+type Snapshot = { savedAt:number; fixture:ReturnType<typeof publicFixture> };
+// Per-instance protection complements the shared KV snapshot; not a global rate limiter.
+const recent = new Map<string, Snapshot>();
+const retryAfter = new Map<string, number>();
 const refreshes = new Map<string, Promise<ReturnType<typeof publicFixture>>>();
 const sourceId = '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg';
 const pick = (value: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.map(key => [key, value[key]]));
@@ -31,11 +37,14 @@ async function refreshFixture(env: Env) {
       const response = await fetch(url.toString(), {signal:AbortSignal.timeout(12000), redirect:'follow', cache:'no-store'});
       if (!response.ok) throw new Error('Upstream unavailable');
       const fixture = publicFixture(await response.json());
+      recent.set(env.FIXTURE_SCRIPT_URL!, {savedAt:Date.now(), fixture});
+      retryAfter.delete(env.FIXTURE_SCRIPT_URL!);
       // KV failure must not discard a valid live response; snapshots never expire.
       try { await env.FIXTURE_CACHE?.put(CACHE_KEY, JSON.stringify({savedAt:Date.now(), fixture})); } catch { console.warn('Fixture snapshot could not be saved'); }
       return fixture;
     } catch { /* Retry the read once; this endpoint never writes to Sheets. */ }
   }
+  retryAfter.set(env.FIXTURE_SCRIPT_URL!, Date.now() + FAILURE_COOLDOWN_MS);
   throw new Error('Fixture unavailable');
 }
 
@@ -44,17 +53,25 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, waitUntil })
   const freshRequested = new URL(request.url).searchParams.get('actualizar') === '1';
   if (request.method !== 'GET') return Response.json({error:'Método no permitido.'}, {status:405, headers:{...headers, Allow:'GET'}});
   if (!env.FIXTURE_SCRIPT_URL) return Response.json({error:'La programación no está configurada.'}, {status:503, headers});
-  let cached: {savedAt:number; fixture:ReturnType<typeof publicFixture>} | null = null;
+  let cached: Snapshot | null = null;
   try {
     const snapshot = await env.FIXTURE_CACHE?.get<{savedAt:number; fixture:unknown}>(CACHE_KEY, {type:'json', cacheTtl:30});
     if (snapshot && Number.isFinite(snapshot.savedAt) && snapshot.savedAt <= Date.now()) {
       cached = {savedAt:snapshot.savedAt, fixture:publicFixture(snapshot.fixture)};
     }
   } catch { /* A missing or damaged snapshot must not prevent a live read. */ }
-  if (!freshRequested && cached && Date.now() - cached.savedAt < FRESH_MS) {
+  const refreshKey = env.FIXTURE_SCRIPT_URL;
+  const local = recent.get(refreshKey);
+  if (local && (!cached || local.savedAt > cached.savedAt)) cached = local;
+  const cooldown = Math.max(0, (retryAfter.get(refreshKey) || 0) - Date.now());
+  if (cooldown > 0) {
+    if (cached) return Response.json({...cached.fixture, copiaCompartida:true, desactualizado:true}, {headers});
+    return Response.json({error:'Google no está disponible. Espera unos segundos antes de actualizar.'},
+      {status:503, headers:{...headers, 'Retry-After':String(Math.ceil(cooldown / 1000))}});
+  }
+  if (cached && Date.now() - cached.savedAt < (freshRequested ? MIN_REFRESH_MS : FRESH_MS)) {
     return Response.json({...cached.fixture, copiaCompartida:true, desactualizado:false}, {headers});
   }
-  const refreshKey = env.FIXTURE_SCRIPT_URL;
   let pending = refreshes.get(refreshKey);
   if (!pending) {
     pending = refreshFixture(env).finally(() => { refreshes.delete(refreshKey); });
