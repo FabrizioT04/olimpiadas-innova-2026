@@ -21,7 +21,9 @@ function verificarResultadoUnificado() {
 }
 // Recuperación administrativa si se cerró el navegador y se perdió el reintento.
 // No cambia el plan original ni resuelve automáticamente ediciones externas.
-function recuperarResultadoPendiente() {
+// El sufijo _ impide invocarla mediante google.script.run desde la web.
+// Ejecutar únicamente desde el editor de Apps Script; no crear un wrapper público.
+function recuperarResultadoPendiente_() {
   var lock=LockService.getScriptLock();lock.waitLock(20000);
   try {
     var sheet=resultadoSheet_(),rows=resultadoRows_(sheet);

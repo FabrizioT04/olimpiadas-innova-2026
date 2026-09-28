@@ -89,7 +89,7 @@ test('legacy fixture writes are disabled, old records remain readable and row mo
 });
 
 test('administrative recovery completes the original plan after browser retry is lost',()=>{
- const s=setup();s.fail('W8');s.send();s.fail('');s.c.recuperarResultadoPendiente();
+ const s=setup();s.fail('W8');s.send();s.fail('');assert.equal(typeof s.c.recuperarResultadoPendiente,'undefined');s.c.recuperarResultadoPendiente_();
  assert.equal(s.cells.E8.value,100);assert.equal(s.cells.W8.value,25);assert.equal(s.journal[1][17],'CONFIRMADO');assert.equal(s.send().success,true);
 });
 test('zero awards are explicit and prior pending manual operations block new results',()=>{

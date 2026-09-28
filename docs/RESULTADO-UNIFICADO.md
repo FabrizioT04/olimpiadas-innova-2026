@@ -28,7 +28,7 @@ La hoja privada `Marcadores` conserva sus primeras 13 columnas y añade `PuntosA
 
 Google Sheets no ofrece una transacción única entre ambos archivos: una lectura de puntajes podría observar temporalmente una escritura parcial antes de su recuperación. El sistema no declara éxito hasta confirmar ambos destinos y el registro. No editar directamente las celdas afectadas durante una operación pendiente. Si se detecta una edición externa, la recuperación se detiene para revisión.
 
-Si se perdió la pestaña y su reintento, un administrador puede ejecutar `recuperarResultadoPendiente` en el proyecto de puntajes. Respeta el plan original y rechaza discrepancias; no borrar filas pendientes ni crear otro ID para el mismo intento. Los pendientes antiguos de `HistorialArbitraje` deben revisarse antes de registrar nuevos resultados integrados.
+Si se perdió la pestaña y su reintento, un administrador puede ejecutar `recuperarResultadoPendiente_` en el proyecto de puntajes. Respeta el plan original y rechaza discrepancias; no borrar filas pendientes ni crear otro ID para el mismo intento. Los pendientes antiguos de `HistorialArbitraje` deben revisarse antes de registrar nuevos resultados integrados.
 
 ## Datos anteriores y disciplinas
 
@@ -43,3 +43,6 @@ Pruebas de firma, origen, identidad, versiones, diferencia de puntos, cambio de 
 ## Instalación de la validación de destino
 
 Actualizar `ResultadoUnificado.gs` en el proyecto de **PUNTAJES** y publicar una nueva versión de su implementación existente, conservando URL y propiedades. Publicar GitHub/Cloudflare por sí solo no actualiza Apps Script. Los reintentos pendientes siguen el plan ya registrado; la validación del destino se aplica a nuevas operaciones finalizadas.
+
+
+La recuperación termina en `_` para que Apps Script la trate como privada y no permita invocarla desde `google.script.run`. No conservar una función pública con el nombre anterior ni crear un wrapper público. Al actualizar, reemplazar el archivo completo y publicar una nueva versión de la implementación existente del proyecto de puntajes; guardar el código sin actualizar la implementación no protege la versión web anterior. Revisar y archivar otras implementaciones antiguas que sigan exponiendo esta función.
