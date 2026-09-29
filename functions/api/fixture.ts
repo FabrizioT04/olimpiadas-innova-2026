@@ -30,11 +30,11 @@ export function publicFixture(value: unknown) {
 }
 
 async function refreshFixture(env: Env) {
-  for (let attempt = 0; attempt < 2; attempt++) {
+  { // One longer read lets slow Apps Script executions complete without duplicate requests.
     try {
       const url = new URL(env.FIXTURE_SCRIPT_URL!);
-      url.searchParams.set('_consulta', `${Date.now()}-${attempt}`);
-      const response = await fetch(url.toString(), {signal:AbortSignal.timeout(12000), redirect:'follow', cache:'no-store'});
+      url.searchParams.set('_consulta', `${Date.now()}`);
+      const response = await fetch(url.toString(), {signal:AbortSignal.timeout(25000), redirect:'follow', cache:'no-store'});
       if (!response.ok) throw new Error('Upstream unavailable');
       const fixture = publicFixture(await response.json());
       recent.set(env.FIXTURE_SCRIPT_URL!, {savedAt:Date.now(), fixture});
@@ -42,7 +42,7 @@ async function refreshFixture(env: Env) {
       // KV failure must not discard a valid live response; snapshots never expire.
       try { await env.FIXTURE_CACHE?.put(CACHE_KEY, JSON.stringify({savedAt:Date.now(), fixture})); } catch { console.warn('Fixture snapshot could not be saved'); }
       return fixture;
-    } catch { /* Retry the read once; this endpoint never writes to Sheets. */ }
+    } catch { /* Keep the last snapshot on failure; the next poll retries after cooldown. */ }
   }
   retryAfter.set(env.FIXTURE_SCRIPT_URL!, Date.now() + FAILURE_COOLDOWN_MS);
   throw new Error('Fixture unavailable');

@@ -6,12 +6,12 @@ let instance=0;
 const load=()=>import('data:text/javascript;base64,'+Buffer.from(source).toString('base64')+'#'+(++instance));
 const fixture={version:1,fuente:'14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg',actualizado:new Date().toISOString(),avisos:[],finalistas:[],partidos:[{id:'one',marcador:{version:1,a:3,b:2,email:'private@example.com',motivo:'private'}}],history:['private']};
 const env={FIXTURE_SCRIPT_URL:'https://script.google.com/macros/s/example/exec'};
-test('public fixture needs no session, retries 404 from the original URL, and strips private metadata',async()=>{
+test('public fixture needs no session, reads the original URL, and strips private metadata',async()=>{
   const {onRequest}=await load(),original=global.fetch;let calls=0;
-  global.fetch=async(url)=>{assert.equal(new URL(url).pathname,'/macros/s/example/exec');return ++calls===1 ? new Response('',{status:404}) : Response.json(fixture);};
+  global.fetch=async(url)=>{assert.equal(new URL(url).pathname,'/macros/s/example/exec');calls++;return Response.json(fixture);};
   try {
     const result=await onRequest({request:new Request('https://example.com/api/fixture'),env});
-    assert.equal(result.status,200);assert.equal(calls,2);
+    assert.equal(result.status,200);assert.equal(calls,1);
     const data=await result.json();assert.equal(data.partidos[0].marcador.a,3);
     assert.equal(data.history,undefined);assert.equal(data.partidos[0].marcador.email,undefined);assert.equal(data.partidos[0].marcador.motivo,undefined);
   }finally{global.fetch=original;}
@@ -21,10 +21,10 @@ test('public fixture bounds retries, rejects writes and missing configuration',a
   global.fetch=async()=>{calls++;return Response.json({error:'failed'});};
   const request=new Request('https://example.com/api/fixture');
   try {
-    assert.equal((await onRequest({request,env})).status,502);assert.equal(calls,2);
+    assert.equal((await onRequest({request,env})).status,502);assert.equal(calls,1);
     assert.equal((await onRequest({request,env:{}})).status,503);
     assert.equal((await onRequest({request:new Request(request,{method:'POST'}),env})).status,405);
-    assert.equal(calls,2);
+    assert.equal(calls,1);
   }finally{global.fetch=original;}
 });
 
@@ -41,7 +41,7 @@ test('shared snapshot serves a new visitor without Google and stale snapshot sur
     const stale=await onRequest({request,env:{...env,FIXTURE_CACHE:cache},waitUntil:p=>background.push(p)});
     const data=await stale.json();assert.equal(stale.status,200);assert.equal(data.desactualizado,true);
     assert.equal(data.actualizado,fixture.actualizado);assert.equal(data.partidos[0].marcador.a,3);
-    await Promise.all(background);assert.equal(calls,2);
+    await Promise.all(background);assert.equal(calls,1);
   }finally{global.fetch=original;}
 });
 
@@ -76,7 +76,7 @@ test('manual refresh retains snapshot only when live fetch fails',async()=>{
  global.fetch=async()=>{calls++;throw Error('offline');};
  try {
   const response=await onRequest({request:new Request('https://example.com/api/fixture?actualizar=1'),env:{...env,FIXTURE_CACHE:{get:async()=>({savedAt:Date.now()-11000,fixture})}}});
-  const data=await response.json();assert.equal(calls,2);assert.equal(data.desactualizado,true);assert.equal(data.partidos[0].marcador.a,3);
+  const data=await response.json();assert.equal(calls,1);assert.equal(data.desactualizado,true);assert.equal(data.partidos[0].marcador.a,3);
  }finally{global.fetch=original;}
 });
 
@@ -106,7 +106,7 @@ test('failure backs off for thirty seconds then retries; no unbounded Google req
  try{
   assert.equal((await onRequest({env,request})).status,502);
   for(let i=0;i<5;i++){const response=await onRequest({env,request});assert.equal(response.status,503);assert.equal(response.headers.get('Retry-After'),'30');}
-  assert.equal(calls,2);now+=30001;assert.equal((await onRequest({env,request})).status,502);assert.equal(calls,4);
+  assert.equal(calls,1);now+=30001;assert.equal((await onRequest({env,request})).status,502);assert.equal(calls,2);
  }finally{global.fetch=original;Date.now=originalNow;}
 });
 
