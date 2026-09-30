@@ -38,8 +38,9 @@ export function isActividad(value:unknown): value is Actividad {
     && typeof p.admiteMarcador === 'boolean';
 }
 // Activities for all four Houses are ranked in «Clasificación por puestos», not scored as a match.
-export function paraTodasLasHouses(p:{enfrentamiento:string}) {
-  return /\bTODAS\s+LAS\s+HOUSES?\b/.test(p.enfrentamiento.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase());
+// The programme marks them in the teams or the category column («TODAS LAS HOUSE»).
+export function paraTodasLasHouses(p:{enfrentamiento:string; categoria?:string}) {
+  return /\bTODAS\s+LAS\s+HOUSES?\b/.test(`${p.enfrentamiento} ${p.categoria ?? ''}`.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase());
 }
 export const CATEGORIAS: Record<string,string> = Object.fromEntries(LISTA_CATEGORIAS.map(c => [c.id, c.nombre]));
 export const ACTIVIDADES: Record<string,string> = Object.fromEntries(LISTA_ACTIVIDADES.map(a => [String(a.fila), a.nombre]));

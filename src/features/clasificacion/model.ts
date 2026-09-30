@@ -23,6 +23,27 @@ export function isClasificacion(value: unknown): value is Clasificacion {
     && typeof c.actualizado === 'string' && !Number.isNaN(Date.parse(c.actualizado));
 }
 
+const normalizar = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ');
+
+// Categories named in a programme cell ("Promesas - 1ª y 2ª, Infantil 3ª y4ª…"); none named means all.
+export function categoriasDe(texto: string): string[] {
+  const t = normalizar(texto);
+  const patrones: [string, RegExp][] = [['promesas', /PROMESAS/], ['infantil', /INFANTIL/], ['junior', /JUNIOR/],
+    ['juvenila', /JUVENIL ?A\b/], ['juvenilb', /JUVENIL ?B\b/]];
+  const encontradas = patrones.filter(([, re]) => re.test(t)).map(([id]) => id);
+  return encontradas.length ? encontradas : [...IDS_CATEGORIA];
+}
+
+// Score sheet row suggested for a programme name; the referee can still choose another one.
+const ALIAS_FILA: [RegExp, number][] = [[/RESISTENCIA/, 16], [/RELEVO|POSTA/, 15], [/VELOCIDAD|25 METROS/, 14],
+  [/SALTA SOGA/, 18], [/MICHI/, 19], [/AROS/, 20], [/CANALETA/, 21], [/COMELON/, 22], [/GLOBO/, 23], [/CUCHARA/, 24],
+  [/GANCHO/, 25], [/TRES PIERNAS/, 26], [/MATEMATICA/, 27], [/COMUNICACION/, 28], [/DPSC/, 29], [/INGLES/, 30],
+  [/\bARTE\b/, 31], [/BARRA/, 34], [/DRILL/, 35], [/SANA CONVIVENCIA|EMBAJADOR/, 36], [/ECO HOUSE/, 37]];
+export function filaSugerida(deporte: string) {
+  const t = normalizar(deporte);
+  return ALIAS_FILA.find(([re]) => re.test(t))?.[1] ?? null;
+}
+
 export function hayClasificacionPendiente() {
   try { return !!sessionStorage.getItem(CLASIFICACION_PENDIENTE); } catch { return false; }
 }

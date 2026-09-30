@@ -15,4 +15,6 @@ test('activities for all four Houses are left out of the match list',async()=>{
  const {paraTodasLasHouses}=await model;
  for(const enfrentamiento of ['TODAS LAS HOUSE','Todas las House','todas las houses','  Todas  las  HOUSE '])assert.equal(paraTodasLasHouses({enfrentamiento}),true);
  for(const enfrentamiento of ['BLANCO VS VERDE','Equipos por definir','VS','Bailetón','Houses todas'])assert.equal(paraTodasLasHouses({enfrentamiento}),false);
+ assert.equal(paraTodasLasHouses({enfrentamiento:'Equipos por definir',categoria:'TODAS LAS HOUSE'}),true);
+ assert.equal(paraTodasLasHouses({enfrentamiento:'AZUL VS VERDE',categoria:'Juvenil A'}),false);
 });
