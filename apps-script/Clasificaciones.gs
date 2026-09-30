@@ -3,7 +3,8 @@
 // Se guarda en la hoja privada «Marcadores» con el mismo formato de 19 columnas que los
 // resultados: comparte el bloqueo, el estado PENDIENTE y recuperarResultadoPendiente_.
 // Cada actividad tiene su propia clasificación y sus puntos se suman: una actividad del fixture
-// se identifica por su encuentroId y una actividad fuera del fixture por «sabana:<fila>».
+// se identifica por su encuentroId y una actividad fuera del fixture por «sabana:<fila>», o por
+// «sabana:<fila>:<categoria>» cuando cada categoría compite aparte (retos académicos).
 // Columnas propias: B = clasificacion:<actividad>, J = 'clasificacion',
 // M = {puestos, puntos, actividad, detalle} en JSON; P = fila y Q = columna de categoría de la Sábana.
 var CLASIFICACION_HOUSES = ['white','blue','orange','green'];
@@ -32,7 +33,7 @@ function guardarClasificacion_(d, raw, lock) {
     if (!d || d.action !== 'clasificacion' || typeof d.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(d.id) ||
         typeof d.email !== 'string' || !d.email.includes('@') || !Number.isSafeInteger(d.version) || d.version < 0 ||
         !puestos || !puntos || typeof d.motivo !== 'string' || d.motivo.trim().length < 3 || d.motivo.length > 300 ||
-        typeof d.actividad !== 'string' || !/^([0-9a-f]{64}|sabana:[0-9]{1,2})$/.test(d.actividad) ||
+        typeof d.actividad !== 'string' || !/^([0-9a-f]{64}|sabana:[0-9]{1,2}(:[a-z]+)?)$/.test(d.actividad) || (d.actividad.split(':')[2] || d.categoria) !== d.categoria ||
         typeof d.detalle !== 'string' || d.detalle.trim().length < 3 || d.detalle.length > 200) throw new Error('INVALID');
     // Each position from 1st to 4th belongs to exactly one House: no ties.
     if (CLASIFICACION_HOUSES.map(function(h) { return puestos[h]; }).sort().join() !== '1,2,3,4') throw new Error('INVALID');

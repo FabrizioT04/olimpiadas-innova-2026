@@ -1,4 +1,4 @@
-import { COLORES_HOUSE, FILAS_ACTIVIDAD, IDS_CATEGORIA } from '../../../shared/olimpiadas';
+import { ACTIVIDADES, COLORES_HOUSE, FILAS_ACTIVIDAD, IDS_CATEGORIA } from '../../../shared/olimpiadas';
 
 // sessionStorage key of a ranking sent but not yet confirmed, so a reload retries the same operation.
 export const CLASIFICACION_PENDIENTE = 'clasificacion-intento-v1';
@@ -35,6 +35,9 @@ export function categoriasDe(texto: string): string[] {
   const encontradas = patrones.filter(([, re]) => re.test(t)).map(([id]) => id);
   return encontradas.length ? encontradas : [...IDS_CATEGORIA];
 }
+
+// In academic challenges each category plays a different game: one ranking per category, in its own column.
+export const porCategoria = (fila: number) => ACTIVIDADES.find(a => a.fila === fila)?.grupo === 'Retos Académicos';
 
 // Rankings have no category: points go to the column of the last category taking part.
 export function columnaDe(texto: string) {

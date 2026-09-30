@@ -81,3 +81,13 @@ test('scripts without the ranking file answer UPDATE_REQUIRED',()=>{
  const s=setup();delete s.c.guardarClasificacion_;s.c.guardarClasificacion_=undefined;
  assert.equal(s.send().code,'UPDATE_REQUIRED');assert.equal(s.journal.length,1);
 });
+test('academic challenges keep one ranking per category, each in its own column',()=>{
+ const s=setup();const reto={fila:27,actividad:'sabana:27:promesas',categoria:'promesas',detalle:'Matemática · Promesas'};
+ assert.equal(s.send({id:crypto.randomUUID(),...reto}).success,true);
+ assert.equal(s.send({id:crypto.randomUUID(),...reto,actividad:'sabana:27:junior',categoria:'junior',detalle:'Matemática · Junior'}).success,true);
+ assert.deepEqual(['D27','J27','P27','V27','F27','L27','R27','X27'].map(k=>score(s,k)),[95,100,85,90,95,100,85,90]);
+ assert.equal(s.public().clasificaciones.length,2);
+ // The category in the activity key must match the scoring column.
+ for(const patch of [{actividad:'sabana:27:junior',categoria:'infantil'},{actividad:'sabana:27:otra',categoria:'junior'}])
+  assert.equal(s.send({id:crypto.randomUUID(),...reto,...patch}).code,'INVALID');
+});
