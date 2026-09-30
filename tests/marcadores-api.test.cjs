@@ -11,6 +11,49 @@ const env={ACCESS_TEAM_DOMAIN:'test.cloudflareaccess.com',ACCESS_AUD:'test',APP_
 const body={id:'12345678-1234-1234-1234-123456789012',encuentroId:'a'.repeat(64),version:0,a:3,b:2,estado:'finalizado',motivo:'Partido terminado',email:'spoof@example.com',houseA:'blue',puntosA:100,puntosB:25,fila:8,categoria:'infantil'};
 const request=(data,origin=env.APP_ORIGIN)=>new Request(env.APP_ORIGIN+'/arbitraje/api/marcadores',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','Cf-Access-Jwt-Assertion':'stubbed-only-in-contract-test'},body:JSON.stringify(data)});
 
+test('referee fixture falls back to the last saved copy when Google does not answer',async()=>{
+  // Fresh module instance: the copy throttle is per instance.
+  const {onRequest}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64')+'#copia'),original=global.fetch;
+  const read=()=>new Request(env.APP_ORIGIN+'/arbitraje/api/fixture',{headers:{'Cf-Access-Jwt-Assertion':'stubbed-only-in-contract-test'}});
+  const fixture={fuente:'14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg',partidos:[{id:'1'}],marcadoresHabilitados:true,resultadosVersion:2};
+  const store=new Map();let puts=0;
+  const FIXTURE_CACHE={get:async(key,type)=>{assert.equal(type,'json');const v=store.get(key);return v?JSON.parse(v):null;},put:async(key,value)=>{puts++;store.set(key,value);}};
+  const withCache={...env,FIXTURE_CACHE};
+  try {
+    global.fetch=async()=>Response.json(fixture);
+    const live=await onRequest({request:read(),env:withCache});
+    assert.equal(live.status,200);assert.deepEqual(await live.json(),fixture);
+    assert.equal(puts,1);assert.equal(JSON.parse(store.get('fixture-arbitraje-v1')).fixture.partidos.length,1);
+    assert.equal((await onRequest({request:read(),env:withCache})).status,200);
+    assert.equal(puts,1,'the copy is saved at most once a minute per instance');
+    for (const fail of [async()=>{throw new Error('timeout');},async()=>Response.json({error:'unavailable'}),async()=>new Response('x',{status:500})]) {
+      global.fetch=fail;
+      const fallback=await onRequest({request:read(),env:withCache});
+      assert.equal(fallback.status,200);
+      const data=await fallback.json();
+      assert.deepEqual(data.partidos,fixture.partidos);assert.equal(data.marcadoresHabilitados,true);
+      assert.ok(!Number.isNaN(Date.parse(data.copiaGuardada)));
+      assert.equal(fallback.headers.get('Cache-Control'),'no-store');
+    }
+    store.set('fixture-arbitraje-v1',JSON.stringify({savedAt:Date.now(),fixture:{...fixture,fuente:'otra-hoja'}}));
+    assert.equal((await onRequest({request:read(),env:withCache})).status,502,'a copy from another sheet is never served');
+    store.clear();
+    assert.equal((await onRequest({request:read(),env:withCache})).status,502);
+    const brokenCache={get:async()=>{throw new Error('KV down');},put:async()=>{throw new Error('KV down');}};
+    assert.equal((await onRequest({request:read(),env:{...env,FIXTURE_CACHE:brokenCache}})).status,502);
+  }finally{global.fetch=original;}
+});
+
+test('referee fixture answers live even when its copy cannot be saved',async()=>{
+  const {onRequest}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64')+'#sin-kv'),original=global.fetch;
+  const fixture={fuente:'14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg',partidos:[]};
+  try {
+    global.fetch=async()=>Response.json(fixture);
+    const response=await onRequest({request:new Request(env.APP_ORIGIN+'/arbitraje/api/fixture',{headers:{'Cf-Access-Jwt-Assertion':'stub'}}),env:{...env,FIXTURE_CACHE:{put:async()=>{throw new Error('KV down');}}}});
+    assert.equal(response.status,200);assert.deepEqual(await response.json(),fixture);
+  }finally{global.fetch=original;}
+});
+
 test('retired diagnostic routes are not found and never reach Apps Script',async()=>{
   const {onRequest}=await modulePromise,original=global.fetch;
   global.fetch=async()=>{throw new Error('Must not call Apps Script');};

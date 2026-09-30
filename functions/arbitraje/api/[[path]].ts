@@ -10,11 +10,19 @@ interface Env {
   APPS_SCRIPT_URL: string;
   ARBITRAJE_SECRET: string;
   FIXTURE_SCRIPT_URL?: string;
+  FIXTURE_CACHE?: KVNamespace;
 }
 const json = (value: unknown, status = 200) => Response.json(value, {
   status, headers: { 'Cache-Control': 'no-store' },
 });
 const keySets = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
+// Last programme read for referees, kept apart from the filtered public snapshot and only served
+// through this authenticated route. Saving stays safe with an old copy: Apps Script re-reads the
+// fixture and rejects results whose match version changed (CONFLICT / FIXTURE_CHANGED).
+const FIXTURE_ARBITRAJE_KEY = 'fixture-arbitraje-v1';
+const COPY_INTERVAL_MS = 60000;
+let lastCopySaved = 0;
+type FixtureArbitraje = { fuente?: string; partidos?: unknown[]; error?: string };
 
 export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD || !env.APP_ORIGIN) {
@@ -48,10 +56,24 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     try {
       const upstream = await fetch(env.FIXTURE_SCRIPT_URL, { signal: AbortSignal.timeout(25000) });
       if (!upstream.ok) throw new Error('upstream');
-      const result = await upstream.json() as { fuente?: string; partidos?: unknown[]; error?: string };
+      const result = await upstream.json() as FixtureArbitraje;
       if (result.error || result.fuente !== FIXTURE_FUENTE || !Array.isArray(result.partidos)) throw new Error('fixture');
+      // At most one KV write per minute per instance; a copy that cannot be saved must not block the live answer.
+      if (env.FIXTURE_CACHE && Date.now() - lastCopySaved >= COPY_INTERVAL_MS) {
+        try {
+          await env.FIXTURE_CACHE.put(FIXTURE_ARBITRAJE_KEY, JSON.stringify({ savedAt: Date.now(), fixture: result }));
+          lastCopySaved = Date.now();
+        } catch { console.warn('Referee fixture copy could not be saved'); }
+      }
       return json(result);
     } catch {
+      // Google sometimes takes longer than the timeout: show the last copy instead of an empty panel.
+      try {
+        const copy = await env.FIXTURE_CACHE?.get<{ savedAt: number; fixture: FixtureArbitraje }>(FIXTURE_ARBITRAJE_KEY, 'json');
+        if (copy && Number.isFinite(copy.savedAt) && copy.fixture?.fuente === FIXTURE_FUENTE && Array.isArray(copy.fixture.partidos)) {
+          return json({ ...copy.fixture, copiaGuardada: new Date(copy.savedAt).toISOString() });
+        }
+      } catch { /* Without a usable copy, report the original failure. */ }
       return json({ error: 'No se pudo cargar la programación. Pulsa «Recargar partidos» para reintentar.' }, 502);
     }
   }

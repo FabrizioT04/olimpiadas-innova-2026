@@ -14,6 +14,8 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
   const [puntosA,setPuntosA] = useState(''), [puntosB,setPuntosB] = useState('');
   const [busy,setBusy] = useState(false), [loading,setLoading] = useState(true);
   const [error,setError] = useState(''), [message,setMessage] = useState('');
+  // Set when Google did not answer in time and the server returned the last saved programme.
+  const [copiaGuardada,setCopiaGuardada] = useState('');
   const [pending,setPending] = useState<Intent|null>(() => {
     try { const raw = sessionStorage.getItem(STORAGE); return raw ? JSON.parse(raw) : null; } catch { return null; }
   });
@@ -52,6 +54,7 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
         throw new Error('Los marcadores aún no están habilitados. Completa la configuración del script.');
       if (signal?.aborted || expired) return;
       setError('');
+      setCopiaGuardada(typeof data.copiaGuardada === 'string' && !Number.isNaN(Date.parse(data.copiaGuardada)) ? data.copiaGuardada : '');
       const next:Actividad[] = data.partidos.filter(isActividad);
       setMatches(next);
       // A fresh selection is required after loading, avoiding unnoticed version changes while editing.
@@ -103,6 +106,7 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
     <p className="text-sm text-slate-500">Registra el marcador y, al finalizar, los puntos que decida el profesor para cada House.</p>
     {message && <p role="status" className="text-green-800 bg-green-50 p-3 rounded-lg">{message}</p>}
     {error && <p role="alert" className="text-red-800 bg-red-50 p-3 rounded-lg">{error}</p>}
+    {copiaGuardada && !error && <p role="status" className="text-amber-900 bg-amber-50 p-3 rounded-lg">Google no respondió a tiempo. Se muestra la programación leída el {new Date(copiaGuardada).toLocaleString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}; puede no incluir los últimos cambios. Si un encuentro cambió, el guardado lo detectará y te pedirá recargar. Pulsa «Recargar partidos» para intentar leer la versión actual.</p>}
     {pending && <div className="bg-amber-50 text-amber-900 rounded-lg p-3 space-y-2"><p>Hay un resultado y sus puntos sin confirmar: {pending.a} – {pending.b} · {STATUS_NAMES[pending.estado]}. Reintenta para recuperar su confirmación.</p>
       <button type="button" disabled={busy || loading} onClick={() => void save()} className="underline font-semibold">{busy ? 'Confirmando…' : 'Reintentar el mismo guardado'}</button></div>}
     <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); setError(''); void load(); }} className="text-blue-700 underline disabled:opacity-50">{loading ? 'Leyendo partidos…' : 'Recargar partidos'}</button>
