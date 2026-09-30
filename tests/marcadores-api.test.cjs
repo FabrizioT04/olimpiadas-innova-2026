@@ -11,17 +11,15 @@ const env={ACCESS_TEAM_DOMAIN:'test.cloudflareaccess.com',ACCESS_AUD:'test',APP_
 const body={id:'12345678-1234-1234-1234-123456789012',encuentroId:'a'.repeat(64),version:0,a:3,b:2,estado:'finalizado',motivo:'Partido terminado',email:'spoof@example.com',houseA:'blue',puntosA:100,puntosB:25,fila:8,categoria:'infantil'};
 const request=(data,origin=env.APP_ORIGIN)=>new Request(env.APP_ORIGIN+'/arbitraje/api/marcadores',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','Cf-Access-Jwt-Assertion':'stubbed-only-in-contract-test'},body:JSON.stringify(data)});
 
-test('authenticated configuration diagnosis never calls upstream or reveals secret',async()=>{
+test('retired diagnostic routes are not found and never reach Apps Script',async()=>{
   const {onRequest}=await modulePromise,original=global.fetch;
   global.fetch=async()=>{throw new Error('Must not call Apps Script');};
   try {
-    const response=await onRequest({request:new Request(env.APP_ORIGIN+'/arbitraje/api/diagnostico-auth',{headers:{'Cf-Access-Jwt-Assertion':'stub'}}),env});
-    const result=await response.json();
-    assert.equal(result.huella,crypto.createHash('sha256').update(env.ARBITRAJE_SECRET).digest('hex').slice(0,16));
-    assert.equal(result.urlCorrecta,false);
-    assert.equal(result.espaciosEnExtremos,false);
-    assert.ok(!JSON.stringify(result).includes(env.ARBITRAJE_SECRET));
-    assert.equal(response.headers.get('Cache-Control'),'no-store');
+    for (const path of ['/arbitraje/api/diagnostico-auth','/arbitraje/api/comprobar-auth']) {
+      const response=await onRequest({request:new Request(env.APP_ORIGIN+path,{headers:{'Cf-Access-Jwt-Assertion':'stub'}}),env});
+      assert.equal(response.status,404);
+      assert.ok(!(await response.text()).includes(env.ARBITRAJE_SECRET));
+    }
   }finally{global.fetch=original;}
 });
 

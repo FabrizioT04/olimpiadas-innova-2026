@@ -42,17 +42,6 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   }
   if (url.pathname === '/arbitraje/api/contenido') return manageContent(request,env,email);
   if (url.pathname === '/arbitraje/api/session' && request.method === 'GET') return json({ email });
-  if (url.pathname === '/arbitraje/api/diagnostico-auth') {
-    if (request.method !== 'GET') return json({ error: 'Método no permitido.' }, 405);
-    const secret = env.ARBITRAJE_SECRET || '';
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret));
-    return json({
-      claveConfigurada: secret.length >= 32,
-      espaciosEnExtremos: secret !== secret.trim(),
-      huella: secret ? Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('').slice(0, 16) : null,
-      urlCorrecta: env.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbyVCfzMa_iJEEHn8Hs1KBUBtkk6DfhT58UK77a2QdscxIiH8EbnU8_4NcaYG5Dz4ttjsA/exec',
-    });
-  }
   if (url.pathname === '/arbitraje/api/fixture') {
     if (request.method !== 'GET') return json({ error: 'Método no permitido.' }, 405);
     if (!env.FIXTURE_SCRIPT_URL) return json({ error: 'La consulta de partidos aún no está configurada.' }, 503);
@@ -67,18 +56,17 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     }
   }
   const isMarker = url.pathname === '/arbitraje/api/marcadores';
-  const isProbe = url.pathname === '/arbitraje/api/comprobar-auth';
-  if (!isMarker && !isProbe && url.pathname !== '/arbitraje/api/puntajes') return json({ error: 'Ruta no encontrada.' }, 404);
-  if (request.method !== (isProbe ? 'GET' : 'POST')) return json({ error: 'Método no permitido.' }, 405);
-  if (!isProbe && (request.headers.get('Origin') !== env.APP_ORIGIN ||
-      !request.headers.get('Content-Type')?.startsWith('application/json'))) {
+  if (!isMarker && url.pathname !== '/arbitraje/api/puntajes') return json({ error: 'Ruta no encontrada.' }, 404);
+  if (request.method !== 'POST') return json({ error: 'Método no permitido.' }, 405);
+  if (request.headers.get('Origin') !== env.APP_ORIGIN ||
+      !request.headers.get('Content-Type')?.startsWith('application/json')) {
     return json({ error: 'Solicitud no permitida.' }, 403);
   }
   const scriptUrl = env.APPS_SCRIPT_URL;
   if (!scriptUrl || (isMarker && !env.FIXTURE_SCRIPT_URL) || !env.ARBITRAJE_SECRET || env.ARBITRAJE_SECRET.length < 32) {
     return json({ error: 'El registro aún no está configurado.' }, 503);
   }
-  const raw = isProbe ? '{}' : await request.text();
+  const raw = await request.text();
   if (raw.length > 4096) return json({ error: 'Solicitud demasiado grande.' }, 413);
   let data;
   try { data = JSON.parse(raw); } catch { return json({ error: 'Datos inválidos.' }, 400); }
@@ -94,7 +82,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {
     return json({ error: 'Revisa el encuentro, los marcadores (0–999), los puntos (0–10000), la categoría, la actividad y el motivo.' }, 400);
   }
-  if (!isMarker && !isProbe && (!data || !COLORES_HOUSE.includes(data.house) ||
+  if (!isMarker && (!data || !COLORES_HOUSE.includes(data.house) ||
       !IDS_CATEGORIA.includes(data.categoria) ||
       !['sumar', 'restar'].includes(data.operacion) || !FILAS_ACTIVIDAD.includes(data.fila) ||
       !Number.isSafeInteger(data.puntos) || data.puntos < 1 || data.puntos > 10000 ||
@@ -102,7 +90,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {
     return json({ error: 'Revisa la actividad, los puntos y el motivo (3–300 caracteres).' }, 400);
   }
-  const payload = JSON.stringify(isProbe ? { action: 'diagnostico-autorizacion' } : isMarker
+  const payload = JSON.stringify(isMarker
     ? { action: 'resultado', id: data.id, email, encuentroId: data.encuentroId, version: data.version,
         a: data.a, b: data.b, estado: data.estado, motivo: data.motivo.trim(),
         puntosA:data.puntosA,puntosB:data.puntosB,fila:data.estado === 'finalizado' ? data.fila : null,
@@ -120,19 +108,6 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       signal: AbortSignal.timeout(isMarker ? 60000 : 25000) });
     if (!upstream.ok) throw new Error('upstream');
     const result = await upstream.json() as { success?: boolean; error?: string; diagnostico?: string; pending?: boolean; id?: string; nuevo?: number; code?: string; marcador?: unknown };
-    if (isProbe) {
-      const messages: Record<string, string> = {
-        AUTH_OK: 'La autorización funciona. Esta comprobación no registra puntos.',
-        AUTH_CONFIG: 'La clave de Apps Script está ausente o es demasiado corta.',
-        AUTH_PAYLOAD: 'El contenido firmado no tiene el formato esperado.',
-        AUTH_TIMESTAMP: 'La fecha enviada no tiene el formato esperado.',
-        AUTH_EXPIRED: 'La fecha de la solicitud supera el margen de dos minutos.',
-        AUTH_SIGNATURE_FORMAT: 'La firma no tiene el formato esperado.',
-        AUTH_SIGNATURE_MISMATCH: 'La firma calculada por Apps Script no coincide con la enviada.',
-      };
-      const code = typeof result.diagnostico === 'string' && Object.hasOwn(messages, result.diagnostico) ? result.diagnostico : 'DIAGNOSTICO_NO_DISPONIBLE';
-      return json({ codigo: code, mensaje: messages[code] || 'La implementación todavía no devuelve los nuevos diagnósticos. Comprueba la versión publicada.' });
-    }
     if (isMarker) {
       if (result.success === true && result.id === data.id && result.marcador && (result.marcador as {integrado?:boolean}).integrado === true) return json({success:true,id:result.id,marcador:result.marcador});
       const errors: Record<string,string> = { CONFLICT:'Otro árbitro actualizó este encuentro. Recarga antes de guardar.',
