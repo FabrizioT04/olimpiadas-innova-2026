@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { ACTIVIDADES, ACTIVIDADES_CLASIFICACION, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE, HOUSES, RETOS_ACADEMICOS } from '../../../shared/olimpiadas';
 import { CLASIFICACION_PENDIENTE, LUGARES, columnaDe, filaSugerida, isClasificacion, porCategoria } from './model';
 import type { Clasificacion } from './model';
-import { isActividad, paraTodasLasHouses } from '../marcadores/model';
+import { isActividad, isEncuentro, paraTodasLasHouses } from '../marcadores/model';
 import type { Actividad } from '../marcadores/model';
+import PanelMarcadores from '../marcadores/PanelMarcadores';
+import { tipoPuesto } from './model';
 
 interface Intent { id:string; actividad:string; detalle:string; fila:number; categoria:string; version:number; puestos:Record<string,number>; puntos:Record<string,number>; motivo:string }
 // The ranking target is fixed by what was selected: activity, score sheet row and column.
@@ -37,6 +39,9 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
   const [clasificaciones,setClasificaciones] = useState<Clasificacion[]>([]);
   // Programme activities for all four Houses that add points to the score sheet, chosen by date.
   const [programadas,setProgramadas] = useState<Actividad[]>([]);
+  // Matches for 1st–2nd and 3rd–4th place between two Houses: their result decides the places.
+  const [partidosPuesto,setPartidosPuesto] = useState<Actividad[]>([]);
+  const [partidoLocked,setPartidoLocked] = useState(false);
   const [fecha,setFecha] = useState(''), [seleccion,setSeleccion] = useState('');
   const [puestos,setPuestos] = useState<Record<string,string>>(aTexto());
   const [puntos,setPuntos] = useState<Record<string,string>>(aTexto());
@@ -47,10 +52,12 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
     try { const raw = sessionStorage.getItem(CLASIFICACION_PENDIENTE); return raw ? JSON.parse(raw) : null; } catch { return null; }
   });
   const sending = useRef(false);
-  useEffect(() => { onLockedChange(busy || !!pending); }, [busy,pending,onLockedChange]);
-  const fechas = [...new Set(programadas.map(p => p.fecha).filter(Boolean))].sort();
+  useEffect(() => { onLockedChange(busy || !!pending || partidoLocked); }, [busy,pending,partidoLocked,onLockedChange]);
+  const fechas = [...new Set([...programadas, ...partidosPuesto].map(p => p.fecha).filter(Boolean))].sort();
   const delDia = programadas.filter(p => p.fecha === fecha);
+  const puestosDelDia = partidosPuesto.filter(p => p.fecha === fecha);
   const programada = fecha !== OTRAS ? programadas.find(p => p.id === seleccion) : undefined;
+  const partido = fecha !== OTRAS ? puestosDelDia.find(p => p.id === seleccion) : undefined;
   const destino = programada ? destinoDe(programada) : fecha === OTRAS && seleccion ? destinoOtra(seleccion) : null;
   const actual = destino ? clasificaciones.find(c => c.actividad === destino.actividad) : undefined;
   const usados = COLORES_HOUSE.map(h => puestos[h]).filter(Boolean);
@@ -85,6 +92,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
       if (signal?.aborted) return;
       const lista:Clasificacion[] = data.clasificaciones.filter((c:unknown) => isClasificacion(c) && Number.isSafeInteger(c.version) && c.version > 0);
       setError(''); setClasificaciones(lista); cargar(actividad, lista);
+      setPartidosPuesto(Array.isArray(data.partidos) ? data.partidos.filter((p:unknown) => isEncuentro(p) && isActividad(p) && tipoPuesto(p.fase ?? '') !== null) : []);
       setProgramadas(Array.isArray(data.partidos) ? data.partidos.filter((p:unknown) => isActividad(p) && paraTodasLasHouses(p) && filaSugerida(p.deporte) !== null) : []);
     } catch (err) {
       if (!signal?.aborted) setError(err instanceof Error && err.name !== 'AbortError' ? err.message : 'La lectura tardó demasiado. Pulsa «Recargar clasificaciones» para reintentar.');
@@ -137,7 +145,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
       <button type="button" disabled={busy || loading} onClick={() => void save()} className="underline font-semibold">{busy ? 'Confirmando…' : 'Reintentar el mismo guardado'}</button></div>}
     <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); setError(''); void load(undefined, destino?.actividad || null); }} className="text-blue-700 underline disabled:opacity-50">{loading ? 'Leyendo clasificaciones…' : 'Recargar clasificaciones'}</button>
     <form onSubmit={e => { e.preventDefault(); void save(); }} className="space-y-4">
-      <fieldset disabled={busy || loading || !!pending} className="space-y-4 disabled:opacity-60">
+      <fieldset disabled={busy || loading || !!pending || partidoLocked} className="space-y-4 disabled:opacity-60">
         <div className="grid sm:grid-cols-2 gap-4">
           <label className="block text-sm font-medium">Fecha
             <select required value={fecha} onChange={e => elegirFecha(e.target.value)} className="block w-full border rounded-xl p-3 mt-1">
@@ -154,7 +162,10 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
                   // Academic challenges: one option per challenge and category, grouped by area.
                   ? ACTIVIDADES_CLASIFICACION.filter(a => a.grupo === g).map(a => <optgroup key={a.fila} label={`${g} · ${a.nombre}`}>{opcionesRetos(a.fila).map(o => <option key={o.valor} value={o.valor}>{o.texto}</option>)}</optgroup>)
                   : [<optgroup key={g} label={g}>{ACTIVIDADES_CLASIFICACION.filter(a => a.grupo === g).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}</optgroup>])
-                : delDia.map(p => <option key={p.id} value={p.id}>{p.hora} · {p.deporte} · {p.categoria}</option>)}
+                : <>
+                  {!!puestosDelDia.length && <optgroup label="Partidos por puesto (dos Houses)">{puestosDelDia.map(p => <option key={p.id} value={p.id}>{tipoPuesto(p.fase ?? '') === 'final' ? '1.º y 2.º' : '3.º y 4.º'} · {p.hora} · {p.deporte} · {p.categoria} · {p.enfrentamiento}</option>)}</optgroup>}
+                  {!!delDia.length && <optgroup label="Actividades con todas las Houses">{delDia.map(p => <option key={p.id} value={p.id}>{p.hora} · {p.deporte} · {p.categoria}</option>)}</optgroup>}
+                </>}
             </select>
           </label>}
         </div>
@@ -179,5 +190,11 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
         </>}
       </fieldset>
     </form>
+    {/* A match for a place is saved exactly like «Resultado del partido»: its result decides the places. */}
+    {partido && <div className="space-y-3">
+      <div className="bg-slate-100 rounded-xl p-3 text-sm"><span className="font-medium">{tipoPuesto(partido.fase ?? '') === 'final' ? 'Partido por el 1.º y 2.º puesto' : 'Partido por el 3.º y 4.º puesto'}:</span> el ganador queda {tipoPuesto(partido.fase ?? '') === 'final' ? '1.º y el perdedor 2.º' : '3.º y el perdedor 4.º'}. Si terminan empatados, registra el marcador con el desempate incluido.</div>
+      <PanelMarcadores key={partido.id} onLockedChange={setPartidoLocked}
+        embebido={{ partido, onGuardado: () => { setLoading(true); void load(); } }} />
+    </div>}
   </section>;
 }

@@ -14,7 +14,7 @@ export function isMarcador(value: unknown): value is Marcador {
       && (m.estado === 'finalizado' || (m.puntosA === 0 && m.puntosB === 0))));
 }
 export interface Encuentro {
-  encuentroId:string; fecha:string; hora:string; deporte:string; categoria:string; enfrentamiento:string;
+  encuentroId:string; fecha:string; hora:string; deporte:string; categoria:string; enfrentamiento:string; fase?:string;
   houses:[string,string]; admiteMarcador:boolean; marcador:Marcador|null;
 }
 export function isEncuentro(value: unknown): value is Encuentro {
