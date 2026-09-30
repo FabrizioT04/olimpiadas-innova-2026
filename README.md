@@ -1,38 +1,73 @@
-# React + TypeScript + Vite
+# Olimpiadas 360° · Innova Schools SMP
 
-## Acceso público y arbitraje
+Sitio de las Olimpiadas 360° 2026 de Innova Schools San Martín de Porres.
+Producción: https://olimpiadas-innova-2026.pages.dev
 
-El sitio mantiene la consulta pública. El panel y las escrituras requieren Cloudflare Access.
-Ver [configuración, activación y pruebas de arbitraje](docs/ARBITRAJE.md).
-La activación requiere configurar Cloudflare y actualizar Apps Script; no basta con publicar el frontend.
+## Secciones
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+| Ruta | Acceso | Contenido |
+|---|---|---|
+| `/` | Público | Fixture oficial y finalistas, leídos de Google Sheets |
+| `/medallero` | Público | Puntaje oficial de las Houses |
+| `/momentos` | Público | Galería de fotos y videos |
+| `/arbitraje` | Cloudflare Access | Panel para registrar resultados, retos y penalidades, y publicar fotos y mascotas |
 
-Currently, two official plugins are available:
+## Arquitectura
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend** (`src/`): React + Vite + Tailwind. El Fixture va en la carga inicial; las demás pestañas se descargan al abrirlas.
+- **Funciones** (`functions/`): Cloudflare Pages Functions.
+  - `/api/fixture` y `/api/puntajes` leen Apps Script y comparten una copia en KV, para no consultar Google por cada visitante.
+  - `/api/contenido` y `/api/media/*` sirven las fotos y mascotas publicadas desde R2.
+  - `/arbitraje/api/*` valida la sesión de Cloudflare Access y firma con HMAC cada escritura hacia Apps Script.
+- **Apps Script** (`apps-script/`): escribe en las hojas de Google. Se publica desde el editor de Apps Script, no desde este repositorio.
+- **Valores comunes** (`shared/olimpiadas.ts`): Houses, categorías, filas de actividades e ID de la hoja del fixture, usados por el frontend y por las funciones. Si cambian, hay que actualizar también los `.gs` indicados en ese archivo.
 
-## React Compiler
+## Desarrollo local
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev          # solo el frontend; las APIs no responden
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Para probar también las funciones:
+
+```bash
+npm run build
+npx wrangler pages dev dist
+```
+
+Sin variables, las funciones responden que no están configuradas. Para conectarlas, crea un archivo `.dev.vars` (está en `.gitignore`) con las variables de la tabla de abajo. No uses los valores de producción: apunta a hojas y scripts de prueba.
+
+## Comprobaciones
+
+```bash
+npm test               # pruebas de las funciones y de Apps Script
+npm run lint
+npm run typecheck:api  # tipos de las funciones
+npm run build          # tipos del frontend y build
+```
+
+## Despliegue
+
+Cloudflare Pages está conectado a este repositorio: cada push a `main` se publica en producción. La configuración de build es `npm run build`, con salida `dist`; las funciones se toman de `functions/`.
+
+Variables y enlaces de Cloudflare Pages (producción):
+
+| Nombre | Tipo | Uso |
+|---|---|---|
+| `ACCESS_TEAM_DOMAIN` | Texto | Dominio del equipo de Cloudflare Access (`<equipo>.cloudflareaccess.com`) |
+| `ACCESS_AUD` | Texto | AUD de la aplicación de Access que protege `/arbitraje*` |
+| `APP_ORIGIN` | Texto | `https://olimpiadas-innova-2026.pages.dev`; las escrituras desde otro origen se rechazan |
+| `APPS_SCRIPT_URL` | Texto | URL `/exec` del script de puntajes |
+| `FIXTURE_SCRIPT_URL` | Texto | URL `/exec` del script del fixture |
+| `ARBITRAJE_SECRET` | Secreto | Clave HMAC compartida con Apps Script (32 caracteres o más) |
+| `CONTENT_BUCKET` | R2 | Fotos, mascotas y catálogo de contenido |
+| `FIXTURE_CACHE` | KV | Copia compartida del fixture y de los puntajes |
+
+## Documentación
+
+- [Arbitraje y Cloudflare Access](docs/ARBITRAJE.md)
+- [Fixture oficial](docs/FIXTURE-OFICIAL.md)
+- [Marcadores](docs/MARCADORES.md)
+- [Registro unificado de resultados](docs/RESULTADO-UNIFICADO.md)
+- [PDF de actividades](docs/ACTIVIDADES-PDF.md) (sección retirada del sitio)
