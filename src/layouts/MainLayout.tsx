@@ -1,10 +1,42 @@
-import { useEffect, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useState } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon, Menu, X } from 'lucide-react';
-import PanelArbitro from '../pages/PanelArbitro';
-import Puntajes from '../pages/Puntajes';
 import Fixture from '../pages/Fixture';
-import Galeria from '../pages/Galeria';
 import BannerInnova from '../components/BannerInnova';
+
+// After a deploy, an open page may request files from the previous version that no longer exist.
+// Reload once to fetch the new version; the flag prevents a reload loop if the error persists.
+const RELOAD_FLAG = 'recarga-por-version';
+const lazyPage = (load: () => Promise<{ default: ComponentType }>) => lazy(async () => {
+  try {
+    const page = await load();
+    try { sessionStorage.removeItem(RELOAD_FLAG); } catch { /* Storage may be unavailable. */ }
+    return page;
+  } catch (error) {
+    let reloaded = true;
+    try { reloaded = sessionStorage.getItem(RELOAD_FLAG) === '1'; sessionStorage.setItem(RELOAD_FLAG, '1'); } catch { /* Storage may be unavailable. */ }
+    if (!reloaded) window.location.reload();
+    throw error;
+  }
+});
+
+// Keeps the menu usable when a page cannot load, instead of leaving the whole site blank.
+class PageErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return <div role="alert" className="mx-auto max-w-lg rounded-2xl border border-amber-300 bg-amber-50 p-6 text-center text-amber-900">
+      <p className="font-semibold">No se pudo cargar esta sección. Revisa tu conexión.</p>
+      <button onClick={() => window.location.reload()} className="mt-4 rounded-xl bg-indigo-600 px-5 py-2 font-bold text-white">Recargar la página</button>
+    </div>;
+  }
+}
+
+// Pages outside the landing view load only when opened, so visitors don't download the referee panel.
+const PanelArbitro = lazyPage(() => import('../pages/PanelArbitro'));
+const Puntajes = lazyPage(() => import('../pages/Puntajes'));
+const Galeria = lazyPage(() => import('../pages/Galeria'));
 
 const tabFromPath = (path: string) => {
   if (path.includes('arbitraje')) return 'arbitraje';
@@ -203,7 +235,12 @@ export default function MainLayout() {
         {/* Área de Contenido Principal */}
         <main className="flex-1 overflow-y-auto relative p-4 md:p-8">
           <BannerInnova />
-          {renderContent()}
+          {/* The key resets the error when switching tabs, so one failed page doesn't block the rest. */}
+          <PageErrorBoundary key={activeTab}>
+            <Suspense fallback={<p role="status" className="py-12 text-center text-slate-500">Cargando…</p>}>
+              {renderContent()}
+            </Suspense>
+          </PageErrorBoundary>
         </main>
 
       </div>
