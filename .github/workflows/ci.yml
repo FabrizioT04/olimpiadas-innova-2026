@@ -1,0 +1,42 @@
+# Comprueba cada push y pull request. Cloudflare Pages despliega por su cuenta al hacer push a main,
+# así que este flujo no bloquea el despliegue: avisa en GitHub (y por correo) si algo se rompió.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  comprobaciones:
+    name: Lint, tipos, pruebas y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tipos de las funciones
+        run: npm run typecheck:api
+
+      - name: Pruebas
+        run: npm test
+
+      - name: Build (incluye los tipos del frontend)
+        run: npm run build
