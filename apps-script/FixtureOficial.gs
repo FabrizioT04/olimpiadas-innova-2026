@@ -127,6 +127,11 @@ function parseFixture(sheets) {
         else if (label && !foundDate) { title = label; phase = ''; }
         return;
       }
+      // A banner merged across hour and discipline (e.g. a break) separates blocks; it is not an activity.
+      if (headers.deporte != null && roots[r][headers.hora] === roots[r][headers.deporte]) return;
+      // A row inside vertical merges repeats the activity above unless it adds a value of its own
+      // (another category, phase or activity under the same hour).
+      if (roots[r].every(function (root, c) { return !row[c] || +root.split(':')[0] !== r; })) return;
       var fecha = dateValue(at(row, 'dia')) || sectionDate;
       var sport = at(row, 'deporte');
       var teams = headers.equipos == null ? '' : span(row, headers.equipos, headers.categoria, r);

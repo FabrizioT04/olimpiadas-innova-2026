@@ -40,6 +40,28 @@ test('daily sections read actual dates, changed column order and activities with
   assert.ok(result.partidos[1].avisos.some(s => s.includes('2025')));
   assert.equal(result.partidos[2].fase,'Carrera');
 });
+test('merged hours list an activity once per own category and skip break banners', () => {
+  const result = parse([sheet('Jueves 01/10/2026', [
+    ['Jueves 01/10/2026'],
+    ['HORA','PARTIDO','Disciplina','EQUIPOS','','','','Categoria','RESPONSABLES - ARBITROS','LUGAR'],
+    ['08:20 a 09:00','Finales','CARRERA DE RESISTENCIA','TODAS LAS HOUSE','','','','Promesas','Mario',1],
+    ['','','','','','','','Infantil','',''],
+    ['','','','','','','','','',''],
+    ['09:00 a 09:20','Finales','CARRERA DE GANCHOS','TODAS LAS HOUSE','','','','Junior','Mario',1],
+    ['','','','','','','','','',''],
+    ['12:30 A 01:00 - REFRIGERIO','','','','','','','','',''],
+    ['01:00 a 01:20','1er y 2do','Basquet','','VERDE VS AZUL','','','Juvenil A','Enrique',1]],
+    [[2,0,3,1],[2,1,3,1],[2,2,3,1],[2,3,3,4],[2,8,3,1],[2,9,3,1],[3,7,2,1],
+     [5,0,2,1],[5,1,2,1],[5,2,2,1],[5,3,2,4],[5,7,2,1],[7,0,1,9],[8,4,1,2]])]);
+  result.partidos.sort((a,b) => a.fila - b.fila);
+  assert.deepEqual(result.partidos.map(p => [p.fila, p.deporte, p.categoria]), [
+    [3,'CARRERA DE RESISTENCIA','Promesas'],
+    [4,'CARRERA DE RESISTENCIA','Infantil'],
+    [6,'CARRERA DE GANCHOS','Junior'],
+    [9,'Basquet','Juvenil A']]);
+  assert.equal(result.partidos[3].enfrentamiento,'VERDE VS AZUL');
+  assert.ok(result.partidos.every(p => p.fecha === '2026-10-01'));
+});
 test('finalists include blank positions without leaking merged category into opponents', () => {
   const result = parse([sheet('Finalistas', [
     ['Finalistas'],['Disciplina','Categoria'],
