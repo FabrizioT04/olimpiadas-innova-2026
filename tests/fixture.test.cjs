@@ -62,6 +62,16 @@ test('merged hours list an activity once per own category and skip break banners
   assert.equal(result.partidos[3].enfrentamiento,'VERDE VS AZUL');
   assert.ok(result.partidos.every(p => p.fecha === '2026-10-01'));
 });
+test('referee column is found by RESPONSABLES or ARBITRO(S) headers', () => {
+  for (const title of ['RESPONSABLES - ARBITROS','ARBITROS','Árbitro']) {
+    const result = parse([sheet('MARTES 29/09/2026', [
+      ['MARTES 29/09/2026'],
+      ['HORA','PARTIDO','Disciplina','EQUIPOS','Categoria',title,'LUGAR'],
+      ['08:00 a 08:20','Final','Voley','AZUL VS VERDE','Junior','Katty Ramos',1]])]);
+    assert.equal(result.partidos[0].arbitro,'Katty Ramos');
+    assert.equal(result.partidos[0].lugar,'1');
+  }
+});
 test('finalists include blank positions without leaking merged category into opponents', () => {
   const result = parse([sheet('Finalistas', [
     ['Finalistas'],['Disciplina','Categoria'],

@@ -110,7 +110,7 @@ function parseFixture(sheets) {
           var key = v === 'HORA' ? 'hora' : v === 'DIA' ? 'dia' : v === 'DISCIPLINA' ? 'deporte'
             : v === 'EQUIPOS' ? 'equipos' : /^CATEGORIA/.test(v) ? 'categoria'
             : v === 'PARTIDO' ? 'fase' : /^(CAMPO|LUGAR)$/.test(v) ? 'lugar'
-            : /^RESPONSABLES/.test(v) ? 'arbitro' : v === 'BLOQUE' ? 'bloque' : '';
+            : /^(RESPONSABLES|ARBITRO)/.test(v) ? 'arbitro' : v === 'BLOQUE' ? 'bloque' : '';
           if (key) headers[key] = c;
         });
         return;
