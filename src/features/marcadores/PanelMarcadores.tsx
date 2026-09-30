@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CATEGORIAS, ACTIVIDADES, destinoSugerido, HOUSE_NAMES, STATUS_NAMES, isActividad, isEncuentro, isMarcador, paraTodasLasHouses } from './model';
 import type { Actividad, Marcador } from './model';
 import { FIXTURE_FUENTE } from '../../../shared/olimpiadas';
+import { tipoPuesto } from '../clasificacion/model';
 
 interface Intent { id:string; encuentroId:string; version:number; a:number; b:number; estado:Marcador['estado']; motivo:string; puntosA:number; puntosB:number; fila:number|null; categoria:string }
 const STORAGE = 'resultado-intento-v2';
@@ -61,7 +62,8 @@ export default function PanelMarcadores({onLockedChange, embebido}:{onLockedChan
       if (signal?.aborted || expired) return;
       setError('');
       setCopiaGuardada(typeof data.copiaGuardada === 'string' && !Number.isNaN(Date.parse(data.copiaGuardada)) ? data.copiaGuardada : '');
-      const next:Actividad[] = data.partidos.filter((p:unknown) => isActividad(p) && !paraTodasLasHouses(p));
+      // Matches that decide a place are registered only in «Clasificación por puestos».
+      const next:Actividad[] = data.partidos.filter((p:unknown) => isActividad(p) && !paraTodasLasHouses(p) && tipoPuesto(p.fase ?? '') === null);
       setMatches(next);
       // A fresh selection is required after loading, avoiding unnoticed version changes while editing.
       choose();
@@ -168,6 +170,6 @@ export default function PanelMarcadores({onLockedChange, embebido}:{onLockedChan
         {campos}
       </fieldset>
     </form>
-    <p className="text-xs text-slate-500">Se muestran los partidos de la programación oficial, con o sin árbitro asignado. Las actividades con todas las Houses se registran en «Clasificación por puestos». Si faltan equipos o datos, complétalos en Sheets y pulsa «Recargar partidos».</p>
+    <p className="text-xs text-slate-500">Se muestran los partidos de la programación oficial, con o sin árbitro asignado. Los partidos por el 1.º y 2.º o el 3.º y 4.º puesto y las actividades con todas las Houses se registran en «Clasificación por puestos». Si faltan equipos o datos, complétalos en Sheets y pulsa «Recargar partidos».</p>
   </section>;
 }
