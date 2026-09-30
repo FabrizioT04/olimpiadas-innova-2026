@@ -1,3 +1,5 @@
+import { HOUSES } from '../../shared/olimpiadas';
+
 export interface ContentEnv { CONTENT_BUCKET?: R2Bucket; APP_ORIGIN: string }
 export interface Item {
   id: string; kind: 'foto' | 'mascota'; album: string; subseccion: string; house: string; title: string;
@@ -8,7 +10,8 @@ interface Catalog { albumes?: Album[]; revision: string; items: Item[]; mascotas
 
 const key = 'catalogo.json';
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
-const houses = ['dolphins', 'seagulls', 'eagles', 'horses'];
+// Mascots are stored by animal (the frontend key), not by the House color used in the sheet.
+const houses = HOUSES.map(h => h.animal as string);
 const albums = ['convivencia', 'eco-house', 'deportes', 'encuentros'];
 const ecoHouseFolders = ['asamblea', 'mariquitas', 'carteles'];
 const defaultAlbumTitles = ['Sana convivencia', 'En la cancha', 'Espíritu Eco House', 'Juntos celebramos'];
