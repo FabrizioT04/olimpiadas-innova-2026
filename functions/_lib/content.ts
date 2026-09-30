@@ -15,11 +15,16 @@ async function save(bucket:R2Bucket,data:Catalog,etag?:string) {
  data.revision=crypto.randomUUID();
  return bucket.put(key,JSON.stringify(data),{onlyIf:etag?{etagMatches:etag}:{etagDoesNotMatch:'*'},httpMetadata:{contentType:'application/json'}});
 }
-export async function imageResponse(bucket:R2Bucket,id:string,privateView=false) {
+// Public images may be cached briefly: a hidden photo stops being served once this expires.
+const PUBLIC_IMAGE_CACHE='public, max-age=300';
+export async function imageResponse(bucket:R2Bucket,id:string,privateView=false,ifNoneMatch?:string|null) {
  const {data}=await catalog(bucket);const item=data.items.find(i=>i.id===id);
  if(!item || (!privateView && !(item.kind==='foto'?item.published:Object.values(data.mascotas).includes(id)))) return json({error:'Imagen no disponible.'},404);
+ // Image ids are never reused for other content, so the id is a valid strong ETag.
+ const etag='"'+id+'"';
+ if(!privateView && ifNoneMatch?.split(',').some(tag=>tag.trim()===etag))return new Response(null,{status:304,headers:{ETag:etag,'Cache-Control':PUBLIC_IMAGE_CACHE}});
  const image=await bucket.get('imagenes/'+id+'.webp');if(!image)return json({error:'Imagen no disponible.'},404);
- return new Response(image.body,{headers:{'Content-Type':'image/webp','X-Content-Type-Options':'nosniff','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; sandbox"}});
+ return new Response(image.body,{headers:{'Content-Type':'image/webp','X-Content-Type-Options':'nosniff','Cache-Control':privateView?'no-store':PUBLIC_IMAGE_CACHE,...(privateView?{}:{ETag:etag}),'Content-Security-Policy':"default-src 'none'; sandbox"}});
 }
 export async function publicContent(bucket?:R2Bucket) {
  if(!bucket)return json({fotos:[],mascotas:{}});

@@ -112,3 +112,19 @@ test('album creation rejects invalid names, duplicates, wrong origin and stale w
  assert.equal((await api.manageContent(request(data.revision,{action:'create-album',titulo:'  NUEVO  '}),s.env,'staff@example.com')).status,409);
  assert.equal(data.albumes.length,1);
 });
+test('public images are cacheable and revalidate by id, but hidden photos and previews are not',async()=>{
+ const api=await modulePromise,s=setup();let data=await upload(api,s);const id=data.items[0].id,etag='"'+id+'"';
+ const preview=await api.imageResponse(s.bucket,id,true,etag);
+ assert.equal(preview.status,200);assert.equal(preview.headers.get('Cache-Control'),'no-store');assert.equal(preview.headers.get('ETag'),null);
+ data=await (await api.manageContent(request(data.revision,{action:'publish',id}),s.env,'staff@example.com')).json();
+ const first=await api.imageResponse(s.bucket,id);
+ assert.equal(first.status,200);assert.equal(first.headers.get('Cache-Control'),'public, max-age=300');assert.equal(first.headers.get('ETag'),etag);
+ const reads=[];const get=s.bucket.get;s.bucket.get=async key=>{reads.push(key);return get(key);};
+ const revalidated=await api.imageResponse(s.bucket,id,false,'"other", '+etag);
+ assert.equal(revalidated.status,304);assert.equal(revalidated.headers.get('ETag'),etag);
+ assert.deepEqual(reads,['catalogo.json']);
+ s.bucket.get=get;
+ await api.manageContent(request(data.revision,{action:'hide',id}),s.env,'staff@example.com');
+ const hidden=await api.imageResponse(s.bucket,id,false,etag);
+ assert.equal(hidden.status,404);assert.equal(hidden.headers.get('Cache-Control'),'no-store');
+});
