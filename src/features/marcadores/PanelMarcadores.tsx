@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CATEGORIAS, ACTIVIDADES, destinoSugerido, HOUSE_NAMES, STATUS_NAMES, isActividad, isEncuentro, isMarcador } from './model';
+import { CATEGORIAS, ACTIVIDADES, destinoSugerido, HOUSE_NAMES, STATUS_NAMES, isActividad, isEncuentro, isMarcador, paraTodasLasHouses } from './model';
 import type { Actividad, Marcador } from './model';
 import { FIXTURE_FUENTE } from '../../../shared/olimpiadas';
 
@@ -55,7 +55,7 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
       if (signal?.aborted || expired) return;
       setError('');
       setCopiaGuardada(typeof data.copiaGuardada === 'string' && !Number.isNaN(Date.parse(data.copiaGuardada)) ? data.copiaGuardada : '');
-      const next:Actividad[] = data.partidos.filter(isActividad);
+      const next:Actividad[] = data.partidos.filter((p:unknown) => isActividad(p) && !paraTodasLasHouses(p));
       setMatches(next);
       // A fresh selection is required after loading, avoiding unnoticed version changes while editing.
       choose();
@@ -147,6 +147,6 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
         <button type="submit" disabled={(status === 'pendiente' && (Number(a)!==0 || Number(b)!==0)) || (status === 'finalizado' && !destinoValido)} className="rounded-xl bg-blue-600 text-white px-5 py-3 disabled:opacity-50">{busy ? 'Guardando…' : 'Guardar resultado y puntos'}</button></>}
       </fieldset>
     </form>
-    <p className="text-xs text-slate-500">Se muestra toda la programación oficial, con o sin árbitro asignado. Si faltan equipos o datos, complétalos en Sheets y pulsa «Recargar partidos».</p>
+    <p className="text-xs text-slate-500">Se muestran los partidos de la programación oficial, con o sin árbitro asignado. Las actividades con todas las Houses se registran en «Clasificación por puestos». Si faltan equipos o datos, complétalos en Sheets y pulsa «Recargar partidos».</p>
   </section>;
 }

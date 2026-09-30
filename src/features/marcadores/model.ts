@@ -37,6 +37,10 @@ export function isActividad(value:unknown): value is Actividad {
     && Array.isArray(p.avisos) && p.avisos.every(a => typeof a === 'string')
     && typeof p.admiteMarcador === 'boolean';
 }
+// Activities for all four Houses are ranked in «Clasificación por puestos», not scored as a match.
+export function paraTodasLasHouses(p:{enfrentamiento:string}) {
+  return /\bTODAS\s+LAS\s+HOUSES?\b/.test(p.enfrentamiento.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase());
+}
 export const CATEGORIAS: Record<string,string> = Object.fromEntries(LISTA_CATEGORIAS.map(c => [c.id, c.nombre]));
 export const ACTIVIDADES: Record<string,string> = Object.fromEntries(LISTA_ACTIVIDADES.map(a => [String(a.fila), a.nombre]));
 export function destinoSugerido(p?:Actividad) {

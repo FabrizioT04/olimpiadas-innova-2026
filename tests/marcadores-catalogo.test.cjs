@@ -11,3 +11,8 @@ test('official programme remains selectable through finals without assigned refe
  assert.equal(isActividad(ready),true);assert.equal(isEncuentro(ready),true);
  assert.equal(isActividad({...base,avisos:['Revisar fecha']}),true);
 });
+test('activities for all four Houses are left out of the match list',async()=>{
+ const {paraTodasLasHouses}=await model;
+ for(const enfrentamiento of ['TODAS LAS HOUSE','Todas las House','todas las houses','  Todas  las  HOUSE '])assert.equal(paraTodasLasHouses({enfrentamiento}),true);
+ for(const enfrentamiento of ['BLANCO VS VERDE','Equipos por definir','VS','Bailetón','Houses todas'])assert.equal(paraTodasLasHouses({enfrentamiento}),false);
+});
