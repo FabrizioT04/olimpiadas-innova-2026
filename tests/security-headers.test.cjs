@@ -8,10 +8,28 @@ const loaded = import('data:text/javascript;base64,' + Buffer.from(source).toStr
 
 test('static routes disallow framing without restricting scripts, images or outgoing frames', () => {
   const headers = fs.readFileSync('public/_headers', 'utf8');
-  assert.match(headers, /^\/\*\r?\n/);
+  assert.match(headers, /^\/\*\r?\n/m);
   assert.match(headers, /Content-Security-Policy: frame-ancestors 'none'/);
   assert.match(headers, /X-Frame-Options: DENY/);
-  assert.doesNotMatch(headers, /(?:script-src|img-src|frame-src|default-src)/);
+  // The enforced policy only forbids framing; the fuller policy is report-only until it is verified.
+  const enforced = headers.split(/\r?\n/).filter(line => /^\s*Content-Security-Policy:/.test(line));
+  assert.equal(enforced.length, 1);
+  assert.doesNotMatch(enforced[0], /(?:script-src|img-src|frame-src|default-src)/);
+});
+
+test('report-only policy covers every resource the site loads from its own origin', () => {
+  const headers = fs.readFileSync('public/_headers', 'utf8');
+  const line = headers.split(/\r?\n/).find(l => /^\s*Content-Security-Policy-Report-Only:/.test(l));
+  assert.ok(line, 'missing report-only policy');
+  const policy = Object.fromEntries(line.split(':').slice(1).join(':').split(';')
+    .map(d => d.trim().split(/\s+/)).map(([name, ...values]) => [name, values]));
+  for (const directive of ['default-src', 'script-src', 'style-src', 'connect-src', 'media-src']) {
+    assert.deepEqual(policy[directive], ["'self'"], directive);
+  }
+  // blob: is needed for the upload preview in the referee panel.
+  assert.deepEqual(policy['img-src'], ["'self'", 'data:', 'blob:']);
+  assert.deepEqual(policy['object-src'], ["'none'"]);
+  assert.ok(!line.includes('unsafe-inline') && !line.includes('unsafe-eval'));
 });
 
 test('Functions preserve status, body, cache, and existing image CSP while forbidding framing', async () => {

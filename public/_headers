@@ -1,5 +1,8 @@
+# Content-Security-Policy-Report-Only está en fase de prueba: el navegador no bloquea nada,
+# solo avisa en la consola de lo que bloquearía. Cuando no haya avisos, pasará a ser la política activa.
 /*
   Content-Security-Policy: frame-ancestors 'none'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; media-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; worker-src 'none'
