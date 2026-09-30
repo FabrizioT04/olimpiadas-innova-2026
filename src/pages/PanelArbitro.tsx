@@ -103,7 +103,7 @@ export default function PanelArbitro() {
           {([
             { id: 'marcadores', title: 'Resultado del partido', description: 'Marcador y puntos en una operación', Icon: Trophy },
             { id: 'clasificacion', title: 'Clasificación por puestos', description: 'Del 1.º al 4.º con todas las Houses', Icon: ListOrdered },
-            { id: 'puntajes', title: 'Retos y ajustes', description: 'Otros puntos y penalidades por House', Icon: Medal },
+            { id: 'puntajes', title: 'Penalidades y bonos', description: 'Restar o sumar puntos a una sola House', Icon: Medal },
             { id: 'contenido', title: 'Fotos y mascotas', description: 'Subir, revisar y publicar imágenes', Icon: Images },
           ] as const).map(({ id, title, description, Icon }) => (
             <button key={id} type="button" aria-pressed={registro === id} aria-controls={`panel-${id}`}
@@ -125,8 +125,8 @@ export default function PanelArbitro() {
         </div>}
         <section id="panel-puntajes" hidden={registro !== 'puntajes'} aria-labelledby="titulo-puntajes">
         <div className="mb-5 px-1">
-          <h2 id="titulo-puntajes" className="text-xl font-bold">Retos, penalidades y ajustes</h2>
-          <p className="text-sm text-slate-500 mt-2">Selecciona una House para registrar retos o penalidades. Los puntos de un partido se guardan en «Resultado del partido».</p>
+          <h2 id="titulo-puntajes" className="text-xl font-bold">Penalidades y bonos</h2>
+          <p className="text-sm text-slate-500 mt-2">Resta o suma puntos a una sola House, fuera de partidos y clasificaciones. Los puntos de un partido se guardan en «Resultado del partido» y los de actividades con las cuatro Houses en «Clasificación por puestos».</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 

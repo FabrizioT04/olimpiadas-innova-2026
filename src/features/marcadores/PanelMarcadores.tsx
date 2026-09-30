@@ -120,7 +120,7 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
         {!loading && !matches.length && !error && <p className="text-sm text-slate-500">No hay actividades en el fixture oficial.</p>}
         {current && !isEncuentro(current) && <div role="status" className="bg-amber-50 text-amber-900 p-3 rounded-lg space-y-2">
           <p>Este encuentro está en la programación. No necesita un árbitro asignado para aparecer aquí.</p>
-          {!current.houses && <p>Equipos por definir o actividad sin enfrentamiento entre dos Houses. Completa los equipos en Sheets para registrar un marcador; los puntos de otras actividades se registran en el formulario de puntajes.</p>}
+          {!current.houses && <p>Equipos por definir o actividad sin enfrentamiento entre dos Houses. Completa los equipos en Sheets para registrar un marcador; si participan las cuatro Houses, usa «Clasificación por puestos».</p>}
           {current.avisos.map((aviso,i) => <p key={i}>{aviso}</p>)}
           <p>Para habilitar el marcador, revisa que tenga fecha, disciplina y dos Houses distintas, sin avisos ni encuentros duplicados.</p>
         </div>}
