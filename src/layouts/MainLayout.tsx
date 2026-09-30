@@ -185,33 +185,17 @@ export default function MainLayout() {
           </button>
         </nav>
 
-        {/* Widget de Estado de Plataforma */}
+        {/* Identificación del evento (texto fijo: no indica el estado de la conexión) */}
         <div className="p-4 border-t border-slate-50">
           <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-full blur-xl opacity-50 -mr-6 -mt-6 group-hover:opacity-80 transition-opacity"></div>
             
-            <div className="flex items-center gap-2.5 mb-2.5 relative z-10">
-              <div className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </div>
-              <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest">
-                Sistema Activo
-              </span>
-            </div>
-            
-            <p className="text-[10px] text-slate-500 font-medium leading-relaxed mb-3 relative z-10">
-              Plataforma oficial de sincronización en tiempo real conectada a la base de datos central.
+            <p className="text-[11px] font-black text-slate-700 uppercase tracking-widest relative z-10">
+              Olimpiadas 360° · 2026
             </p>
-            
-            <div className="flex items-center justify-between border-t border-slate-200/60 pt-3 relative z-10">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                Innova SMP © 2026
-              </span>
-              <span className="text-[9px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                v1.0.0
-              </span>
-            </div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 relative z-10">
+              Innova Schools SMP
+            </p>
           </div>
         </div>
         

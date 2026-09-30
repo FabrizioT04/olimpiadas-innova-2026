@@ -59,9 +59,8 @@ export default function BannerInnova() {
       </div>
 
       {/* Lado derecho: Insignia */}
-      <div className="relative z-10 hidden lg:flex items-center gap-2 bg-white/15 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20 text-xs font-bold text-white shadow-sm">
-        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-        <span>Sistema en Vivo</span>
+      <div className="relative z-10 hidden lg:flex items-center bg-white/15 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20 text-xs font-bold text-white shadow-sm">
+        <span>Olimpiadas 360° · 2026</span>
       </div>
 
     </div>
