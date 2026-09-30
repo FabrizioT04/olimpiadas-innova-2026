@@ -6,23 +6,18 @@ const source = ts.transpileModule(fs.readFileSync('functions/_middleware.ts', 'u
 }).outputText;
 const loaded = import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 
-test('static routes disallow framing without restricting scripts, images or outgoing frames', () => {
+test('static routes enforce a same-origin CSP that also forbids framing', () => {
   const headers = fs.readFileSync('public/_headers', 'utf8');
   assert.match(headers, /^\/\*\r?\n/m);
-  assert.match(headers, /Content-Security-Policy: frame-ancestors 'none'/);
   assert.match(headers, /X-Frame-Options: DENY/);
-  // The enforced policy only forbids framing; the fuller policy is report-only until it is verified.
-  const enforced = headers.split(/\r?\n/).filter(line => /^\s*Content-Security-Policy:/.test(line));
-  assert.equal(enforced.length, 1);
-  assert.doesNotMatch(enforced[0], /(?:script-src|img-src|frame-src|default-src)/);
-});
-
-test('report-only policy covers every resource the site loads from its own origin', () => {
-  const headers = fs.readFileSync('public/_headers', 'utf8');
-  const line = headers.split(/\r?\n/).find(l => /^\s*Content-Security-Policy-Report-Only:/.test(l));
-  assert.ok(line, 'missing report-only policy');
+  // A single enforced policy (verified first in report-only mode, with no violations).
+  const lines = headers.split(/\r?\n/).filter(line => /^\s*Content-Security-Policy(?:-Report-Only)?:/.test(line));
+  assert.equal(lines.length, 1);
+  const line = lines[0];
+  assert.match(line, /^\s*Content-Security-Policy:/);
   const policy = Object.fromEntries(line.split(':').slice(1).join(':').split(';')
     .map(d => d.trim().split(/\s+/)).map(([name, ...values]) => [name, values]));
+  assert.deepEqual(policy['frame-ancestors'], ["'none'"]);
   for (const directive of ['default-src', 'script-src', 'style-src', 'connect-src', 'media-src']) {
     assert.deepEqual(policy[directive], ["'self'"], directive);
   }

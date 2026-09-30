@@ -1,8 +1,7 @@
-# Content-Security-Policy-Report-Only está en fase de prueba: el navegador no bloquea nada,
-# solo avisa en la consola de lo que bloquearía. Cuando no haya avisos, pasará a ser la política activa.
+# La CSP solo permite recursos del propio sitio (y data:/blob: para imágenes, usados por la vista previa
+# de subidas). Si se añade un recurso externo (fuentes, analíticas, etc.), hay que incluir su dominio aquí.
 /*
-  Content-Security-Policy: frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; media-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; worker-src 'none'; frame-ancestors 'none'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; media-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; worker-src 'none'
