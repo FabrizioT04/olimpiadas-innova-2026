@@ -1,4 +1,4 @@
-import { FIXTURE_FUENTE as sourceId } from '../../shared/olimpiadas';
+import { COLORES_HOUSE, FILAS_ACTIVIDAD, FIXTURE_FUENTE as sourceId, IDS_CATEGORIA } from '../../shared/olimpiadas';
 
 interface Env { FIXTURE_SCRIPT_URL?: string; FIXTURE_CACHE?: KVNamespace }
 const CACHE_KEY = 'fixture-publico-v1';
@@ -11,6 +11,15 @@ const recent = new Map<string, Snapshot>();
 const retryAfter = new Map<string, number>();
 const refreshes = new Map<string, Promise<ReturnType<typeof publicFixture>>>();
 const pick = (value: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.map(key => [key, value[key]]));
+// Only complete rankings (each House a distinct 1st–4th place) are published, and never their points.
+function publicRanking(value: unknown) {
+  if (!value || typeof value !== 'object') return null;
+  const c = value as Record<string, unknown>, puestos = c.puestos as Record<string, unknown> | null;
+  if (!FILAS_ACTIVIDAD.includes(c.fila as number) || !IDS_CATEGORIA.includes(c.categoria as string) ||
+      typeof c.actualizado !== 'string' || Number.isNaN(Date.parse(c.actualizado)) || !puestos || typeof puestos !== 'object' ||
+      !COLORES_HOUSE.every(h => Number.isSafeInteger(puestos[h])) || COLORES_HOUSE.map(h => puestos[h]).sort().join() !== '1,2,3,4') return null;
+  return { fila: c.fila, categoria: c.categoria, actualizado: c.actualizado, puestos: pick(puestos, [...COLORES_HOUSE]) };
+}
 
 // Expose only the public programme and scores, never the private scoring history.
 export function publicFixture(value: unknown) {
@@ -18,7 +27,7 @@ export function publicFixture(value: unknown) {
   const data = value as Record<string, unknown>;
   if (data.version !== 1 || data.fuente !== sourceId || typeof data.actualizado !== 'string' ||
       Number.isNaN(Date.parse(data.actualizado)) || !Array.isArray(data.partidos) ||
-      !Array.isArray(data.finalistas) || !Array.isArray(data.avisos)) throw new Error('Invalid fixture');
+      !Array.isArray(data.avisos)) throw new Error('Invalid fixture');
   return {
     version: 1, fuente: sourceId, actualizado: data.actualizado,
     avisos: data.avisos.filter(item => typeof item === 'string'),
@@ -26,7 +35,7 @@ export function publicFixture(value: unknown) {
       ...pick(p, ['id','fecha','hora','deporte','enfrentamiento','categoria','arbitro','lugar','fase','bloque','seccion','origen','fila','avisos']),
       marcador: p.marcador ? pick(p.marcador, ['version','houseA','houseB','a','b','estado','actualizado']) : null,
     })),
-    finalistas: data.finalistas.map(p => pick(p, ['id','deporte','categoria','terceroCuarto','primeroSegundo','puestos','origen','fila'])),
+    clasificaciones: Array.isArray(data.clasificaciones) ? data.clasificaciones.map(publicRanking).filter(c => c !== null) : [],
   };
 }
 

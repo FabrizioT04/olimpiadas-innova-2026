@@ -22,9 +22,7 @@ function leerFixture_() {
           return [m.getRow()-1, m.getColumn()-1, m.getNumRows(), m.getNumColumns()];
         }) };
     });
-    var fixture = parseFixture(source);
-    if (typeof aplicarFinalistas2026_ === 'function') fixture = aplicarFinalistas2026_(fixture);
-    return fixture;
+    return parseFixture(source);
 }
 
 function doGet() {

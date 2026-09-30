@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Calendar, Clock, RefreshCw, Trophy } from 'lucide-react';
 import { HOUSE_NAMES, STATUS_NAMES, isMarcador } from '../features/marcadores/model';
 import type { Marcador } from '../features/marcadores/model';
-import { CATEGORIAS, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
+import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
+import { LUGARES, isClasificacion } from '../features/clasificacion/model';
+import type { Clasificacion } from '../features/clasificacion/model';
 
 interface Partido {
   id: string; fecha: string; hora: string; deporte: string; enfrentamiento: string;
@@ -10,19 +12,14 @@ interface Partido {
   seccion: string; origen: string; fila: number; avisos: string[];
   marcador?: Marcador | null;
 }
-interface Finalista {
-  id: string; deporte: string; categoria: string; terceroCuarto: string;
-  primeroSegundo: string; puestos: string[]; origen: string; fila: number;
-}
 interface FixtureData {
   desactualizado?: boolean;
   version: number; fuente: string; actualizado: string; partidos: Partido[];
-  finalistas: Finalista[]; avisos: string[];
+  avisos: string[]; clasificaciones?: Clasificacion[];
 }
 const WEB_APP_URL = '/api/fixture';
 const SNAPSHOT_KEY = 'fixture-publico-v1';
 const displayDate = (date: string) => date ? new Date(`${date}T12:00:00`).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha por definir';
-const matchup = (text: string) => !text.trim() || text.trim().toUpperCase() === 'VS' ? 'Por definir' : text;
 const categoryWithGrades = (category: string) => {
   const grades: Record<string, string> = Object.fromEntries(CATEGORIAS.map(c => [c.id, c.grados + ' grado']));
   const key = category.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '');
@@ -38,10 +35,16 @@ function isFixture(value: unknown): value is FixtureData {
     && Array.isArray(data.partidos) && data.partidos.every(p => p && typeof p === 'object'
       && ['id','fecha','hora','deporte','enfrentamiento','categoria','arbitro','lugar','fase','bloque','seccion','origen'].every(k => typeof (p as unknown as Record<string,unknown>)[k] === 'string')
       && (p.fecha === '' || /^\d{4}-\d{2}-\d{2}$/.test(p.fecha)) && strings(p.avisos))
-    && Array.isArray(data.finalistas) && data.finalistas.every(p => p && typeof p === 'object'
-      && ['id','deporte','categoria','terceroCuarto','primeroSegundo','origen'].every(k => typeof (p as unknown as Record<string,unknown>)[k] === 'string')
-      && strings(p.puestos) && p.puestos.length === 4);
+    // Older snapshots have no rankings; when present every entry must be complete.
+    && (data.clasificaciones === undefined || (Array.isArray(data.clasificaciones) && data.clasificaciones.every(isClasificacion)));
 }
+// Rankings follow the order of activities and categories in the score sheet.
+const ordenClasificacion = (c: Clasificacion) =>
+  ACTIVIDADES.findIndex(a => a.fila === c.fila) * 10 + CATEGORIAS.findIndex(x => x.id === c.categoria);
+const categoriaClasificacion = (id: string) => {
+  const c = CATEGORIAS.find(x => x.id === id);
+  return c ? `${c.nombre} · ${c.grados} grado` : id;
+};
 
 function lastFixture(): FixtureData | null {
   try {
@@ -56,7 +59,7 @@ export default function Fixture() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('todos');
-  const [view, setView] = useState<'programacion' | 'finalistas'>('programacion');
+  const [view, setView] = useState<'programacion' | 'puestos'>('programacion');
   const refresh = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -122,7 +125,7 @@ export default function Fixture() {
     {data?.avisos.map(message => <p key={message} className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{message}</p>)}
     <div className="flex flex-wrap gap-3 items-center rounded-2xl bg-white border border-slate-200 p-3">
       <button onClick={() => setView('programacion')} aria-pressed={view === 'programacion'} className={`rounded-lg px-4 py-2 ${view === 'programacion' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}>Programación</button>
-      <button onClick={() => setView('finalistas')} aria-pressed={view === 'finalistas'} className={`rounded-lg px-4 py-2 ${view === 'finalistas' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}>Finalistas y puestos</button>
+      <button onClick={() => setView('puestos')} aria-pressed={view === 'puestos'} className={`rounded-lg px-4 py-2 ${view === 'puestos' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}>Puestos</button>
       {view === 'programacion' && <label className="flex gap-2 items-center text-sm text-slate-600">Fecha
         <select value={selected} onChange={e => setFilter(e.target.value)} className="border rounded-lg p-2 max-w-full"><option value="todos">Todas</option>{days.map(day => <option key={day} value={day}>{displayDate(day)}</option>)}</select>
       </label>}
@@ -145,14 +148,16 @@ export default function Fixture() {
         </article>)}</div>
       </section>)}
     </>}
-    {data && view === 'finalistas' && <div className="space-y-4">
-      <p className="text-sm text-slate-500">Cruces y puestos registrados en las hojas oficiales de finalistas. Los pendientes aparecen como «Por definir».</p>
-      {!data.finalistas.length && <p>No hay finalistas publicados.</p>}
-      <div className="grid md:grid-cols-2 gap-4">{data.finalistas.map(p => <article key={p.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-        <h2 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{p.deporte}</h2><p className="text-sm text-slate-600">{categoryWithGrades(p.categoria)}</p>
-        <p className="text-sm">1.º y 2.º: {matchup(p.primeroSegundo)}</p><p className="text-sm">3.º y 4.º: {matchup(p.terceroCuarto)}</p>
-        <ol className="grid grid-cols-2 gap-2 text-sm">{p.puestos.map((team,i) => <li key={i} className="rounded bg-slate-50 p-2">{i+1}.º: {team || 'Por definir'}</li>)}</ol>
-      </article>)}</div>
-    </div>}
+    {data && view === 'puestos' && <section className="space-y-4">
+        <h2 className="font-bold text-lg text-slate-800">Clasificaciones por puestos</h2>
+        <p className="text-sm text-slate-500">Actividades con las cuatro Houses, registradas por los árbitros. Los deportes muestran su marcador final en «Programación».</p>
+        {!data.clasificaciones?.length && <p className="py-8 text-center text-slate-500">Todavía no hay puestos registrados.</p>}
+        <div className="grid md:grid-cols-2 gap-4">{[...(data.clasificaciones || [])].sort((a,b) => ordenClasificacion(a) - ordenClasificacion(b)).map(c => <article key={`${c.fila}:${c.categoria}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+          <h3 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{ACTIVIDADES.find(a => a.fila === c.fila)?.etiqueta}</h3>
+          <p className="text-sm text-slate-600">{categoriaClasificacion(c.categoria)}</p>
+          <ol className="grid grid-cols-2 gap-2 text-sm">{[...COLORES_HOUSE].sort((a,b) => c.puestos[a] - c.puestos[b]).map(h => <li key={h} className="rounded bg-slate-50 p-2">{LUGARES[c.puestos[h]-1]}: {HOUSE_NAMES[h]}</li>)}</ol>
+          <p className="text-xs text-slate-400">Registrada: {new Date(c.actualizado).toLocaleString('es-PE')}</p>
+        </article>)}</div>
+    </section>}
   </div>;
 }
