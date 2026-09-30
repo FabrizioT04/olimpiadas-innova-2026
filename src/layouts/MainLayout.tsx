@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon, Menu, X } from 'lucide-react';
 import Fixture from '../pages/Fixture';
@@ -50,6 +50,28 @@ export default function MainLayout() {
 
   // Estado para controlar la apertura del menú en celulares
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const botonAbrir = useRef<HTMLButtonElement>(null);
+  const botonCerrar = useRef<HTMLButtonElement>(null);
+  const menuAbiertoAntes = useRef(false);
+
+  // Opening the menu moves focus into it; closing returns it to the menu button. Escape closes it.
+  useEffect(() => {
+    if (isMobileMenuOpen) botonCerrar.current?.focus();
+    else if (menuAbiertoAntes.current) botonAbrir.current?.focus();
+    menuAbiertoAntes.current = isMobileMenuOpen;
+    if (!isMobileMenuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsMobileMenuOpen(false); };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isMobileMenuOpen]);
+
+  // The phone menu makes no sense on a wide screen: close it if the window grows past `md`.
+  useEffect(() => {
+    const escritorio = window.matchMedia('(min-width: 768px)');
+    const cerrar = () => { if (escritorio.matches) setIsMobileMenuOpen(false); };
+    escritorio.addEventListener('change', cerrar);
+    return () => escritorio.removeEventListener('change', cerrar);
+  }, []);
 
   // Los botones atrás/adelante del navegador cambian la URL; la vista debe seguirla.
   useEffect(() => {
@@ -99,10 +121,13 @@ export default function MainLayout() {
       )}
 
       {/* Barra Lateral (Sidebar Responsivo) */}
-      <aside className={`
+      {/* On phones the closed menu is `invisible` (not just off screen), so keyboard and screen readers skip it.
+          `md:visible` keeps it always available on wide screens without depending on JavaScript.
+          Visibility changes at once when opening (so focus can move in) and after the slide when closing. */}
+      <aside id="menu-principal" className={`
         fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-100 flex flex-col flex-shrink-0 
-        shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-transform duration-300 ease-in-out
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:relative
+        shadow-[4px_0_24px_rgba(0,0,0,0.02)] duration-300 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0 visible transition-transform' : '-translate-x-full invisible transition-[transform,visibility]'} md:translate-x-0 md:relative md:visible
       `}>
         
         {/* Logo */}
@@ -123,17 +148,20 @@ export default function MainLayout() {
           
           {/* Botón para cerrar menú en móviles */}
           <button 
+            ref={botonCerrar}
             onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Cerrar menú"
             className="md:hidden text-slate-400 hover:text-slate-600 p-1"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         {/* Navegación */}
-        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
+        <nav aria-label="Secciones" className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
           <button
             onClick={() => handleTabChange('arbitraje')}
+            aria-current={activeTab === 'arbitraje' ? 'page' : undefined}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
               activeTab === 'arbitraje'
                 ? 'bg-indigo-50 text-indigo-600 shadow-sm'
@@ -147,6 +175,7 @@ export default function MainLayout() {
 
           <button
             onClick={() => handleTabChange('fixture')}
+            aria-current={activeTab === 'fixture' ? 'page' : undefined}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
               activeTab === 'fixture'
                 ? 'bg-indigo-50 text-indigo-600 shadow-sm'
@@ -160,6 +189,7 @@ export default function MainLayout() {
 
           <button
             onClick={() => handleTabChange('medallero')}
+            aria-current={activeTab === 'medallero' ? 'page' : undefined}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
               activeTab === 'medallero'
                 ? 'bg-indigo-50 text-indigo-600 shadow-sm'
@@ -173,6 +203,7 @@ export default function MainLayout() {
 
           <button
             onClick={() => handleTabChange('momentos')}
+            aria-current={activeTab === 'momentos' ? 'page' : undefined}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
               activeTab === 'momentos'
                 ? 'bg-indigo-50 text-indigo-600 shadow-sm'
@@ -202,15 +233,20 @@ export default function MainLayout() {
       </aside>
 
       {/* Área Principal con Barra Superior Móvil */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      {/* While the phone menu is open, the page behind it is inactive too. */}
+      <div inert={isMobileMenuOpen} className="flex-1 flex flex-col h-screen overflow-hidden">
         
         {/* Cabecera superior solo visible en celulares */}
         <header className="md:hidden h-16 bg-white border-b border-slate-100 px-4 flex items-center justify-between flex-shrink-0 z-10">
           <button 
+            ref={botonAbrir}
             onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Abrir menú"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="menu-principal"
             className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-6 h-6" aria-hidden="true" />
           </button>
           <span className="font-black text-slate-800 text-sm">Olimpiadas 360°</span>
           <div className="w-10"></div> {/* Espaciador simétrico */}
