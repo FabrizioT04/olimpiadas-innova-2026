@@ -3,6 +3,8 @@ import type { FotoGaleria, AlbumGaleria } from '../../data/galeria';
 
 export function useContenido() {
   const [data, setData] = useState<{ albumes?: AlbumGaleria[]; fotos: FotoGaleria[]; mascotas: Record<string, string> }>({ fotos: [], mascotas: {} });
+  // False until the first answer (or failure), so callers can avoid flashing default mascots.
+  const [cargado, setCargado] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
     const refresh = async () => {
@@ -13,6 +15,7 @@ export function useContenido() {
         const next = await response.json();
         if (Array.isArray(next.fotos) && next.mascotas && !controller.signal.aborted) setData(next);
       } catch { /* Conserva el último contenido cuando no hay conexión. */ }
+      finally { if (!controller.signal.aborted) setCargado(true); }
     };
     void refresh();
     const timer = window.setInterval(refresh, 60000);
@@ -20,5 +23,5 @@ export function useContenido() {
     window.addEventListener('contenido-publicado', refresh);
     return () => { controller.abort(); clearInterval(timer); document.removeEventListener('visibilitychange', refresh); window.removeEventListener('contenido-publicado', refresh); };
   }, []);
-  return data;
+  return { ...data, cargado };
 }

@@ -2,10 +2,10 @@ import { useState, useRef } from 'react';
 
 // 1. Importamos las imágenes desde la carpeta assets
 // (Vite se encargará de optimizarlas cuando subas la web a Cloudflare)
-import imgDolphins from '../../../assets/dolphins.png';
-import imgSeagulls from '../../../assets/seagulls.png';
-import imgEagles from '../../../assets/eagles.png';
-import imgHorses from '../../../assets/horses.png';
+import imgDolphins from '../../../assets/dolphins.webp';
+import imgSeagulls from '../../../assets/seagulls.webp';
+import imgEagles from '../../../assets/eagles.webp';
+import imgHorses from '../../../assets/horses.webp';
 
 export interface House {
   id: string;

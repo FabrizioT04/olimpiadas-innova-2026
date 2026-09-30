@@ -9,13 +9,16 @@ const endpoint = '/arbitraje/api/contenido';
 const folders = [{ id: 'asamblea', title: 'Asamblea' }, { id: 'mariquitas', title: 'Maraquitas' }, { id: 'carteles', title: 'Elaboración de carteles' }];
 const control = 'mt-2 min-w-0 w-full rounded-xl border border-slate-300 bg-white p-3';
 
-async function prepare(file: File) {
+// Mascots are shown at most ~176 px wide; photos can be opened full size in the gallery.
+const MAX_SIDE = { foto: 2000, mascota: 512 } as const;
+
+async function prepare(file: File, kind: 'foto' | 'mascota') {
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw Error('Escoge una imagen JPG, PNG o WebP.');
   if (file.size > 20 * 1024 * 1024) throw Error('La imagen original debe pesar menos de 20 MB.');
   const bitmap = await createImageBitmap(file);
   try {
     if (bitmap.width * bitmap.height > 50000000) throw Error('La imagen es demasiado grande. Reduce su resolución antes de subirla.');
-    const scale = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, MAX_SIDE[kind] / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(bitmap.width * scale)); canvas.height = Math.max(1, Math.round(bitmap.height * scale));
     const ctx = canvas.getContext('2d'); if (!ctx) throw Error('No se pudo preparar la imagen.');
@@ -44,6 +47,7 @@ export default function AdminContenido() {
   const [confirmation, setConfirmation] = useState<Item | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const processing = useRef(0);
   const load = async () => {
     setBusy(true); setError('');
     try { const response = await fetch(endpoint, { cache: 'no-store' }); const data = await response.json(); if (!response.ok) throw Error(data.error || 'No se pudo cargar el contenido.'); setCatalog(data); }
@@ -66,6 +70,14 @@ export default function AdminContenido() {
     } catch (e) { setError(e instanceof Error ? e.message : 'Error de conexión. Recarga para comprobar el estado antes de repetir.'); }
     finally { setBusy(false); }
   };
+  const process = async (file: File, target: typeof kind) => {
+    // Only the latest selection wins if the type changes while an image is being processed.
+    const run = ++processing.current;
+    setBlob(null); setError(''); setNotice(''); setBusy(true);
+    try { const result = await prepare(file, target); if (run === processing.current) setBlob(result); }
+    catch (err) { if (run === processing.current) setError(err instanceof Error ? err.message : 'No se pudo abrir esta imagen.'); }
+    finally { if (run === processing.current) setBusy(false); }
+  };
   const upload = () => {
     if (!blob) return;
     const title = kind === 'mascota' ? `Mascota de ${HOUSES.find(h => h.id === house)?.name}` : album === 'eco-house' ? folders.find(f => f.id === folder)!.title : albumesGaleria.find(a => a.id === album)!.titulo;
@@ -82,7 +94,7 @@ export default function AdminContenido() {
     {catalog && <>
     <fieldset disabled={busy} className="space-y-5 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-6 disabled:opacity-60">
       <div><h3 className="flex items-center gap-2 font-bold"><Upload size={18} aria-hidden="true" /> Subir imagen</h3><p className="mt-1 text-sm text-slate-500">Elige dónde quieres mostrarla.</p></div>
-      <div className="grid items-start gap-5 sm:grid-cols-2"><label className="text-sm font-medium">Tipo de imagen<select className={control} value={kind} onChange={e => setKind(e.target.value as typeof kind)}><option value="foto">Foto para un álbum</option><option value="mascota">Mascota de una House</option></select></label>
+      <div className="grid items-start gap-5 sm:grid-cols-2"><label className="text-sm font-medium">Tipo de imagen<select className={control} value={kind} onChange={e => { const next = e.target.value as typeof kind; setKind(next); const file = input.current?.files?.[0]; if (file) void process(file, next); }}><option value="foto">Foto para un álbum</option><option value="mascota">Mascota de una House</option></select></label>
       {kind === 'foto' ? <div><label className="text-sm font-medium" htmlFor="content-album">Álbum</label><select id="content-album" className={control} value={album} onChange={e => setAlbum(e.target.value)}>{albumesGaleria.map(a => <option key={a.id} value={a.id}>{a.titulo}</option>)}</select><button type="button" onClick={() => setCreatingAlbum(!creatingAlbum)} aria-expanded={creatingAlbum} aria-controls="new-album-form" className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50"><Plus size={16} aria-hidden="true" />{creatingAlbum ? 'Cerrar nuevo álbum' : 'Crear álbum'}</button></div> : <label className="text-sm font-medium">House<select className={control} value={house} onChange={e => setHouse(e.target.value)}>{HOUSES.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select></label>}
       {kind === 'foto' && album === 'eco-house' && <label>Sección<select className={control} value={folder} onChange={e => setFolder(e.target.value)}>{folders.map(f => <option key={f.id} value={f.id}>{f.title}</option>)}</select></label>}</div>
     {creatingAlbum && kind === 'foto' && <form id="new-album-form" className="space-y-4 rounded-2xl border border-indigo-100 bg-indigo-50 p-4" onSubmit={async e => {
@@ -91,9 +103,8 @@ export default function AdminContenido() {
       const created = result?.albumes?.at(-1);
       if (created) { setAlbum(created.id); setKind('foto'); setCreatingAlbum(false); setAlbumTitle(''); setAlbumDescription(''); setNotice('Álbum creado. Ya puedes subir fotos; aparecerá en la galería al publicar la primera.'); }
     }}><h3 className="font-bold">Nuevo álbum</h3><label className="block">Nombre<input autoFocus required minLength={3} maxLength={80} disabled={busy} className={control} value={albumTitle} onChange={e => setAlbumTitle(e.target.value)} /></label><label className="block">Descripción (opcional)<textarea maxLength={240} disabled={busy} className={control} value={albumDescription} onChange={e => setAlbumDescription(e.target.value)} /></label><p className="text-sm text-slate-600">Será visible para los visitantes cuando publiques su primera foto.</p><button disabled={busy} className="rounded-xl bg-indigo-600 px-5 py-3 font-bold text-white disabled:opacity-50">Crear álbum</button></form>}
-      <label className="block text-sm font-medium">Archivo de imagen<span className="mt-1 block text-xs font-normal text-slate-500">JPG, PNG o WebP · Hasta 20 MB</span><input ref={input} className="mt-3 block w-full min-w-0 rounded-xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100" type="file" accept="image/jpeg,image/png,image/webp" onChange={async e => {
-        const file = e.target.files?.[0]; setBlob(null); setError(''); setNotice(''); if (!file) return; setBusy(true);
-        try { setBlob(await prepare(file)); } catch (err) { setError(err instanceof Error ? err.message : 'No se pudo abrir esta imagen.'); } finally { setBusy(false); }
+      <label className="block text-sm font-medium">Archivo de imagen<span className="mt-1 block text-xs font-normal text-slate-500">JPG, PNG o WebP · Hasta 20 MB</span><input ref={input} className="mt-3 block w-full min-w-0 rounded-xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => {
+        const file = e.target.files?.[0]; if (file) void process(file, kind); else { setBlob(null); setError(''); setNotice(''); }
       }} /></label>
       {preview && <div className="rounded-xl bg-slate-50 p-4"><img src={preview} alt="Vista previa de la imagen seleccionada" className="mx-auto max-h-72 object-contain" /><p className="mt-2 text-center text-sm text-slate-500">Imagen optimizada: {Math.ceil((blob?.size || 0) / 1024)} KB</p></div>}
       <button disabled={!blob || busy} onClick={upload} className="rounded-xl bg-indigo-600 px-5 py-3 font-bold text-white disabled:opacity-40">Guardar borrador</button>
