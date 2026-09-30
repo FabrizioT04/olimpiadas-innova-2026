@@ -54,7 +54,7 @@ export const ACTIVIDADES = [
   { fila: 31, nombre: 'Arte', etiqueta: 'Arte (Máscaras, Mural, Canto)', grupo: 'Retos Académicos' },
   { fila: 34, nombre: 'Barras', etiqueta: 'Concurso de Barras', grupo: 'Eventos Especiales y Reconocimientos' },
   { fila: 35, nombre: 'Drill', etiqueta: 'Concurso de Drill Coreográfico', grupo: 'Eventos Especiales y Reconocimientos' },
-  { fila: 36, nombre: 'Sana convivencia', etiqueta: 'Reconocimiento: Sana Convivencia', grupo: 'Eventos Especiales y Reconocimientos' },
+  { fila: 36, nombre: 'Sana convivencia', etiqueta: 'Reconocimiento: Embajadores de Sana Convivencia', grupo: 'Eventos Especiales y Reconocimientos' },
   { fila: 37, nombre: 'Eco House', etiqueta: 'Reconocimiento: Eco House', grupo: 'Eventos Especiales y Reconocimientos' },
 ] as const;
 export const FILAS_ACTIVIDAD: readonly number[] = ACTIVIDADES.map(a => a.fila);
