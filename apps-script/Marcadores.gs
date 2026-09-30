@@ -40,11 +40,22 @@ function marcadorPublico_(r) {
   return { version:Number(r[2]), houseA:r[5], houseB:r[6], a:Number(r[7]), b:Number(r[8]), estado:r[9], actualizado:new Date(r[3]).toISOString(),
     puntosA:Number(r[13]) || 0,puntosB:Number(r[14]) || 0,fila:Number(r[15]) || null,categoria:r[16] || '',integrado:r[17] === 'CONFIRMADO' };
 }
+// Clasificación por puestos guardada por Clasificaciones.gs (proyecto de puntajes).
+function clasificacionPublica_(r) {
+  var datos = JSON.parse(r[12]);
+  return { version:Number(r[2]), fila:Number(r[15]), categoria:r[16], puestos:datos.puestos, puntos:datos.puntos,
+    actualizado:new Date(r[3]).toISOString() };
+}
 function enriquecerMarcadores_(fixture) {
-  var counts = {}, latest = {}, enabled = false;
+  var counts = {}, latest = {}, enabled = false, clasificaciones = {};
   fixture.partidos.forEach(function (p) { p.encuentroId = marcadorId_(p); counts[p.encuentroId] = (counts[p.encuentroId] || 0)+1; });
+  fixture.clasificaciones = [];
   try {
-    marcadorRows_(marcadorSheet_()).forEach(function (r) { latest[r[1]] = r; });
+    marcadorRows_(marcadorSheet_()).forEach(function (r) {
+      latest[r[1]] = r;
+      if (/^clasificacion:/.test(r[1]) && r[17] === 'CONFIRMADO') clasificaciones[r[1]] = r;
+    });
+    fixture.clasificaciones = Object.keys(clasificaciones).map(function (k) { return clasificacionPublica_(clasificaciones[k]); });
     var secret = PropertiesService.getScriptProperties().getProperty('ARBITRAJE_SECRET');
     enabled = !!secret && secret.length >= 32;
   } catch (_) { fixture.avisos.push('Los marcadores todavía no están disponibles. La programación sigue visible.'); }

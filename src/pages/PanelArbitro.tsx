@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Loader2, ShieldCheck, UserCheck, LogOut, Trophy, Medal, Images } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, LogOut, Trophy, Medal, Images, ListOrdered } from 'lucide-react';
 import { HOUSES, useArbitraje } from '../features/arbitraje/hooks/useArbitraje';
 import PanelMarcadores from '../features/marcadores/PanelMarcadores';
+import PanelClasificacion from '../features/clasificacion/PanelClasificacion';
+import { hayClasificacionPendiente } from '../features/clasificacion/model';
 
 import AdminContenido from '../features/contenido/AdminContenido';
 import { useContenido } from '../features/contenido/useContenido';
@@ -13,10 +15,14 @@ const GRUPOS_ACTIVIDAD = [...new Set(ACTIVIDADES.map(a => a.grupo))];
 
 export default function PanelArbitro() {
   const { mascotas, cargado } = useContenido();
-  const [registro, setRegistro] = useState<'marcadores' | 'puntajes' | 'contenido'>('marcadores');
+  // An unconfirmed ranking reopens its own view, since pending saves lock switching views.
+  const [registro, setRegistro] = useState<'marcadores' | 'clasificacion' | 'puntajes' | 'contenido'>(() => hayClasificacionPendiente() ? 'clasificacion' : 'marcadores');
   const [correoAutorizado, setCorreoAutorizado] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [resultLocked,setResultLocked] = useState(false);
+  const [rankingLocked,setRankingLocked] = useState(false);
+  // Mounted on first visit (or with a pending ranking) and then kept, like the other forms.
+  const [clasificacionAbierta,setClasificacionAbierta] = useState(hayClasificacionPendiente);
   useEffect(() => {
     localStorage.removeItem('arbitro_autorizado');
     const controller = new AbortController();
@@ -93,14 +99,15 @@ export default function PanelArbitro() {
           <p className="text-slate-500 font-medium text-sm md:text-base">Resultados de partidos y puntos de las Houses en un solo lugar</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-white/80 p-2 mb-6" role="group" aria-label="Tipo de registro">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 rounded-2xl border border-slate-200 bg-white/80 p-2 mb-6" role="group" aria-label="Tipo de registro">
           {([
             { id: 'marcadores', title: 'Resultado del partido', description: 'Marcador y puntos en una operación', Icon: Trophy },
+            { id: 'clasificacion', title: 'Clasificación por puestos', description: 'Del 1.º al 4.º con todas las Houses', Icon: ListOrdered },
             { id: 'puntajes', title: 'Retos y ajustes', description: 'Otros puntos y penalidades por House', Icon: Medal },
             { id: 'contenido', title: 'Fotos y mascotas', description: 'Subir, revisar y publicar imágenes', Icon: Images },
           ] as const).map(({ id, title, description, Icon }) => (
             <button key={id} type="button" aria-pressed={registro === id} aria-controls={`panel-${id}`}
-              disabled={resultLocked || isSubmitting} onClick={() => setRegistro(id)}
+              disabled={resultLocked || rankingLocked || isSubmitting} onClick={() => { setRegistro(id); if (id === 'clasificacion') setClasificacionAbierta(true); }}
               className={`flex items-center gap-3 rounded-xl px-4 py-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${registro === id ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-indigo-50'}`}>
               <Icon size={22} className="shrink-0" aria-hidden="true" />
               <span><span className="block text-sm font-bold">{title}</span><span className={`block text-xs mt-1 ${registro === id ? 'text-indigo-100' : 'text-slate-500'}`}>{description}</span></span>
@@ -113,6 +120,9 @@ export default function PanelArbitro() {
         <div id="panel-marcadores" hidden={registro !== 'marcadores'}>
           <PanelMarcadores onLockedChange={setResultLocked} />
         </div>
+        {clasificacionAbierta && <div id="panel-clasificacion" hidden={registro !== 'clasificacion'}>
+          <PanelClasificacion onLockedChange={setRankingLocked} />
+        </div>}
         <section id="panel-puntajes" hidden={registro !== 'puntajes'} aria-labelledby="titulo-puntajes">
         <div className="mb-5 px-1">
           <h2 id="titulo-puntajes" className="text-xl font-bold">Retos, penalidades y ajustes</h2>

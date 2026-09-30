@@ -23,6 +23,10 @@ function doPost(e) {
       if (typeof guardarResultado_ !== 'function') return arbitrajeJson_({success:false,code:'UPDATE_REQUIRED'});
       return guardarResultado_(data,envelope.payload,lock);
     }
+    if (data.action === 'clasificacion') {
+      if (typeof guardarClasificacion_ !== 'function') return arbitrajeJson_({success:false,code:'UPDATE_REQUIRED'});
+      return guardarClasificacion_(data,envelope.payload,lock);
+    }
     var columns = {
       white: { promesas: 'D', infantil: 'E', junior: 'F', juvenila: 'G', juvenilb: 'H' },
       blue: { promesas: 'J', infantil: 'K', junior: 'L', juvenila: 'M', juvenilb: 'N' },

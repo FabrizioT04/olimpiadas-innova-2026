@@ -120,3 +120,43 @@ test('version conflict is actionable and cannot be reported as success',async()=
   try {const response=await onRequest({request:request(body),env});assert.equal(response.status,409);assert.equal((await response.json()).code,'CONFLICT');}finally{global.fetch=original;}
 });
 
+const ranking={id:'12345678-1234-1234-1234-123456789013',fila:19,categoria:'junior',version:0,puestos:{white:2,blue:1,orange:4,green:3},puntos:{white:95,blue:100,orange:85,green:90},motivo:'Final de Carrera de Michi',email:'spoof@example.com'};
+const rankingRequest=(data,origin=env.APP_ORIGIN)=>new Request(env.APP_ORIGIN+'/arbitraje/api/clasificacion',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','Cf-Access-Jwt-Assertion':'stub'},body:JSON.stringify(data)});
+test('ranking API signs verified identity and forwards exactly four Houses to the score script',async()=>{
+  const {onRequest}=await modulePromise,original=global.fetch;
+  global.fetch=async(url,options)=>{
+    assert.equal(url,env.APPS_SCRIPT_URL);
+    const envelope=JSON.parse(options.body),payload=JSON.parse(envelope.payload);
+    assert.equal(payload.action,'clasificacion');assert.equal(payload.email,'verified@example.com');
+    assert.deepEqual(payload.puestos,ranking.puestos);assert.deepEqual(payload.puntos,ranking.puntos);assert.equal(payload.fila,19);
+    assert.equal(envelope.signature,crypto.createHmac('sha256',env.ARBITRAJE_SECRET).update(envelope.timestamp+'.'+envelope.payload).digest('hex'));
+    return Response.json({success:true,id:ranking.id,clasificacion:{version:1,integrado:true}});
+  };
+  try {
+    const response=await onRequest({request:rankingRequest(ranking),env});
+    assert.equal(response.status,200);assert.equal((await response.json()).clasificacion.version,1);
+  }finally{global.fetch=original;}
+});
+test('invalid rankings and foreign origin never reach Apps Script',async()=>{
+  const {onRequest}=await modulePromise,original=global.fetch;global.fetch=async()=>{throw Error('Unexpected upstream call');};
+  try {
+    for(const patch of [{puestos:{white:1,blue:1,orange:3,green:4}},{puestos:{white:1,blue:2,orange:3}},{puestos:{white:1,blue:2,orange:3,green:5}},
+      {puestos:{...ranking.puestos,red:1}},{puntos:{...ranking.puntos,white:-1}},{puntos:{...ranking.puntos,white:1.5}},{puntos:{...ranking.puntos,white:10001}},
+      {puntos:null},{fila:99},{categoria:'otra'},{version:-1},{motivo:'x'},{id:'x'}])
+      assert.equal((await onRequest({request:rankingRequest({...ranking,...patch}),env})).status,400);
+    assert.equal((await onRequest({request:rankingRequest(ranking,'https://foreign.example'),env})).status,403);
+  }finally{global.fetch=original;}
+});
+test('ranking rejections are actionable and an unconfirmed ranking is never success',async()=>{
+  const {onRequest}=await modulePromise,original=global.fetch;
+  try {
+    for(const [reply,code] of [[{success:false,code:'CONFLICT',pending:false},'CONFLICT'],[{success:false,code:'CELL_INVALID',pending:false},'CELL_INVALID'],
+      [{success:true,id:ranking.id,clasificacion:{version:1,integrado:false}},'UNCONFIRMED'],[{success:true,id:'other',clasificacion:{integrado:true}},'UNCONFIRMED']]){
+      global.fetch=async()=>Response.json(reply);
+      const response=await onRequest({request:rankingRequest(ranking),env}),data=await response.json();
+      assert.equal(response.status,409);assert.equal(data.code,code);
+    }
+    global.fetch=async()=>{throw new Error('timeout');};
+    assert.equal((await onRequest({request:rankingRequest(ranking),env})).status,502);
+  }finally{global.fetch=original;}
+});

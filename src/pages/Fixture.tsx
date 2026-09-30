@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Calendar, Clock, RefreshCw, Trophy } from 'lucide-react';
 import { HOUSE_NAMES, STATUS_NAMES, isMarcador } from '../features/marcadores/model';
 import type { Marcador } from '../features/marcadores/model';
-import { CATEGORIAS, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
+import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
+import { LUGARES, isClasificacion } from '../features/clasificacion/model';
+import type { Clasificacion } from '../features/clasificacion/model';
 
 interface Partido {
   id: string; fecha: string; hora: string; deporte: string; enfrentamiento: string;
@@ -18,6 +20,7 @@ interface FixtureData {
   desactualizado?: boolean;
   version: number; fuente: string; actualizado: string; partidos: Partido[];
   finalistas: Finalista[]; avisos: string[];
+  clasificaciones?: Clasificacion[];
 }
 const WEB_APP_URL = '/api/fixture';
 const SNAPSHOT_KEY = 'fixture-publico-v1';
@@ -40,8 +43,17 @@ function isFixture(value: unknown): value is FixtureData {
       && (p.fecha === '' || /^\d{4}-\d{2}-\d{2}$/.test(p.fecha)) && strings(p.avisos))
     && Array.isArray(data.finalistas) && data.finalistas.every(p => p && typeof p === 'object'
       && ['id','deporte','categoria','terceroCuarto','primeroSegundo','origen'].every(k => typeof (p as unknown as Record<string,unknown>)[k] === 'string')
-      && strings(p.puestos) && p.puestos.length === 4);
+      && strings(p.puestos) && p.puestos.length === 4)
+    // Older snapshots have no rankings; when present every entry must be complete.
+    && (data.clasificaciones === undefined || (Array.isArray(data.clasificaciones) && data.clasificaciones.every(isClasificacion)));
 }
+// Rankings follow the order of activities and categories in the score sheet.
+const ordenClasificacion = (c: Clasificacion) =>
+  ACTIVIDADES.findIndex(a => a.fila === c.fila) * 10 + CATEGORIAS.findIndex(x => x.id === c.categoria);
+const categoriaClasificacion = (id: string) => {
+  const c = CATEGORIAS.find(x => x.id === id);
+  return c ? `${c.nombre} · ${c.grados} grado` : id;
+};
 
 function lastFixture(): FixtureData | null {
   try {
@@ -146,6 +158,17 @@ export default function Fixture() {
       </section>)}
     </>}
     {data && view === 'finalistas' && <div className="space-y-4">
+      {!!data.clasificaciones?.length && <section className="space-y-3">
+        <h2 className="font-bold text-lg text-slate-800">Clasificaciones por puestos</h2>
+        <p className="text-sm text-slate-500">Actividades con las cuatro Houses, registradas por los árbitros.</p>
+        <div className="grid md:grid-cols-2 gap-4">{[...data.clasificaciones].sort((a,b) => ordenClasificacion(a) - ordenClasificacion(b)).map(c => <article key={`${c.fila}:${c.categoria}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+          <h3 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{ACTIVIDADES.find(a => a.fila === c.fila)?.etiqueta}</h3>
+          <p className="text-sm text-slate-600">{categoriaClasificacion(c.categoria)}</p>
+          <ol className="grid grid-cols-2 gap-2 text-sm">{[...COLORES_HOUSE].sort((a,b) => c.puestos[a] - c.puestos[b]).map(h => <li key={h} className="rounded bg-slate-50 p-2">{LUGARES[c.puestos[h]-1]}: {HOUSE_NAMES[h]}</li>)}</ol>
+          <p className="text-xs text-slate-400">Registrada: {new Date(c.actualizado).toLocaleString('es-PE')}</p>
+        </article>)}</div>
+      </section>}
+      <h2 className="font-bold text-lg text-slate-800">Finalistas</h2>
       <p className="text-sm text-slate-500">Cruces y puestos registrados en las hojas oficiales de finalistas. Los pendientes aparecen como «Por definir».</p>
       {!data.finalistas.length && <p>No hay finalistas publicados.</p>}
       <div className="grid md:grid-cols-2 gap-4">{data.finalistas.map(p => <article key={p.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">

@@ -23,6 +23,13 @@ const FIXTURE_ARBITRAJE_KEY = 'fixture-arbitraje-v1';
 const COPY_INTERVAL_MS = 60000;
 let lastCopySaved = 0;
 type FixtureArbitraje = { fuente?: string; partidos?: unknown[]; error?: string };
+// Exactly the four Houses, each with a whole number in range; any other key is rejected.
+function porHouse(value: unknown, min: number, max: number) {
+  if (!value || typeof value !== 'object' || Object.keys(value).length !== COLORES_HOUSE.length) return null;
+  const v = value as Record<string, unknown>;
+  return COLORES_HOUSE.every(h => Number.isSafeInteger(v[h]) && (v[h] as number) >= min && (v[h] as number) <= max)
+    ? Object.fromEntries(COLORES_HOUSE.map(h => [h, v[h]])) as Record<string, number> : null;
+}
 
 export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD || !env.APP_ORIGIN) {
@@ -78,7 +85,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     }
   }
   const isMarker = url.pathname === '/arbitraje/api/marcadores';
-  if (!isMarker && url.pathname !== '/arbitraje/api/puntajes') return json({ error: 'Ruta no encontrada.' }, 404);
+  const isRanking = url.pathname === '/arbitraje/api/clasificacion';
+  if (!isMarker && !isRanking && url.pathname !== '/arbitraje/api/puntajes') return json({ error: 'Ruta no encontrada.' }, 404);
   if (request.method !== 'POST') return json({ error: 'Método no permitido.' }, 405);
   if (request.headers.get('Origin') !== env.APP_ORIGIN ||
       !request.headers.get('Content-Type')?.startsWith('application/json')) {
@@ -104,7 +112,16 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {
     return json({ error: 'Revisa el encuentro, los marcadores (0–999), los puntos (0–10000), la categoría, la actividad y el motivo.' }, 400);
   }
-  if (!isMarker && (!data || !COLORES_HOUSE.includes(data.house) ||
+  const puestos = isRanking && data ? porHouse(data.puestos, 1, 4) : null;
+  const puntos = isRanking && data ? porHouse(data.puntos, 0, 10000) : null;
+  if (isRanking && (!data || !puestos || !puntos || Object.values(puestos).sort().join() !== '1,2,3,4' ||
+      !FILAS_ACTIVIDAD.includes(data.fila) || !IDS_CATEGORIA.includes(data.categoria) ||
+      !Number.isSafeInteger(data.version) || data.version < 0 ||
+      typeof data.motivo !== 'string' || data.motivo.trim().length < 3 || data.motivo.length > 300 ||
+      typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {
+    return json({ error: 'Revisa la actividad, la categoría, los puestos (1.º a 4.º, sin repetir), los puntos (0–10000) y el motivo.' }, 400);
+  }
+  if (!isMarker && !isRanking && (!data || !COLORES_HOUSE.includes(data.house) ||
       !IDS_CATEGORIA.includes(data.categoria) ||
       !['sumar', 'restar'].includes(data.operacion) || !FILAS_ACTIVIDAD.includes(data.fila) ||
       !Number.isSafeInteger(data.puntos) || data.puntos < 1 || data.puntos > 10000 ||
@@ -117,6 +134,9 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
         a: data.a, b: data.b, estado: data.estado, motivo: data.motivo.trim(),
         puntosA:data.puntosA,puntosB:data.puntosB,fila:data.estado === 'finalizado' ? data.fila : null,
         categoria:data.estado === 'finalizado' ? data.categoria : '',fixtureUrl:env.FIXTURE_SCRIPT_URL }
+    : isRanking
+    ? { action: 'clasificacion', id: data.id, email, fila: data.fila, categoria: data.categoria,
+        version: data.version, puestos, puntos, motivo: data.motivo.trim() }
     : { id: data.id, email, house: data.house, categoria: data.categoria,
         operacion: data.operacion, fila: data.fila, puntos: data.puntos, motivo: data.motivo.trim() });
   const timestamp = Date.now();
@@ -127,9 +147,21 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   try {
     const upstream = await fetch(scriptUrl, { method: 'POST',
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ timestamp, payload, signature }),
-      signal: AbortSignal.timeout(isMarker ? 60000 : 25000) });
+      signal: AbortSignal.timeout(isMarker || isRanking ? 60000 : 25000) });
     if (!upstream.ok) throw new Error('upstream');
-    const result = await upstream.json() as { success?: boolean; error?: string; diagnostico?: string; pending?: boolean; id?: string; nuevo?: number; code?: string; marcador?: unknown };
+    const result = await upstream.json() as { success?: boolean; error?: string; diagnostico?: string; pending?: boolean; id?: string; nuevo?: number; code?: string; marcador?: unknown; clasificacion?: unknown };
+    if (isRanking) {
+      if (result.success === true && result.id === data.id && result.clasificacion && (result.clasificacion as {integrado?:boolean}).integrado === true) return json({success:true,id:result.id,clasificacion:result.clasificacion});
+      const errors: Record<string,string> = { CONFLICT:'Otro árbitro actualizó esta clasificación. Recarga antes de guardar.',
+        NOT_CONFIGURED:'Falta configurar el registro de clasificaciones en el script de puntajes.', ID_REUSED:'Identificador ya usado. Recarga la clasificación.',
+        UPDATE_REQUIRED:'Actualiza el script de puntajes para registrar clasificaciones.',
+        OTHER_PENDING:'Hay otro resultado pendiente de confirmación. Completa su reintento antes de guardar.',
+        REVIEW_REQUIRED:'Los puntos cambiaron directamente en Sheets durante un guardado pendiente. Solicita una revisión; no crees otro registro.',
+        CELL_INVALID:'La actividad y categoría elegidas no tienen una celda habilitada para las cuatro Houses.',
+        INSUFFICIENT_POINTS:'La corrección dejaría puntos negativos. Revisa los ajustes anteriores en Sheets.',
+        INVALID:'Revisa la actividad, la categoría, los puestos y los puntos.' };
+      return json({error:errors[result.code || ''] || 'No se confirmó la clasificación completa. Reintenta el mismo guardado.',code:result.code || 'UNCONFIRMED',pending:result.pending},409);
+    }
     if (isMarker) {
       if (result.success === true && result.id === data.id && result.marcador && (result.marcador as {integrado?:boolean}).integrado === true) return json({success:true,id:result.id,marcador:result.marcador});
       const errors: Record<string,string> = { CONFLICT:'Otro árbitro actualizó este encuentro. Recarga antes de guardar.',
