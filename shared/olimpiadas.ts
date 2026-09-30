@@ -58,3 +58,7 @@ export const ACTIVIDADES = [
   { fila: 37, nombre: 'Eco House', etiqueta: 'Reconocimiento: Eco House', grupo: 'Eventos Especiales y Reconocimientos' },
 ] as const;
 export const FILAS_ACTIVIDAD: readonly number[] = ACTIVIDADES.map(a => a.fila);
+// Los deportes principales se juegan entre dos Houses y sus puestos salen de «Resultado del partido».
+// El resto (carreras, gymkana, retos académicos y eventos) reúne a las cuatro Houses y se clasifica por puestos.
+export const ACTIVIDADES_CLASIFICACION = ACTIVIDADES.filter(a => a.grupo !== 'Deportes Principales');
+export const FILAS_CLASIFICACION: readonly number[] = ACTIVIDADES_CLASIFICACION.map(a => a.fila);

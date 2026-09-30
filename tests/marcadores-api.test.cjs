@@ -142,7 +142,7 @@ test('invalid rankings and foreign origin never reach Apps Script',async()=>{
   try {
     for(const patch of [{puestos:{white:1,blue:1,orange:3,green:4}},{puestos:{white:1,blue:2,orange:3}},{puestos:{white:1,blue:2,orange:3,green:5}},
       {puestos:{...ranking.puestos,red:1}},{puntos:{...ranking.puntos,white:-1}},{puntos:{...ranking.puntos,white:1.5}},{puntos:{...ranking.puntos,white:10001}},
-      {puntos:null},{fila:99},{categoria:'otra'},{version:-1},{motivo:'x'},{id:'x'}])
+      {puntos:null},{fila:99},{fila:8},{fila:12},{fila:17},{categoria:'otra'},{version:-1},{motivo:'x'},{id:'x'}])
       assert.equal((await onRequest({request:rankingRequest({...ranking,...patch}),env})).status,400);
     assert.equal((await onRequest({request:rankingRequest(ranking,'https://foreign.example'),env})).status,403);
   }finally{global.fetch=original;}

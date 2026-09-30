@@ -1,6 +1,6 @@
 import { manageContent } from '../../_lib/content';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-import { COLORES_HOUSE, FILAS_ACTIVIDAD, FIXTURE_FUENTE, IDS_CATEGORIA } from '../../../shared/olimpiadas';
+import { COLORES_HOUSE, FILAS_ACTIVIDAD, FILAS_CLASIFICACION, FIXTURE_FUENTE, IDS_CATEGORIA } from '../../../shared/olimpiadas';
 
 interface Env {
   CONTENT_BUCKET?: R2Bucket;
@@ -115,7 +115,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   const puestos = isRanking && data ? porHouse(data.puestos, 1, 4) : null;
   const puntos = isRanking && data ? porHouse(data.puntos, 0, 10000) : null;
   if (isRanking && (!data || !puestos || !puntos || Object.values(puestos).sort().join() !== '1,2,3,4' ||
-      !FILAS_ACTIVIDAD.includes(data.fila) || !IDS_CATEGORIA.includes(data.categoria) ||
+      !FILAS_CLASIFICACION.includes(data.fila) || !IDS_CATEGORIA.includes(data.categoria) ||
       !Number.isSafeInteger(data.version) || data.version < 0 ||
       typeof data.motivo !== 'string' || data.motivo.trim().length < 3 || data.motivo.length > 300 ||
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {

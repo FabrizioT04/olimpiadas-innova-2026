@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE, HOUSES } from '../../../shared/olimpiadas';
+import { ACTIVIDADES, ACTIVIDADES_CLASIFICACION, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE, HOUSES } from '../../../shared/olimpiadas';
 import { CLASIFICACION_PENDIENTE, LUGARES, isClasificacion } from './model';
 import type { Clasificacion } from './model';
 
 interface Intent { id:string; fila:number; categoria:string; version:number; puestos:Record<string,number>; puntos:Record<string,number>; motivo:string }
-const GRUPOS = [...new Set(ACTIVIDADES.map(a => a.grupo))];
+const GRUPOS = [...new Set(ACTIVIDADES_CLASIFICACION.map(a => a.grupo))];
 const nombreActividad = (fila:number) => ACTIVIDADES.find(a => a.fila === fila)?.etiqueta || `Fila ${fila}`;
 const nombreCategoria = (id:string) => CATEGORIAS.find(c => c.id === id)?.nombre || id;
 const aTexto = (valores?:Record<string,number>) => Object.fromEntries(COLORES_HOUSE.map(h => [h, valores ? String(valores[h] ?? '') : '']));
@@ -105,7 +105,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
           <label className="block text-sm font-medium">Actividad
             <select required value={fila} onChange={e => elegir(e.target.value, categoria, clasificaciones)} className="block w-full border rounded-xl p-3 mt-1">
               <option value="">Selecciona una actividad</option>
-              {GRUPOS.map(g => <optgroup key={g} label={g}>{ACTIVIDADES.filter(a => a.grupo === g).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}</optgroup>)}
+              {GRUPOS.map(g => <optgroup key={g} label={g}>{ACTIVIDADES_CLASIFICACION.filter(a => a.grupo === g).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}</optgroup>)}
             </select>
           </label>
           <label className="block text-sm font-medium">Categoría
