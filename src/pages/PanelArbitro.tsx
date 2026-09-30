@@ -6,6 +6,10 @@ import PanelMarcadores from '../features/marcadores/PanelMarcadores';
 import AdminContenido from '../features/contenido/AdminContenido';
 import { useContenido } from '../features/contenido/useContenido';
 import MascotaHouse from '../components/MascotaHouse';
+import { ACTIVIDADES, CATEGORIAS } from '../../shared/olimpiadas';
+
+// Grupos del selector de actividades, en el orden en que aparecen.
+const GRUPOS_ACTIVIDAD = [...new Set(ACTIVIDADES.map(a => a.grupo))];
 
 export default function PanelArbitro() {
   const { mascotas, cargado } = useContenido();
@@ -166,11 +170,7 @@ export default function PanelArbitro() {
                       id="categoria" name="categoria" value={category} onChange={(e) => setCategory(e.target.value)}
                     >
                       <option value="">Elige...</option>
-                      <option value="promesas">Promesas (1º y 2º)</option>
-                      <option value="infantil">Infantil (3º y 4º)</option>
-                      <option value="junior">Junior (5º y 6º)</option>
-                      <option value="juvenila">Juvenil A (7º y 8º)</option>
-                      <option value="juvenilb">Juvenil B (9º, 10º, 11º)</option>
+                      {CATEGORIAS.map(c => <option key={c.id} value={c.id}>{c.nombre} ({c.grados})</option>)}
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
@@ -186,42 +186,9 @@ export default function PanelArbitro() {
                       id="actividad" name="actividad" value={activity} onChange={(e) => setActivity(e.target.value)}
                     >
                       <option value="">Elige el deporte o reto...</option>
-                      <optgroup label="Deportes Principales">
-                        <option value="8">Futsal</option>
-                        <option value="9">Vóley</option>
-                        <option value="10">Pasabola</option>
-                        <option value="11">Balonmano</option>
-                        <option value="12">Básquet</option>
-                        <option value="13">Coneball</option>
-                        <option value="17">Bádminton</option>
-                      </optgroup>
-                      <optgroup label="Gynkana y Carreras">
-                        <option value="14">Carrera 25 metros</option>
-                        <option value="15">Carrera de relevos</option>
-                        <option value="16">Carrera de Resistencia</option>
-                        <option value="18">Salta Soga</option>
-                        <option value="19">Carrera de Michi</option>
-                        <option value="20">Aros Musicales</option>
-                        <option value="21">Carrera de Canalestas</option>
-                        <option value="22">Comelones</option>
-                        <option value="23">Carrera revienta globos</option>
-                        <option value="24">La cuchara y el limón</option>
-                        <option value="25">Carrera de Ganchos</option>
-                        <option value="26">Carrera de Tres Piernas</option>
-                      </optgroup>
-                      <optgroup label="Retos Académicos">
-                        <option value="27">Matemática (Tangram, Retos)</option>
-                        <option value="28">Comunicación (Cuentos, Debate)</option>
-                        <option value="29">DPSC (Juegos Andinos, Taptana)</option>
-                        <option value="30">Inglés (English Race, Lyrics War)</option>
-                        <option value="31">Arte (Máscaras, Mural, Canto)</option>
-                      </optgroup>
-                      <optgroup label="Eventos Especiales y Reconocimientos">
-                        <option value="34">Concurso de Barras</option>
-                        <option value="35">Concurso de Drill Coreográfico</option>
-                        <option value="36">Reconocimiento: Sana Convivencia</option>
-                        <option value="37">Reconocimiento: Eco House</option>
-                      </optgroup>
+                      {GRUPOS_ACTIVIDAD.map(grupo => <optgroup key={grupo} label={grupo}>
+                        {ACTIVIDADES.filter(a => a.grupo === grupo).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}
+                      </optgroup>)}
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>

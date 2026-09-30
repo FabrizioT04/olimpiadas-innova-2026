@@ -1,10 +1,11 @@
+import { COLORES_HOUSE, type ColorHouse } from '../../shared/olimpiadas';
+
 interface Env { APPS_SCRIPT_URL?: string; FIXTURE_CACHE?: KVNamespace }
-type Puntajes = { white:number; blue:number; orange:number; green:number };
+type Puntajes = Record<ColorHouse, number>;
 type Snapshot = { savedAt:number; puntajes:Puntajes };
 const CACHE_KEY = 'puntajes-publico-v1';
 const FRESH_MS = 10000;
 const FAILURE_COOLDOWN_MS = 15000;
-const HOUSES = ['white','blue','orange','green'] as const;
 // Per-instance protection complements the shared KV snapshot, as in /api/fixture.
 let recent: Snapshot | null = null;
 let retryAfter = 0;
@@ -14,8 +15,8 @@ let pending: Promise<Snapshot> | null = null;
 export function publicPuntajes(value: unknown): Puntajes {
   if (!value || typeof value !== 'object') throw new Error('Invalid scores');
   const data = value as Record<string, unknown>;
-  if (!HOUSES.every(h => Number.isSafeInteger(data[h]) && (data[h] as number) >= 0)) throw new Error('Invalid scores');
-  return {white:data.white as number, blue:data.blue as number, orange:data.orange as number, green:data.green as number};
+  if (!COLORES_HOUSE.every(h => Number.isSafeInteger(data[h]) && (data[h] as number) >= 0)) throw new Error('Invalid scores');
+  return Object.fromEntries(COLORES_HOUSE.map(h => [h, data[h]])) as Puntajes;
 }
 
 async function refreshPuntajes(env: Env) {

@@ -1,3 +1,5 @@
+import { FIXTURE_FUENTE as sourceId } from '../../shared/olimpiadas';
+
 interface Env { FIXTURE_SCRIPT_URL?: string; FIXTURE_CACHE?: KVNamespace }
 const CACHE_KEY = 'fixture-publico-v1';
 const FRESH_MS = 30000;
@@ -8,7 +10,6 @@ type Snapshot = { savedAt:number; fixture:ReturnType<typeof publicFixture> };
 const recent = new Map<string, Snapshot>();
 const retryAfter = new Map<string, number>();
 const refreshes = new Map<string, Promise<ReturnType<typeof publicFixture>>>();
-const sourceId = '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg';
 const pick = (value: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.map(key => [key, value[key]]));
 
 // Expose only the public programme and scores, never the private scoring history.

@@ -1,5 +1,6 @@
 import { manageContent } from '../../_lib/content';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { COLORES_HOUSE, FILAS_ACTIVIDAD, FIXTURE_FUENTE, IDS_CATEGORIA } from '../../../shared/olimpiadas';
 
 interface Env {
   CONTENT_BUCKET?: R2Bucket;
@@ -59,7 +60,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       const upstream = await fetch(env.FIXTURE_SCRIPT_URL, { signal: AbortSignal.timeout(25000) });
       if (!upstream.ok) throw new Error('upstream');
       const result = await upstream.json() as { fuente?: string; partidos?: unknown[]; error?: string };
-      if (result.error || result.fuente !== '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg' || !Array.isArray(result.partidos)) throw new Error('fixture');
+      if (result.error || result.fuente !== FIXTURE_FUENTE || !Array.isArray(result.partidos)) throw new Error('fixture');
       return json(result);
     } catch {
       return json({ error: 'No se pudo cargar la programación. Pulsa «Recargar partidos» para reintentar.' }, 502);
@@ -81,7 +82,6 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (raw.length > 4096) return json({ error: 'Solicitud demasiado grande.' }, 413);
   let data;
   try { data = JSON.parse(raw); } catch { return json({ error: 'Datos inválidos.' }, 400); }
-  const rows = [...Array.from({ length: 24 }, (_, i) => i + 8), 34, 35, 36, 37];
   if (isMarker && (!data || typeof data.encuentroId !== 'string' || !/^[0-9a-f]{64}$/.test(data.encuentroId) ||
       !Number.isSafeInteger(data.version) || data.version < 0 ||
       !Number.isSafeInteger(data.a) || data.a < 0 || data.a > 999 || !Number.isSafeInteger(data.b) || data.b < 0 || data.b > 999 ||
@@ -89,14 +89,14 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       !Number.isSafeInteger(data.puntosA) || data.puntosA < 0 || data.puntosA > 10000 ||
       !Number.isSafeInteger(data.puntosB) || data.puntosB < 0 || data.puntosB > 10000 ||
       (data.estado !== 'finalizado' && (data.puntosA !== 0 || data.puntosB !== 0)) ||
-      (data.estado === 'finalizado' && (!rows.includes(data.fila) || !['promesas','infantil','junior','juvenila','juvenilb'].includes(data.categoria))) ||
+      (data.estado === 'finalizado' && (!FILAS_ACTIVIDAD.includes(data.fila) || !IDS_CATEGORIA.includes(data.categoria))) ||
       typeof data.motivo !== 'string' || data.motivo.trim().length < 3 || data.motivo.length > 300 ||
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {
     return json({ error: 'Revisa el encuentro, los marcadores (0–999), los puntos (0–10000), la categoría, la actividad y el motivo.' }, 400);
   }
-  if (!isMarker && !isProbe && (!data || !['white', 'blue', 'orange', 'green'].includes(data.house) ||
-      !['promesas', 'infantil', 'junior', 'juvenila', 'juvenilb'].includes(data.categoria) ||
-      !['sumar', 'restar'].includes(data.operacion) || !rows.includes(data.fila) ||
+  if (!isMarker && !isProbe && (!data || !COLORES_HOUSE.includes(data.house) ||
+      !IDS_CATEGORIA.includes(data.categoria) ||
+      !['sumar', 'restar'].includes(data.operacion) || !FILAS_ACTIVIDAD.includes(data.fila) ||
       !Number.isSafeInteger(data.puntos) || data.puntos < 1 || data.puntos > 10000 ||
       typeof data.motivo !== 'string' || data.motivo.trim().length < 3 || data.motivo.length > 300 ||
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {

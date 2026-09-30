@@ -1,7 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),ts=require('typescript');
-const source=ts.transpileModule(fs.readFileSync('functions/api/fixture.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const source=require('./shared-module.cjs')(ts.transpileModule(fs.readFileSync('functions/api/fixture.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText);
 let instance=0;
 const load=()=>import('data:text/javascript;base64,'+Buffer.from(source).toString('base64')+'#'+(++instance));
 const fixture={version:1,fuente:'14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg',actualizado:new Date().toISOString(),avisos:[],finalistas:[],partidos:[{id:'one',marcador:{version:1,a:3,b:2,email:'private@example.com',motivo:'private'}}],history:['private']};

@@ -6,21 +6,18 @@ import imgDolphins from '../../../assets/dolphins.webp';
 import imgSeagulls from '../../../assets/seagulls.webp';
 import imgEagles from '../../../assets/eagles.webp';
 import imgHorses from '../../../assets/horses.webp';
+import { HOUSES as HOUSES_BASE, type ColorHouse } from '../../../../shared/olimpiadas';
 
 export interface House {
-  id: string;
+  id: string;       // animal: identifica la mascota
   name: string;
-  color: 'blue' | 'gray' | 'green' | 'orange';
+  color: ColorHouse; // clave de la House en la hoja y en el backend
   img: string; 
 }
 
-// 2. Reemplazamos los emojis por las variables de las imágenes
-export const HOUSES: House[] = [
-  { id: 'dolphins', name: 'DOLPHINS', color: 'blue', img: imgDolphins },
-  { id: 'seagulls', name: 'SEAGULLS', color: 'gray', img: imgSeagulls },
-  { id: 'eagles', name: 'EAGLES', color: 'green', img: imgEagles },
-  { id: 'horses', name: 'HORSES', color: 'orange', img: imgHorses }
-];
+// 2. Mascotas de respaldo; los datos de cada House vienen de shared/olimpiadas.ts
+const IMAGENES: Record<string, string> = { dolphins: imgDolphins, seagulls: imgSeagulls, eagles: imgEagles, horses: imgHorses };
+export const HOUSES: House[] = HOUSES_BASE.map(h => ({ id: h.animal, name: h.nombre, color: h.color, img: IMAGENES[h.animal] }));
 
 export const useArbitraje = () => {
   const [selectedHouse, setSelectedHouse] = useState<House | null>(null);
@@ -53,17 +50,9 @@ export const useArbitraje = () => {
     }
     sending.current = true;
     setIsSubmitting(true);
-    // 1. Diccionario traductor de eSports a Colores de tu Excel
-    const traductorEquipos: Record<string, string> = {
-      'HORSES': 'orange',
-      'DOLPHINS': 'blue',
-      'EAGLES': 'green',
-      'SEAGULLS': 'white'
-    };
-
-    // 2. Construimos el Payload EXACTO que espera tu Apps Script
+    // Construimos el Payload EXACTO que espera tu Apps Script
     const payload = {
-      house: traductorEquipos[selectedHouse.name], // Traduce 'HORSES' a 'orange'
+      house: selectedHouse.color,                  // Color de la House en la hoja (ej: 'orange')
       operacion: operation.toLowerCase(),          // 'sumar' o 'restar'
       categoria: category.toLowerCase(),           // 'promesas', 'infantil', etc.
       fila: parseInt(activity, 10),                // El número de fila del Excel (ej: 8)

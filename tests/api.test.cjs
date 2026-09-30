@@ -3,8 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const ts = require('typescript');
 const { pathToFileURL } = require('node:url');
-const source = ts.transpileModule(fs.readFileSync('functions/arbitraje/api/[[path]].ts','utf8'),
-  {compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText
+const source = require('./shared-module.cjs')(ts.transpileModule(fs.readFileSync('functions/arbitraje/api/[[path]].ts','utf8'),
+  {compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText)
   .replace("from '../../_lib/content'", `from '${require('./content-module.cjs')}'`)
   .replace("from 'jose'", `from '${pathToFileURL(require.resolve('jose')).href}'`);
 const modulePromise=import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));

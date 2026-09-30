@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HOUSES } from '../features/arbitraje/hooks/useArbitraje';
 import MascotaHouse from '../components/MascotaHouse';
+import { COLORES_HOUSE } from '../../shared/olimpiadas';
+
+// Orden inicial antes de ordenar por puntos; decide cómo se muestran los empates.
+const ORDEN_EMPATE = ['horses', 'dolphins', 'eagles', 'seagulls'];
 
 export default function Puntajes() {
   const { mascotas, cargado } = useContenido();
@@ -22,14 +26,12 @@ export default function Puntajes() {
         const respuesta = await fetch('/api/puntajes', { cache: 'no-store' });
         if (!respuesta.ok) throw new Error('Puntajes no disponibles');
         const datosBackend = await respuesta.json();
-        if (!['white', 'blue', 'orange', 'green'].every(h => Number.isSafeInteger(datosBackend[h]))) throw new Error('Respuesta inválida');
+        if (!COLORES_HOUSE.every(h => Number.isSafeInteger(datosBackend[h]))) throw new Error('Respuesta inválida');
 
-        const dataTransformada = [
-          { houseId: 'horses', points: datosBackend.orange || 0 },
-          { houseId: 'dolphins', points: datosBackend.blue || 0 },
-          { houseId: 'eagles', points: datosBackend.green || 0 },
-          { houseId: 'seagulls', points: datosBackend.white || 0 }
-        ];
+        const dataTransformada = ORDEN_EMPATE.map(animal => {
+          const house = HOUSES.find(h => h.id === animal)!;
+          return { houseId: house.id, points: datosBackend[house.color] || 0 };
+        });
 
         dataTransformada.sort((a, b) => b.points - a.points);
         datosUltimos = dataTransformada;

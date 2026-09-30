@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Calendar, Clock, RefreshCw, Trophy } from 'lucide-react';
 import { HOUSE_NAMES, STATUS_NAMES, isMarcador } from '../features/marcadores/model';
 import type { Marcador } from '../features/marcadores/model';
+import { CATEGORIAS, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
 
 interface Partido {
   id: string; fecha: string; hora: string; deporte: string; enfrentamiento: string;
@@ -18,16 +19,12 @@ interface FixtureData {
   version: number; fuente: string; actualizado: string; partidos: Partido[];
   finalistas: Finalista[]; avisos: string[];
 }
-const SHEET_ID = '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg';
 const WEB_APP_URL = '/api/fixture';
 const SNAPSHOT_KEY = 'fixture-publico-v1';
 const displayDate = (date: string) => date ? new Date(`${date}T12:00:00`).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha por definir';
 const matchup = (text: string) => !text.trim() || text.trim().toUpperCase() === 'VS' ? 'Por definir' : text;
 const categoryWithGrades = (category: string) => {
-  const grades: Record<string, string> = {
-    promesas: '1.º y 2.º grado', infantil: '3.º y 4.º grado',
-    junior: '5.º y 6.º grado', juvenila: '7.º y 8.º grado', juvenilb: '9.º, 10.º y 11.º grado',
-  };
+  const grades: Record<string, string> = Object.fromEntries(CATEGORIAS.map(c => [c.id, c.grados + ' grado']));
   const key = category.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '');
   return grades[key] ? `${category} · ${grades[key]}` : category;
 };

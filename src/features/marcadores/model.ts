@@ -1,5 +1,6 @@
-export const FIXTURE_URL = import.meta.env.VITE_FIXTURE_URL || 'https://script.google.com/macros/s/AKfycbw6v_-hQor-DMh7Mg2qtodwpuIiXIuCOqqtV3mY3Gs5ueqZBrDH8LORqa7RTMWhIH1uqw/exec';
-export const HOUSE_NAMES: Record<string,string> = { white:'Blanco · Seagulls',blue:'Azul · Dolphins',orange:'Anaranjado · Horses',green:'Verde · Eagles' };
+import { ACTIVIDADES as LISTA_ACTIVIDADES, CATEGORIAS as LISTA_CATEGORIAS, HOUSES } from '../../../shared/olimpiadas';
+
+export const HOUSE_NAMES: Record<string,string> = Object.fromEntries(HOUSES.map(h => [h.color, h.etiqueta]));
 export const STATUS_NAMES = { pendiente:'Pendiente', 'en-juego':'En juego', finalizado:'Finalizado' };
 export interface Marcador { version:number; houseA:string; houseB:string; a:number; b:number; estado:keyof typeof STATUS_NAMES; actualizado:string;
   integrado?:boolean; puntosA?:number; puntosB?:number; fila?:number|null; categoria?:string }
@@ -36,8 +37,8 @@ export function isActividad(value:unknown): value is Actividad {
     && Array.isArray(p.avisos) && p.avisos.every(a => typeof a === 'string')
     && typeof p.admiteMarcador === 'boolean';
 }
-export const CATEGORIAS = {promesas:'Promesas',infantil:'Infantil',junior:'Junior',juvenila:'Juvenil A',juvenilb:'Juvenil B'};
-export const ACTIVIDADES:Record<string,string> = {'8':'Futsal','9':'Vóley','10':'Pasabola','11':'Balonmano','12':'Básquet','13':'Coneball','14':'Carrera 25 metros','15':'Carrera de relevos','16':'Carrera de resistencia','17':'Bádminton','18':'Salta soga','19':'Carrera de Michi','20':'Aros musicales','21':'Carrera de canaletas','22':'Comelones','23':'Revienta globos','24':'La cuchara y el limón','25':'Carrera de ganchos','26':'Carrera de tres piernas','27':'Matemática','28':'Comunicación','29':'DPSC','30':'Inglés','31':'Arte','34':'Barras','35':'Drill','36':'Sana convivencia','37':'Eco House'};
+export const CATEGORIAS: Record<string,string> = Object.fromEntries(LISTA_CATEGORIAS.map(c => [c.id, c.nombre]));
+export const ACTIVIDADES: Record<string,string> = Object.fromEntries(LISTA_ACTIVIDADES.map(a => [String(a.fila), a.nombre]));
 export function destinoSugerido(p?:Actividad) {
   const norm=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,'');
   const category=norm(p?.categoria || '');

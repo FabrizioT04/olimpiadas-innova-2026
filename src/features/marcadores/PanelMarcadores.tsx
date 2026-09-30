@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CATEGORIAS, ACTIVIDADES, destinoSugerido, HOUSE_NAMES, STATUS_NAMES, isActividad, isEncuentro, isMarcador } from './model';
 import type { Actividad, Marcador } from './model';
+import { FIXTURE_FUENTE } from '../../../shared/olimpiadas';
 
 interface Intent { id:string; encuentroId:string; version:number; a:number; b:number; estado:Marcador['estado']; motivo:string; puntosA:number; puntosB:number; fila:number|null; categoria:string }
 const STORAGE = 'resultado-intento-v2';
@@ -47,7 +48,7 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
       if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('No se recibió la programación. Vuelve a ingresar al panel y reintenta.');
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'No se pudo leer el fixture.');
-      if (data.fuente !== '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg' || data.marcadoresHabilitados !== true || data.resultadosVersion !== 2 || !Array.isArray(data.partidos))
+      if (data.fuente !== FIXTURE_FUENTE || data.marcadoresHabilitados !== true || data.resultadosVersion !== 2 || !Array.isArray(data.partidos))
         throw new Error('Los marcadores aún no están habilitados. Completa la configuración del script.');
       if (signal?.aborted || expired) return;
       setError('');

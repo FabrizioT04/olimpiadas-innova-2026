@@ -1,7 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),ts=require('typescript');
-const source=ts.transpileModule(fs.readFileSync('functions/api/puntajes.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const source=require('./shared-module.cjs')(ts.transpileModule(fs.readFileSync('functions/api/puntajes.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText);
 let instance=0;
 const load=()=>import('data:text/javascript;base64,'+Buffer.from(source).toString('base64')+'#'+(++instance));
 const env={APPS_SCRIPT_URL:'https://script.google.com/macros/s/example/exec'};
