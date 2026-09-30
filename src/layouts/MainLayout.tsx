@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LayoutDashboard, CalendarDays, Medal, Image as ImageIcon, Menu, X } from 'lucide-react';
 import PanelArbitro from '../pages/PanelArbitro';
 import Puntajes from '../pages/Puntajes';
@@ -6,17 +6,28 @@ import Fixture from '../pages/Fixture';
 import Galeria from '../pages/Galeria';
 import BannerInnova from '../components/BannerInnova';
 
+const tabFromPath = (path: string) => {
+  if (path.includes('arbitraje')) return 'arbitraje';
+  if (path.includes('puntajes') || path.includes('medallero')) return 'medallero';
+  if (path.includes('momentos')) return 'momentos';
+  return 'fixture';
+};
+
 export default function MainLayout() {
-  const [activeTab, setActiveTab] = useState(() => {
-    const path = window.location.pathname;
-    if (path.includes('arbitraje')) return 'arbitraje';
-    if (path.includes('puntajes') || path.includes('medallero')) return 'medallero';
-    if (path.includes('momentos')) return 'momentos';
-    return 'fixture';
-  });
+  const [activeTab, setActiveTab] = useState(() => tabFromPath(window.location.pathname));
 
   // Estado para controlar la apertura del menú en celulares
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Los botones atrás/adelante del navegador cambian la URL; la vista debe seguirla.
+  useEffect(() => {
+    const onPopState = () => {
+      setActiveTab(tabFromPath(window.location.pathname));
+      setIsMobileMenuOpen(false);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   const handleTabChange = (tab: string) => {
     if (tab === 'arbitraje') {
@@ -24,7 +35,7 @@ export default function MainLayout() {
     } else {
       setActiveTab(tab);
       const newPath = tab === 'fixture' ? '/' : `/${tab}`;
-      window.history.pushState({}, '', newPath);
+      if (window.location.pathname !== newPath) window.history.pushState({}, '', newPath);
       setIsMobileMenuOpen(false); // Cierra el menú en móvil al hacer clic
     }
   };
@@ -131,7 +142,7 @@ export default function MainLayout() {
           <button
             onClick={() => handleTabChange('momentos')}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
-              activeTab === 'galeria'
+              activeTab === 'momentos'
                 ? 'bg-indigo-50 text-indigo-600 shadow-sm'
                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
             }`}

@@ -9,19 +9,19 @@ export default function Puntajes() {
   const [rankings, setRankings] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
 
-  const SCRIPT_URL_LECTURA = 'https://script.google.com/macros/s/AKfycbyVCfzMa_iJEEHn8Hs1KBUBtkk6DfhT58UK77a2QdscxIiH8EbnU8_4NcaYG5Dz4ttjsA/exec';
-
   useEffect(() => {
     let datosUltimos: any[] = [];
+    let consultando = false;
 
     const obtenerPuntajes = async () => {
+      if (consultando || document.hidden) return;
+      consultando = true;
       try {
-        const url = `${SCRIPT_URL_LECTURA}?page=api_puntos`;
-        const respuesta = await fetch(url);
-        const textoJSONP = await respuesta.text(); 
-        
-        const jsonLimpio = textoJSONP.replace(/^procesarPodio\(/, '').replace(/\);?$/, '');
-        const datosBackend = JSON.parse(jsonLimpio);
+        // El servidor comparte una sola lectura de Google entre todos los visitantes.
+        const respuesta = await fetch('/api/puntajes', { cache: 'no-store' });
+        if (!respuesta.ok) throw new Error('Puntajes no disponibles');
+        const datosBackend = await respuesta.json();
+        if (!['white', 'blue', 'orange', 'green'].every(h => Number.isSafeInteger(datosBackend[h]))) throw new Error('Respuesta inválida');
 
         const dataTransformada = [
           { houseId: 'horses', points: datosBackend.orange || 0 },
@@ -36,11 +36,13 @@ export default function Puntajes() {
         actualizarVista(datosUltimos);
       } catch (error) {
         console.error("Error al cargar los puntajes:", error);
-        if (rankings.length === 0) {
+        // Solo muestra ceros si nunca hubo datos; un fallo puntual conserva los últimos puntajes.
+        if (datosUltimos.length === 0) {
           datosUltimos = HOUSES.map(h => ({ houseId: h.id, points: 0 }));
           actualizarVista(datosUltimos);
         }
       } finally {
+        consultando = false;
         setCargando(false);
       }
     };
@@ -70,8 +72,9 @@ export default function Puntajes() {
 
     obtenerPuntajes();
     
-    // 1. Sincronización con la base de datos cada 4 segundos
-    const intervaloDatos = setInterval(obtenerPuntajes, 4000);
+    // 1. Sincronización cada 15 segundos, solo con la pestaña visible
+    const intervaloDatos = setInterval(obtenerPuntajes, 15000);
+    document.addEventListener('visibilitychange', obtenerPuntajes);
 
     // 2. ROTACIÓN AUTOMÁTICA: Si todos tienen los mismos puntos, rotamos la lista cada 4 segundos
     const intervaloRotacion = setInterval(() => {
@@ -88,6 +91,7 @@ export default function Puntajes() {
     return () => {
       clearInterval(intervaloDatos);
       clearInterval(intervaloRotacion);
+      document.removeEventListener('visibilitychange', obtenerPuntajes);
     };
   }, []);
 
