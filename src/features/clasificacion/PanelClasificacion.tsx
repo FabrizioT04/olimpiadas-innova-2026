@@ -37,7 +37,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
     const controller = new AbortController();
     const cancel = () => controller.abort();
     signal?.addEventListener('abort', cancel, { once: true });
-    const timeout = window.setTimeout(() => controller.abort(), 30000);
+    const timeout = window.setTimeout(() => controller.abort(), 60000);
     try {
       const response = await fetch('/arbitraje/api/fixture',{cache:'no-store',signal:controller.signal});
       if (response.redirected || response.status === 401 || response.status === 403) throw new Error('Tu sesión venció. Vuelve a ingresar al panel.');

@@ -61,7 +61,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     if (request.method !== 'GET') return json({ error: 'Método no permitido.' }, 405);
     if (!env.FIXTURE_SCRIPT_URL) return json({ error: 'La consulta de partidos aún no está configurada.' }, 503);
     try {
-      const upstream = await fetch(env.FIXTURE_SCRIPT_URL, { signal: AbortSignal.timeout(25000) });
+      // Apps Script often needs 15–25 s; the saved copy is only a fallback when Google is really slow.
+      const upstream = await fetch(env.FIXTURE_SCRIPT_URL, { signal: AbortSignal.timeout(50000) });
       if (!upstream.ok) throw new Error('upstream');
       const result = await upstream.json() as FixtureArbitraje;
       if (result.error || result.fuente !== FIXTURE_FUENTE || !Array.isArray(result.partidos)) throw new Error('fixture');

@@ -43,7 +43,7 @@ export default function PanelMarcadores({onLockedChange}:{onLockedChange:(locked
         setError('La lectura tardó demasiado. Pulsa «Recargar partidos» para reintentar.');
         setLoading(false);
       }
-    }, 30000);
+    }, 60000);
     try {
       const response = await fetch('/arbitraje/api/fixture',{cache:'no-store',signal:controller.signal});
       if (response.redirected || response.status === 401 || response.status === 403) throw new Error('Tu sesión venció. Vuelve a ingresar al panel.');
