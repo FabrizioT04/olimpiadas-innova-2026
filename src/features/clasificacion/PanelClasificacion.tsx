@@ -82,7 +82,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
         throw new Error(result.error || 'No se pudo confirmar la clasificación. Reintenta la misma operación.');
       }
       sessionStorage.removeItem(CLASIFICACION_PENDIENTE); setPending(null);
-      setMessage(`Clasificación de ${nombreActividad(intent.fila)} · ${nombreCategoria(intent.categoria)} confirmada. El puntaje oficial y el fixture la mostrarán en su siguiente consulta.`);
+      setMessage(`Clasificación de ${nombreActividad(intent.fila)} · ${nombreCategoria(intent.categoria)} confirmada. El puntaje oficial la mostrará en su siguiente consulta.`);
       setLoading(true);
       await load(undefined, {fila:String(intent.fila), categoria:intent.categoria});
     } catch (err) { setError(err instanceof Error && !['AbortError','TimeoutError','SyntaxError'].includes(err.name) ? err.message : 'No se pudo confirmar el guardado. Reintenta la misma operación.'); }
@@ -93,7 +93,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
 
   return <section className="bg-white/70 backdrop-blur-2xl rounded-[2rem] border border-white/80 p-5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-5">
     <h2 className="text-xl font-bold">Clasificación por puestos</h2>
-    <p className="text-sm text-slate-500">Para actividades en las que participan las cuatro Houses: asigna el 1.º, 2.º, 3.º y 4.º puesto y los puntos que decidan los árbitros. Los cuatro puntajes se guardan juntos.</p>
+    <p className="text-sm text-slate-500">Para actividades en las que participan las cuatro Houses: asigna el 1.º, 2.º, 3.º y 4.º puesto y los puntos que decidan los árbitros. Los cuatro puntajes se guardan juntos en la Sábana. Los puestos que ve el público se publican desde el archivo FINALISTA 2026.</p>
     {message && <p role="status" className="text-green-800 bg-green-50 p-3 rounded-lg">{message}</p>}
     {error && <p role="alert" className="text-red-800 bg-red-50 p-3 rounded-lg">{error}</p>}
     {pending && <div className="bg-amber-50 text-amber-900 rounded-lg p-3 space-y-2"><p>Hay una clasificación sin confirmar: {nombreActividad(pending.fila)} · {nombreCategoria(pending.categoria)} ({resumen(pending)}). Reintenta para recuperar su confirmación.</p>

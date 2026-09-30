@@ -119,3 +119,8 @@ test('concurrent manual refreshes share one upstream request',async()=>{
   assert.ok((await Promise.all(responses)).every(r=>r.status===200));
  }finally{global.fetch=original;}
 });
+test('referee rankings are not published: public places come from the finalists sheet',async()=>{
+ const {onRequest}=await load(),original=global.fetch;
+ global.fetch=async()=>Response.json({...fixture,clasificaciones:[{version:1,fila:19,categoria:'junior',puestos:{white:1,blue:2,orange:3,green:4},puntos:{white:100,blue:95,orange:90,green:85}}]});
+ try {const data=await(await onRequest({request:new Request('https://example.com/api/fixture'),env})).json();assert.equal(data.clasificaciones,undefined);}finally{global.fetch=original;}
+});
