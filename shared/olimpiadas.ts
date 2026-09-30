@@ -58,6 +58,31 @@ export const ACTIVIDADES = [
   { fila: 37, nombre: 'Eco House', etiqueta: 'Reconocimiento: Eco House', grupo: 'Eventos Especiales y Reconocimientos' },
 ] as const;
 export const FILAS_ACTIVIDAD: readonly number[] = ACTIVIDADES.map(a => a.fila);
+// Reto que juega cada categoría en los retos académicos, según la pestaña «Juegos por Área» del
+// fixture. Cada categoría compite aparte y suma en su columna de la fila del área.
+export const RETOS_ACADEMICOS = [
+  { fila: 27, reto: 'Replicando figuras', categorias: ['promesas'] },
+  { fila: 27, reto: 'Resolviendo retos computacionales', categorias: ['infantil', 'junior', 'juvenila'] },
+  { fila: 27, reto: '¡Corre, Resuelve y Gana!', categorias: ['juvenilb'] },
+  { fila: 28, reto: 'Cuenta cuentos', categorias: ['promesas'] },
+  { fila: 28, reto: 'Lucha Libro', categorias: ['infantil', 'junior'] },
+  { fila: 28, reto: 'Debate', categorias: ['juvenila', 'juvenilb'] },
+  { fila: 29, reto: 'Memoria histórica', categorias: ['promesas'] },
+  { fila: 29, reto: 'Thunkuna (Rayuela en quechua)', categorias: ['infantil'] },
+  { fila: 29, reto: 'El ajedrez andino', categorias: ['junior', 'juvenila'] },
+  { fila: 29, reto: 'Impro histórica', categorias: ['juvenilb'] },
+  { fila: 30, reto: 'English Race', categorias: ['promesas'] },
+  { fila: 30, reto: 'Sentence Race', categorias: ['infantil'] },
+  { fila: 30, reto: 'Picture Prompt Writing', categorias: ['junior'] },
+  { fila: 30, reto: 'Story Race', categorias: ['juvenila'] },
+  { fila: 30, reto: 'Lyrics War', categorias: ['juvenilb'] },
+  { fila: 31, reto: 'Bailando con las máscaras mágicas', categorias: ['promesas'] },
+  { fila: 31, reto: 'El mural que habla', categorias: ['infantil'] },
+  { fila: 31, reto: '¡Cantemos Juntos!', categorias: ['junior'] },
+  { fila: 31, reto: 'FusionArte Perú', categorias: ['juvenila'] },
+  { fila: 31, reto: 'Perú en Escena', categorias: ['juvenilb'] },
+] as const;
+
 // Los deportes principales se juegan entre dos Houses y sus puestos salen de «Resultado del partido».
 // El resto (carreras, gymkana, retos académicos y eventos) reúne a las cuatro Houses y se clasifica por puestos.
 export const ACTIVIDADES_CLASIFICACION = ACTIVIDADES.filter(a => a.grupo !== 'Deportes Principales');

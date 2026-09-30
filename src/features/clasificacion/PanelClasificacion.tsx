@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ACTIVIDADES, ACTIVIDADES_CLASIFICACION, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE, HOUSES } from '../../../shared/olimpiadas';
+import { ACTIVIDADES, ACTIVIDADES_CLASIFICACION, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE, HOUSES, RETOS_ACADEMICOS } from '../../../shared/olimpiadas';
 import { CLASIFICACION_PENDIENTE, LUGARES, columnaDe, filaSugerida, isClasificacion, porCategoria } from './model';
 import type { Clasificacion } from './model';
 import { isActividad, paraTodasLasHouses } from '../marcadores/model';
@@ -21,17 +21,23 @@ function destinoDe(p:Actividad): Destino|null {
   return fila === null ? null : { actividad:p.encuentroId, fila, categoria:columnaDe(p.categoria),
     detalle:`${fechaCorta(p.fecha)} · ${p.hora} · ${p.deporte} · ${p.categoria}`.slice(0, 200) };
 }
-// Outside the programme: one ranking per activity, except academic challenges, ranked per category.
-function destinoOtra(fila:number, categoria:string): Destino|null {
-  if (!porCategoria(fila)) return { actividad:`sabana:${fila}`, fila, categoria:columnaDe(''), detalle:nombreActividad(fila) };
-  return categoria ? { actividad:`sabana:${fila}:${categoria}`, fila, categoria, detalle:`${nombreActividad(fila)} · ${nombreCategoria(categoria)}` } : null;
+// Outside the programme: one ranking per activity, except academic challenges, where each category
+// plays its own challenge and is chosen as «<fila>:<categoria>».
+function destinoOtra(valor:string): Destino|null {
+  const [texto, categoria] = valor.split(':'), fila = Number(texto);
+  if (!categoria) return porCategoria(fila) ? null : { actividad:`sabana:${fila}`, fila, categoria:columnaDe(''), detalle:nombreActividad(fila) };
+  const reto = RETOS_ACADEMICOS.find(r => r.fila === fila && (r.categorias as readonly string[]).includes(categoria));
+  const area = ACTIVIDADES.find(a => a.fila === fila)?.nombre || nombreActividad(fila);
+  return reto ? { actividad:`sabana:${fila}:${categoria}`, fila, categoria, detalle:`${area} · ${reto.reto} · ${nombreCategoria(categoria)}` } : null;
 }
+const opcionesRetos = (fila:number) => RETOS_ACADEMICOS.filter(r => r.fila === fila)
+  .flatMap(r => r.categorias.map(c => ({ valor:`${fila}:${c}`, texto:`${r.reto} · ${nombreCategoria(c)}` })));
 
 export default function PanelClasificacion({onLockedChange}:{onLockedChange:(locked:boolean)=>void}) {
   const [clasificaciones,setClasificaciones] = useState<Clasificacion[]>([]);
   // Programme activities for all four Houses that add points to the score sheet, chosen by date.
   const [programadas,setProgramadas] = useState<Actividad[]>([]);
-  const [fecha,setFecha] = useState(''), [seleccion,setSeleccion] = useState(''), [categoriaOtra,setCategoriaOtra] = useState('');
+  const [fecha,setFecha] = useState(''), [seleccion,setSeleccion] = useState('');
   const [puestos,setPuestos] = useState<Record<string,string>>(aTexto());
   const [puntos,setPuntos] = useState<Record<string,string>>(aTexto());
   const [motivo,setMotivo] = useState('');
@@ -45,8 +51,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
   const fechas = [...new Set(programadas.map(p => p.fecha).filter(Boolean))].sort();
   const delDia = programadas.filter(p => p.fecha === fecha);
   const programada = fecha !== OTRAS ? programadas.find(p => p.id === seleccion) : undefined;
-  const destino = programada ? destinoDe(programada) : fecha === OTRAS && seleccion ? destinoOtra(Number(seleccion), categoriaOtra) : null;
-  const pideCategoria = fecha === OTRAS && !!seleccion && porCategoria(Number(seleccion));
+  const destino = programada ? destinoDe(programada) : fecha === OTRAS && seleccion ? destinoOtra(seleccion) : null;
   const actual = destino ? clasificaciones.find(c => c.actividad === destino.actividad) : undefined;
   const usados = COLORES_HOUSE.map(h => puestos[h]).filter(Boolean);
   const puestosValidos = COLORES_HOUSE.every(h => ['1','2','3','4'].includes(puestos[h])) && new Set(usados).size === 4;
@@ -57,16 +62,12 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
     const existente = actividad ? lista.find(c => c.actividad === actividad) : undefined;
     setPuestos(aTexto(existente?.puestos)); setPuntos(aTexto(existente?.puntos)); setMotivo('');
   }
-  function elegirFecha(nextFecha:string) { setFecha(nextFecha); setSeleccion(''); setCategoriaOtra(''); cargar(null, clasificaciones); }
+  function elegirFecha(nextFecha:string) { setFecha(nextFecha); setSeleccion(''); cargar(null, clasificaciones); }
   function elegirActividad(valor:string) {
-    setSeleccion(valor); setCategoriaOtra('');
+    setSeleccion(valor);
     const p = programadas.find(x => x.id === valor);
-    const d = fecha === OTRAS ? (valor ? destinoOtra(Number(valor), '') : null) : p ? destinoDe(p) : null;
+    const d = fecha === OTRAS ? (valor ? destinoOtra(valor) : null) : p ? destinoDe(p) : null;
     cargar(d?.actividad || null, clasificaciones);
-  }
-  function elegirCategoriaOtra(valor:string) {
-    setCategoriaOtra(valor);
-    cargar(destinoOtra(Number(seleccion), valor)?.actividad || null, clasificaciones);
   }
   async function load(signal?: AbortSignal, actividad:string|null = null) {
     const controller = new AbortController();
@@ -149,14 +150,11 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
             <select required value={seleccion} onChange={e => elegirActividad(e.target.value)} className="block w-full border rounded-xl p-3 mt-1">
               <option value="">Selecciona una actividad</option>
               {fecha === OTRAS
-                ? GRUPOS.map(g => <optgroup key={g} label={g}>{ACTIVIDADES_CLASIFICACION.filter(a => a.grupo === g).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}</optgroup>)
+                ? GRUPOS.flatMap(g => ACTIVIDADES_CLASIFICACION.some(a => a.grupo === g && porCategoria(a.fila))
+                  // Academic challenges: one option per challenge and category, grouped by area.
+                  ? ACTIVIDADES_CLASIFICACION.filter(a => a.grupo === g).map(a => <optgroup key={a.fila} label={`${g} · ${a.nombre}`}>{opcionesRetos(a.fila).map(o => <option key={o.valor} value={o.valor}>{o.texto}</option>)}</optgroup>)
+                  : [<optgroup key={g} label={g}>{ACTIVIDADES_CLASIFICACION.filter(a => a.grupo === g).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}</optgroup>])
                 : delDia.map(p => <option key={p.id} value={p.id}>{p.hora} · {p.deporte} · {p.categoria}</option>)}
-            </select>
-          </label>}
-          {pideCategoria && <label className="block text-sm font-medium">Categoría (cada una juega su propio reto)
-            <select required value={categoriaOtra} onChange={e => elegirCategoriaOtra(e.target.value)} className="block w-full border rounded-xl p-3 mt-1">
-              <option value="">Selecciona una categoría</option>
-              {CATEGORIAS.map(c => <option key={c.id} value={c.id}>{c.nombre} ({c.grados})</option>)}
             </select>
           </label>}
         </div>
