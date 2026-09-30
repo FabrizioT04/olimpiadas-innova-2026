@@ -39,6 +39,7 @@ export default function PanelArbitro() {
     activity, setActivity,
     motivo, setMotivo,
     isSubmitting,
+    aviso,
     enviarPuntaje
   } = useArbitraje();
 
@@ -214,6 +215,9 @@ export default function PanelArbitro() {
                   onChange={e => setMotivo(e.target.value)} className="w-full p-3 border rounded-xl"
                   placeholder="Ej.: victoria de futsal o corrección del acta" />
               </div>
+              {aviso && (aviso.tipo === 'exito'
+                ? <p role="status" className="text-green-800 bg-green-50 p-3 rounded-lg">{aviso.texto}</p>
+                : <p role="alert" className="text-red-800 bg-red-50 p-3 rounded-lg">{aviso.texto}</p>)}
               {/* Confirmar operación */}
               <button
                 type="submit"

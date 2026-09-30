@@ -29,6 +29,8 @@ export const useArbitraje = () => {
   const sending = useRef(false);
   const [activity, setActivity] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Mensaje mostrado dentro del formulario en lugar de ventanas alert() del navegador.
+  const [aviso, setAviso] = useState<{ tipo: 'error' | 'exito'; texto: string } | null>(null);
   const resetForm = () => {
     setSelectedHouse(null);
     setPoints('');
@@ -39,13 +41,14 @@ export const useArbitraje = () => {
   const enviarPuntaje = async (e: React.FormEvent) => {
     e.preventDefault();
     if (sending.current) return;
+    setAviso(null);
     if (!selectedHouse || !points || !operation || !category || !activity) {
-      alert("Por favor completa todos los campos principales (incluyendo categoría y actividad).");
+      setAviso({ tipo: 'error', texto: 'Completa la House, la operación, la categoría, la actividad y los puntos.' });
       return;
     }
 
     if (!Number.isSafeInteger(Number(points)) || Number(points) < 1 || Number(points) > 10000 || motivo.trim().length < 3) {
-      alert('Ingresa puntos enteros entre 1 y 10000 y un motivo de al menos 3 caracteres.');
+      setAviso({ tipo: 'error', texto: 'Ingresa puntos enteros entre 1 y 10000 y un motivo de al menos 3 caracteres.' });
       return;
     }
     sending.current = true;
@@ -71,11 +74,13 @@ export const useArbitraje = () => {
       });
       const result = await response.json();
       if (!response.ok || result.success !== true) throw new Error(result.error || 'No se confirmó el guardado.');
-      alert('Puntaje guardado y registrado en el historial.');
+      setAviso({ tipo: 'exito', texto: 'Puntaje guardado y registrado en el historial.' });
       pending.current = null;
       resetForm();
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'No se pudo confirmar el guardado. Reintenta sin cambiar los datos.');
+      // Errores de red o respuestas que no son JSON traen mensajes técnicos del navegador; se reemplazan por uno claro.
+      const tecnico = !(error instanceof Error) || ['TypeError', 'SyntaxError'].includes(error.name);
+      setAviso({ tipo: 'error', texto: tecnico ? 'No se pudo confirmar el guardado. Reintenta sin cambiar los datos.' : error.message });
     } finally {
       sending.current = false;
       setIsSubmitting(false);
@@ -90,6 +95,7 @@ export const useArbitraje = () => {
     activity, setActivity,
     motivo, setMotivo,
     isSubmitting,
+    aviso,
     enviarPuntaje
   };
 

@@ -2,20 +2,26 @@ import { useContenido } from '../features/contenido/useContenido';
 import { Trophy, Flame, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HOUSES } from '../features/arbitraje/hooks/useArbitraje';
+import { HOUSES, type House } from '../features/arbitraje/hooks/useArbitraje';
 import MascotaHouse from '../components/MascotaHouse';
 import { COLORES_HOUSE } from '../../shared/olimpiadas';
 
 // Orden inicial antes de ordenar por puntos; decide cómo se muestran los empates.
 const ORDEN_EMPATE = ['horses', 'dolphins', 'eagles', 'seagulls'];
 
+interface PuntajeHouse { houseId: string; points: number }
+interface Ranking {
+  id: string; house: House | undefined; points: number; rank: number;
+  trend: string; statusText: string; isTied: boolean;
+}
+
 export default function Puntajes() {
   const { mascotas, cargado } = useContenido();
-  const [rankings, setRankings] = useState<any[]>([]);
+  const [rankings, setRankings] = useState<Ranking[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    let datosUltimos: any[] = [];
+    let datosUltimos: PuntajeHouse[] = [];
     let consultando = false;
 
     const obtenerPuntajes = async () => {
@@ -25,12 +31,12 @@ export default function Puntajes() {
         // El servidor comparte una sola lectura de Google entre todos los visitantes.
         const respuesta = await fetch('/api/puntajes', { cache: 'no-store' });
         if (!respuesta.ok) throw new Error('Puntajes no disponibles');
-        const datosBackend = await respuesta.json();
+        const datosBackend: Record<string, unknown> = await respuesta.json();
         if (!COLORES_HOUSE.every(h => Number.isSafeInteger(datosBackend[h]))) throw new Error('Respuesta inválida');
 
         const dataTransformada = ORDEN_EMPATE.map(animal => {
           const house = HOUSES.find(h => h.id === animal)!;
-          return { houseId: house.id, points: datosBackend[house.color] || 0 };
+          return { houseId: house.id, points: datosBackend[house.color] as number };
         });
 
         dataTransformada.sort((a, b) => b.points - a.points);
@@ -50,13 +56,13 @@ export default function Puntajes() {
       }
     };
 
-    const actualizarVista = (data: any[]) => {
+    const actualizarVista = (data: PuntajeHouse[]) => {
       const conteoPuntajes: Record<number, number> = {};
       data.forEach(item => {
         conteoPuntajes[item.points] = (conteoPuntajes[item.points] || 0) + 1;
       });
 
-      const rankingsMapeados = data.map((item, index) => {
+      const rankingsMapeados = data.map((item, index): Ranking => {
         const estaEmpatado = conteoPuntajes[item.points] > 1;
         
         return {
