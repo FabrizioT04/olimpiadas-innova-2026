@@ -32,3 +32,20 @@ test('every academic area has one challenge per competing category (Promesas doe
   assert.deepEqual([...cats].sort(),[...esperadas].sort(),'fila '+fila);
  }
 });
+test('sport podiums join the final and the 3rd-place match by sport and category',async()=>{
+ const {podiosDeportivos,tipoPuesto}=await model;
+ for(const fase of ['1ero Y 2do','1er y 2do','1 Y 2 LUGAR','1er y 2do puesto'])assert.equal(tipoPuesto(fase),'final',fase);
+ for(const fase of ['3er y 4to','3 Y 4 PUESTO','3ER Y 4TO PUESTO BALONMANO','3Er y 4to puesto'])assert.equal(tipoPuesto(fase),'tercero',fase);
+ for(const fase of ['Preliminares','Semifinales y Finales','Finales','PRELIMINARES - Recreos',''])assert.equal(tipoPuesto(fase),null,fase);
+ const base={hora:'09:00',enfrentamiento:'X VS Y'};
+ const podios=podiosDeportivos([
+  {...base,id:'1',fecha:'2026-09-28',deporte:'Balonmano',categoria:'Infantil',fase:'3ER Y 4TO PUESTO BALONMANO',marcador:{houseA:'white',houseB:'orange',a:2,b:5,estado:'finalizado',puntosA:85,puntosB:90,integrado:true}},
+  {...base,id:'2',fecha:'2026-09-29',deporte:'BALONMANO',categoria:'Infantiles - 3 y 4',fase:'1ero Y 2do',marcador:{houseA:'green',houseB:'blue',a:3,b:1,estado:'finalizado',puntosA:100,puntosB:95,integrado:true}},
+  {...base,id:'3',fecha:'2026-10-02',deporte:'Futsal',categoria:'Juvenil B 9°,10° y 11°',fase:'1 Y 2 LUGAR',marcador:{houseA:'green',houseB:'orange',a:1,b:1,estado:'finalizado'}},
+  {...base,id:'4',fecha:'2026-10-01',deporte:'FUTSAL',categoria:'Juvenil B 9°,10° y 11°',fase:'3 Y 4 PUESTO',marcador:null},
+  {...base,id:'5',fecha:'2026-09-29',deporte:'Carreras de relevos',categoria:'Promesas - Infantil - Junior',fase:'Finales',marcador:null}]);
+ assert.deepEqual(podios.map(p=>[p.deporte,p.categoria]),[['Futsal','juvenilb'],['Balonmano','infantil']]);
+ assert.deepEqual(JSON.parse(JSON.stringify(podios[1].lugares)),[{puesto:1,house:'green',puntos:100},{puesto:2,house:'blue',puntos:95},{puesto:3,house:'orange',puntos:90},{puesto:4,house:'white',puntos:85}]);
+ // A level final and a pending 3rd-place match leave every place undecided.
+ assert.ok(podios[0].lugares.every(l=>l.house===null));
+});

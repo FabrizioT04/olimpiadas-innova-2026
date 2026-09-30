@@ -119,14 +119,16 @@ test('concurrent manual refreshes share one upstream request',async()=>{
   assert.ok((await Promise.all(responses)).every(r=>r.status===200));
  }finally{global.fetch=original;}
 });
-test('public rankings show only complete places, never points or private data',async()=>{
+test('public rankings show complete places and won points, never private data',async()=>{
  const {onRequest}=await load(),original=global.fetch;
  const valid={version:1,fila:19,categoria:'junior',actualizado:new Date().toISOString(),puestos:{white:2,blue:1,orange:4,green:3},puntos:{white:95,blue:100,orange:85,green:90},email:'private@example.com',actividad:'a'.repeat(64),detalle:'30/09 · 12:00 a 12:30 · CARRERA DE MICHI'};
- global.fetch=async()=>Response.json({...fixture,clasificaciones:[valid,{...valid,puestos:{white:1,blue:1,orange:3,green:4}},{...valid,puestos:{white:'1',blue:'2',orange:'3',green:'4'}},{...valid,fila:99},{...valid,categoria:'otra'},null]});
+ global.fetch=async()=>Response.json({...fixture,clasificaciones:[valid,{...valid,puestos:{white:1,blue:1,orange:3,green:4}},{...valid,puestos:{white:'1',blue:'2',orange:'3',green:'4'}},{...valid,fila:99},{...valid,categoria:'otra'},null,
+  {...valid,detalle:'Sin puntos válidos',puntos:{white:-1,blue:100,orange:85,green:90}}]});
  try {
   const data=await(await onRequest({request:new Request('https://example.com/api/fixture'),env})).json();
-  assert.deepEqual(data.clasificaciones,[{fila:19,categoria:'junior',detalle:valid.detalle,actualizado:valid.actualizado,puestos:{blue:1,white:2,green:3,orange:4}}]);
-  assert.equal(JSON.stringify(data).includes('private@example.com'),false);assert.equal(data.finalistas,undefined);assert.equal(data.clasificaciones[0].puntos,undefined);
+  assert.deepEqual(data.clasificaciones,[{fila:19,categoria:'junior',detalle:valid.detalle,actualizado:valid.actualizado,puestos:{blue:1,white:2,green:3,orange:4},puntos:{blue:100,white:95,green:90,orange:85}},
+   {fila:19,categoria:'junior',detalle:'Sin puntos válidos',actualizado:valid.actualizado,puestos:{blue:1,white:2,green:3,orange:4}}]);
+  assert.equal(JSON.stringify(data).includes('private@example.com'),false);assert.equal(data.finalistas,undefined);assert.equal(data.clasificaciones[0].actividad,undefined);
  }finally{global.fetch=original;}
 });
 test('scripts without rankings publish an empty list',async()=>{

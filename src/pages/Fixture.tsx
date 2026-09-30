@@ -3,7 +3,7 @@ import { Calendar, Clock, RefreshCw, Trophy } from 'lucide-react';
 import { HOUSE_NAMES, STATUS_NAMES, isMarcador } from '../features/marcadores/model';
 import type { Marcador } from '../features/marcadores/model';
 import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
-import { LUGARES, isClasificacion } from '../features/clasificacion/model';
+import { LUGARES, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
 import type { Clasificacion } from '../features/clasificacion/model';
 
 interface Partido {
@@ -107,6 +107,8 @@ export default function Fixture() {
   const selected = days.includes(filter) ? filter : 'todos';
   const matches = (data?.partidos || []).filter(p => selected === 'todos' || p.fecha === selected);
   const groups = Array.from(new Set(matches.map(p => p.fecha)));
+  // Sport podiums come from the registered results of each final and 3rd-place match.
+  const podios = podiosDeportivos((data?.partidos || []).map(p => ({ ...p, marcador: isMarcador(p.marcador) ? p.marcador : null })));
 
   return <div className="space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-4">
@@ -143,16 +145,26 @@ export default function Fixture() {
         </article>)}</div>
       </section>)}
     </>}
-    {data && view === 'puestos' && <section className="space-y-4">
-        <h2 className="font-bold text-lg text-slate-800">Clasificaciones por puestos</h2>
-        <p className="text-sm text-slate-500">Actividades con las cuatro Houses, registradas por los árbitros. Los deportes muestran su marcador final en «Programación».</p>
-        {!data.clasificaciones?.length && <p className="py-8 text-center text-slate-500">Todavía no hay puestos registrados.</p>}
+    {data && view === 'puestos' && <div className="space-y-8"><section className="space-y-4">
+        <h2 className="font-bold text-lg text-slate-800">Actividades con todas las Houses</h2>
+        <p className="text-sm text-slate-500">Carreras, gymkana, retos académicos y concursos, registrados por los árbitros.</p>
+        {!data.clasificaciones?.length && <p className="py-6 text-center text-slate-500">Todavía no hay puestos registrados.</p>}
         <div className="grid md:grid-cols-2 gap-4">{[...(data.clasificaciones || [])].sort(ordenClasificacion).map(c => <article key={`${c.fila}:${c.detalle}:${c.actualizado}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
           <h3 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{ACTIVIDADES.find(a => a.fila === c.fila)?.etiqueta}</h3>
           {c.detalle && <p className="text-sm text-slate-600">{c.detalle}</p>}
-          <ol className="grid grid-cols-2 gap-2 text-sm">{[...COLORES_HOUSE].sort((a,b) => c.puestos[a] - c.puestos[b]).map(h => <li key={h} className="rounded bg-slate-50 p-2">{LUGARES[c.puestos[h]-1]}: {HOUSE_NAMES[h]}</li>)}</ol>
+          <ol className="grid grid-cols-2 gap-2 text-sm">{[...COLORES_HOUSE].sort((a,b) => c.puestos[a] - c.puestos[b]).map(h => <li key={h} className="rounded bg-slate-50 p-2 flex justify-between gap-2"><span>{LUGARES[c.puestos[h]-1]}: {HOUSE_NAMES[h]}</span>{Number.isSafeInteger(c.puntos?.[h]) && <span className="font-semibold text-slate-800 whitespace-nowrap">{c.puntos?.[h]} pts</span>}</li>)}</ol>
           <p className="text-xs text-slate-400">Registrada: {new Date(c.actualizado).toLocaleString('es-PE')}</p>
         </article>)}</div>
-    </section>}
+      </section>
+      {!!podios.length && <section className="space-y-4">
+        <h2 className="font-bold text-lg text-slate-800">Deportes</h2>
+        <p className="text-sm text-slate-500">El ganador del partido por el 1.º y 2.º puesto queda 1.º y el perdedor 2.º; lo mismo con el partido por el 3.º y 4.º. Se completa con los resultados registrados.</p>
+        <div className="grid md:grid-cols-2 gap-4">{podios.map(p => <article key={p.clave} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+          <h3 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{p.deporte} · {CATEGORIAS.find(c => c.id === p.categoria)?.nombre}</h3>
+          {([['1.º y 2.º', p.final], ['3.º y 4.º', p.tercero]] as const).map(([titulo, m]) => m && <p key={titulo} className="text-xs text-slate-500">{titulo} ({m.fecha.slice(8,10)}/{m.fecha.slice(5,7)}): {m.enfrentamiento}{m.marcador ? ` · ${m.marcador.a} – ${m.marcador.b} · ${STATUS_NAMES[m.marcador.estado as keyof typeof STATUS_NAMES] || ''}` : ''}</p>)}
+          <ol className="grid grid-cols-2 gap-2 text-sm">{p.lugares.map(l => <li key={l.puesto} className="rounded bg-slate-50 p-2 flex justify-between gap-2"><span>{LUGARES[l.puesto-1]}: {l.house ? HOUSE_NAMES[l.house] : 'Por definir'}</span>{l.puntos !== undefined && <span className="font-semibold text-slate-800 whitespace-nowrap">{l.puntos} pts</span>}</li>)}</ol>
+        </article>)}</div>
+      </section>}
+    </div>}
   </div>;
 }
