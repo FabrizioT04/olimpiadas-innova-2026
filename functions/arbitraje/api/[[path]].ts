@@ -117,6 +117,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   const puntos = isRanking && data ? porHouse(data.puntos, 0, 10000) : null;
   if (isRanking && (!data || !puestos || !puntos || Object.values(puestos).sort().join() !== '1,2,3,4' ||
       !FILAS_CLASIFICACION.includes(data.fila) || !IDS_CATEGORIA.includes(data.categoria) ||
+      typeof data.actividad !== 'string' || !/^([0-9a-f]{64}|sabana:[0-9]{1,2})$/.test(data.actividad) ||
+      typeof data.detalle !== 'string' || data.detalle.trim().length < 3 || data.detalle.length > 200 ||
       !Number.isSafeInteger(data.version) || data.version < 0 ||
       typeof data.motivo !== 'string' || data.motivo.trim().length < 3 || data.motivo.length > 300 ||
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {
@@ -137,6 +139,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
         categoria:data.estado === 'finalizado' ? data.categoria : '',fixtureUrl:env.FIXTURE_SCRIPT_URL }
     : isRanking
     ? { action: 'clasificacion', id: data.id, email, fila: data.fila, categoria: data.categoria,
+        actividad: data.actividad, detalle: data.detalle.trim(),
         version: data.version, puestos, puntos, motivo: data.motivo.trim() }
     : { id: data.id, email, house: data.house, categoria: data.categoria,
         operacion: data.operacion, fila: data.fila, puntos: data.puntos, motivo: data.motivo.trim() });

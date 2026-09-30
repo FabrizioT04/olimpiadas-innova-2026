@@ -38,13 +38,8 @@ function isFixture(value: unknown): value is FixtureData {
     // Older snapshots have no rankings; when present every entry must be complete.
     && (data.clasificaciones === undefined || (Array.isArray(data.clasificaciones) && data.clasificaciones.every(isClasificacion)));
 }
-// Rankings follow the order of activities and categories in the score sheet.
-const ordenClasificacion = (c: Clasificacion) =>
-  ACTIVIDADES.findIndex(a => a.fila === c.fila) * 10 + CATEGORIAS.findIndex(x => x.id === c.categoria);
-const categoriaClasificacion = (id: string) => {
-  const c = CATEGORIAS.find(x => x.id === id);
-  return c ? `${c.nombre} · ${c.grados} grado` : id;
-};
+// Most recent rankings first: during the event the latest podium is the one people look for.
+const ordenClasificacion = (a: Clasificacion, b: Clasificacion) => b.actualizado.localeCompare(a.actualizado);
 
 function lastFixture(): FixtureData | null {
   try {
@@ -152,9 +147,9 @@ export default function Fixture() {
         <h2 className="font-bold text-lg text-slate-800">Clasificaciones por puestos</h2>
         <p className="text-sm text-slate-500">Actividades con las cuatro Houses, registradas por los árbitros. Los deportes muestran su marcador final en «Programación».</p>
         {!data.clasificaciones?.length && <p className="py-8 text-center text-slate-500">Todavía no hay puestos registrados.</p>}
-        <div className="grid md:grid-cols-2 gap-4">{[...(data.clasificaciones || [])].sort((a,b) => ordenClasificacion(a) - ordenClasificacion(b)).map(c => <article key={`${c.fila}:${c.categoria}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+        <div className="grid md:grid-cols-2 gap-4">{[...(data.clasificaciones || [])].sort(ordenClasificacion).map(c => <article key={`${c.fila}:${c.detalle}:${c.actualizado}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
           <h3 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{ACTIVIDADES.find(a => a.fila === c.fila)?.etiqueta}</h3>
-          <p className="text-sm text-slate-600">{categoriaClasificacion(c.categoria)}</p>
+          {c.detalle && <p className="text-sm text-slate-600">{c.detalle}</p>}
           <ol className="grid grid-cols-2 gap-2 text-sm">{[...COLORES_HOUSE].sort((a,b) => c.puestos[a] - c.puestos[b]).map(h => <li key={h} className="rounded bg-slate-50 p-2">{LUGARES[c.puestos[h]-1]}: {HOUSE_NAMES[h]}</li>)}</ol>
           <p className="text-xs text-slate-400">Registrada: {new Date(c.actualizado).toLocaleString('es-PE')}</p>
         </article>)}</div>

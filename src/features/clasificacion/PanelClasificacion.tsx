@@ -1,24 +1,35 @@
 import { useEffect, useRef, useState } from 'react';
 import { ACTIVIDADES, ACTIVIDADES_CLASIFICACION, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE, HOUSES } from '../../../shared/olimpiadas';
-import { CLASIFICACION_PENDIENTE, LUGARES, categoriasDe, filaSugerida, isClasificacion } from './model';
+import { CLASIFICACION_PENDIENTE, LUGARES, columnaDe, filaSugerida, isClasificacion } from './model';
 import type { Clasificacion } from './model';
 import { isActividad, paraTodasLasHouses } from '../marcadores/model';
 import type { Actividad } from '../marcadores/model';
 
-interface Intent { id:string; fila:number; categoria:string; version:number; puestos:Record<string,number>; puntos:Record<string,number>; motivo:string }
+interface Intent { id:string; actividad:string; detalle:string; fila:number; categoria:string; version:number; puestos:Record<string,number>; puntos:Record<string,number>; motivo:string }
+// The ranking target is fixed by what was selected: activity, score sheet row and column.
+interface Destino { actividad:string; detalle:string; fila:number; categoria:string }
 const GRUPOS = [...new Set(ACTIVIDADES_CLASIFICACION.map(a => a.grupo))];
 const nombreActividad = (fila:number) => ACTIVIDADES.find(a => a.fila === fila)?.etiqueta || `Fila ${fila}`;
 const nombreCategoria = (id:string) => CATEGORIAS.find(c => c.id === id)?.nombre || id;
 const aTexto = (valores?:Record<string,number>) => Object.fromEntries(COLORES_HOUSE.map(h => [h, valores ? String(valores[h] ?? '') : '']));
 const OTRAS = 'otras';
 const fechaLarga = (fecha:string) => new Date(`${fecha}T12:00:00`).toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long' });
+const fechaCorta = (fecha:string) => `${fecha.slice(8,10)}/${fecha.slice(5,7)}`;
+
+function destinoDe(p:Actividad): Destino|null {
+  const fila = filaSugerida(p.deporte);
+  return fila === null ? null : { actividad:p.encuentroId, fila, categoria:columnaDe(p.categoria),
+    detalle:`${fechaCorta(p.fecha)} · ${p.hora} · ${p.deporte} · ${p.categoria}`.slice(0, 200) };
+}
+function destinoOtra(fila:number): Destino {
+  return { actividad:`sabana:${fila}`, fila, categoria:columnaDe(''), detalle:nombreActividad(fila) };
+}
 
 export default function PanelClasificacion({onLockedChange}:{onLockedChange:(locked:boolean)=>void}) {
   const [clasificaciones,setClasificaciones] = useState<Clasificacion[]>([]);
-  // Programme activities for all four Houses, chosen by date to avoid mixing up similar events.
+  // Programme activities for all four Houses that add points to the score sheet, chosen by date.
   const [programadas,setProgramadas] = useState<Actividad[]>([]);
-  const [fecha,setFecha] = useState(''), [actividadId,setActividadId] = useState('');
-  const [fila,setFila] = useState(''), [categoria,setCategoria] = useState('');
+  const [fecha,setFecha] = useState(''), [seleccion,setSeleccion] = useState('');
   const [puestos,setPuestos] = useState<Record<string,string>>(aTexto());
   const [puntos,setPuntos] = useState<Record<string,string>>(aTexto());
   const [motivo,setMotivo] = useState('');
@@ -29,34 +40,28 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
   });
   const sending = useRef(false);
   useEffect(() => { onLockedChange(busy || !!pending); }, [busy,pending,onLockedChange]);
-  const actual = clasificaciones.find(c => c.fila === Number(fila) && c.categoria === categoria);
+  const fechas = [...new Set(programadas.map(p => p.fecha).filter(Boolean))].sort();
+  const delDia = programadas.filter(p => p.fecha === fecha);
+  const programada = fecha !== OTRAS ? programadas.find(p => p.id === seleccion) : undefined;
+  const destino = programada ? destinoDe(programada) : fecha === OTRAS && seleccion ? destinoOtra(Number(seleccion)) : null;
+  const actual = destino ? clasificaciones.find(c => c.actividad === destino.actividad) : undefined;
   const usados = COLORES_HOUSE.map(h => puestos[h]).filter(Boolean);
   const puestosValidos = COLORES_HOUSE.every(h => ['1','2','3','4'].includes(puestos[h])) && new Set(usados).size === 4;
   const puntosValidos = COLORES_HOUSE.every(h => /^\d{1,5}$/.test(puntos[h]) && Number(puntos[h]) <= 10000);
-  const fechas = [...new Set(programadas.map(p => p.fecha).filter(Boolean))].sort();
-  const delDia = programadas.filter(p => p.fecha === fecha);
-  const programada = programadas.find(p => p.id === actividadId);
-  const categoriasPermitidas = programada ? categoriasDe(programada.categoria) : CATEGORIAS.map(c => c.id);
-  const destinoVisible = fecha === OTRAS || !!programada;
 
-  // Selecting an activity and category loads its registered ranking, so a save is a correction.
-  function elegir(nextFila:string, nextCategoria:string, lista:Clasificacion[]) {
-    setFila(nextFila); setCategoria(nextCategoria); setMotivo('');
-    const existente = lista.find(c => c.fila === Number(nextFila) && c.categoria === nextCategoria);
-    setPuestos(aTexto(existente?.puestos)); setPuntos(aTexto(existente?.puntos));
+  // Choosing an activity loads its registered ranking, so a save is a correction.
+  function cargar(actividad:string|null, lista:Clasificacion[]) {
+    const existente = actividad ? lista.find(c => c.actividad === actividad) : undefined;
+    setPuestos(aTexto(existente?.puestos)); setPuntos(aTexto(existente?.puntos)); setMotivo('');
   }
-  function elegirFecha(nextFecha:string) {
-    setFecha(nextFecha); setActividadId(''); elegir('', '', clasificaciones);
+  function elegirFecha(nextFecha:string) { setFecha(nextFecha); setSeleccion(''); cargar(null, clasificaciones); }
+  function elegirActividad(valor:string) {
+    setSeleccion(valor);
+    const p = programadas.find(x => x.id === valor);
+    const d = fecha === OTRAS ? (valor ? destinoOtra(Number(valor)) : null) : p ? destinoDe(p) : null;
+    cargar(d?.actividad || null, clasificaciones);
   }
-  // A programmed activity proposes its score row and, when it names one category, that category.
-  function elegirProgramada(id:string) {
-    setActividadId(id);
-    const p = programadas.find(x => x.id === id);
-    const cats = p ? categoriasDe(p.categoria) : [];
-    const sugerida = p ? filaSugerida(p.deporte) : null;
-    elegir(sugerida ? String(sugerida) : '', cats.length === 1 ? cats[0] : '', clasificaciones);
-  }
-  async function load(signal?: AbortSignal, seleccion = {fila:'', categoria:''}) {
+  async function load(signal?: AbortSignal, actividad:string|null = null) {
     const controller = new AbortController();
     const cancel = () => controller.abort();
     signal?.addEventListener('abort', cancel, { once: true });
@@ -71,8 +76,8 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
         throw new Error('El script del fixture todavía no publica clasificaciones. Actualiza Marcadores.gs en el proyecto Fixture.');
       if (signal?.aborted) return;
       const lista:Clasificacion[] = data.clasificaciones.filter((c:unknown) => isClasificacion(c) && Number.isSafeInteger(c.version) && c.version > 0);
-      setError(''); setClasificaciones(lista); elegir(seleccion.fila, seleccion.categoria, lista);
-      setProgramadas(Array.isArray(data.partidos) ? data.partidos.filter((p:unknown) => isActividad(p) && paraTodasLasHouses(p)) : []);
+      setError(''); setClasificaciones(lista); cargar(actividad, lista);
+      setProgramadas(Array.isArray(data.partidos) ? data.partidos.filter((p:unknown) => isActividad(p) && paraTodasLasHouses(p) && filaSugerida(p.deporte) !== null) : []);
     } catch (err) {
       if (!signal?.aborted) setError(err instanceof Error && err.name !== 'AbortError' ? err.message : 'La lectura tardó demasiado. Pulsa «Recargar clasificaciones» para reintentar.');
     } finally {
@@ -88,8 +93,8 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
   }, []);
   async function save() {
     if (sending.current) return;
-    const intent:Intent|null = pending || (fila && categoria && puestosValidos && puntosValidos ? {
-      id:crypto.randomUUID(), fila:Number(fila), categoria, version:actual?.version || 0,
+    const intent:Intent|null = pending || (destino && puestosValidos && puntosValidos ? {
+      id:crypto.randomUUID(), ...destino, version:actual?.version || 0,
       puestos:Object.fromEntries(COLORES_HOUSE.map(h => [h, Number(puestos[h])])),
       puntos:Object.fromEntries(COLORES_HOUSE.map(h => [h, Number(puntos[h])])), motivo:motivo.trim() } : null);
     if (!intent) return;
@@ -106,9 +111,9 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
         throw new Error(result.error || 'No se pudo confirmar la clasificación. Reintenta la misma operación.');
       }
       sessionStorage.removeItem(CLASIFICACION_PENDIENTE); setPending(null);
-      setMessage(`Clasificación de ${nombreActividad(intent.fila)} · ${nombreCategoria(intent.categoria)} confirmada. El puntaje oficial y la pestaña «Puestos» del fixture la mostrarán en su siguiente consulta.`);
+      setMessage(`Clasificación de ${intent.detalle} confirmada. El puntaje oficial y la pestaña «Puestos» del fixture la mostrarán en su siguiente consulta.`);
       setLoading(true);
-      await load(undefined, {fila:String(intent.fila), categoria:intent.categoria});
+      await load(undefined, intent.actividad);
     } catch (err) { setError(err instanceof Error && !['AbortError','TimeoutError','SyntaxError'].includes(err.name) ? err.message : 'No se pudo confirmar el guardado. Reintenta la misma operación.'); }
     finally { sending.current = false; setBusy(false); }
   }
@@ -120,9 +125,9 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
     <p className="text-sm text-slate-500">Para actividades en las que participan las cuatro Houses: asigna el 1.º, 2.º, 3.º y 4.º puesto y los puntos que decidan los árbitros. Los cuatro puntajes se guardan juntos en la Sábana y los puestos se publican en la pestaña «Puestos» del fixture.</p>
     {message && <p role="status" className="text-green-800 bg-green-50 p-3 rounded-lg">{message}</p>}
     {error && <p role="alert" className="text-red-800 bg-red-50 p-3 rounded-lg">{error}</p>}
-    {pending && <div className="bg-amber-50 text-amber-900 rounded-lg p-3 space-y-2"><p>Hay una clasificación sin confirmar: {nombreActividad(pending.fila)} · {nombreCategoria(pending.categoria)} ({resumen(pending)}). Reintenta para recuperar su confirmación.</p>
+    {pending && <div className="bg-amber-50 text-amber-900 rounded-lg p-3 space-y-2"><p>Hay una clasificación sin confirmar: {pending.detalle} ({resumen(pending)}). Reintenta para recuperar su confirmación.</p>
       <button type="button" disabled={busy || loading} onClick={() => void save()} className="underline font-semibold">{busy ? 'Confirmando…' : 'Reintentar el mismo guardado'}</button></div>}
-    <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); setError(''); void load(undefined, {fila, categoria}); }} className="text-blue-700 underline disabled:opacity-50">{loading ? 'Leyendo clasificaciones…' : 'Recargar clasificaciones'}</button>
+    <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); setError(''); void load(undefined, destino?.actividad || null); }} className="text-blue-700 underline disabled:opacity-50">{loading ? 'Leyendo clasificaciones…' : 'Recargar clasificaciones'}</button>
     <form onSubmit={e => { e.preventDefault(); void save(); }} className="space-y-4">
       <fieldset disabled={busy || loading || !!pending} className="space-y-4 disabled:opacity-60">
         <div className="grid sm:grid-cols-2 gap-4">
@@ -133,29 +138,17 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
               <option value={OTRAS}>Otras actividades (fuera del fixture)</option>
             </select>
           </label>
-          {fecha && fecha !== OTRAS && <label className="block text-sm font-medium">Actividad programada
-            <select required value={actividadId} onChange={e => elegirProgramada(e.target.value)} className="block w-full border rounded-xl p-3 mt-1">
+          {fecha && <label className="block text-sm font-medium">Actividad
+            <select required value={seleccion} onChange={e => elegirActividad(e.target.value)} className="block w-full border rounded-xl p-3 mt-1">
               <option value="">Selecciona una actividad</option>
-              {delDia.map(p => <option key={p.id} value={p.id}>{p.hora} · {p.deporte} · {p.categoria}</option>)}
+              {fecha === OTRAS
+                ? GRUPOS.map(g => <optgroup key={g} label={g}>{ACTIVIDADES_CLASIFICACION.filter(a => a.grupo === g).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}</optgroup>)
+                : delDia.map(p => <option key={p.id} value={p.id}>{p.hora} · {p.deporte} · {p.categoria}</option>)}
             </select>
           </label>}
         </div>
-        {destinoVisible && <div className="grid sm:grid-cols-2 gap-4">
-          <label className="block text-sm font-medium">Categoría
-            <select required value={categoria} onChange={e => elegir(fila, e.target.value, clasificaciones)} className="block w-full border rounded-xl p-3 mt-1">
-              <option value="">Selecciona una categoría</option>
-              {CATEGORIAS.filter(c => categoriasPermitidas.includes(c.id)).map(c => <option key={c.id} value={c.id}>{c.nombre} ({c.grados})</option>)}
-            </select>
-          </label>
-          <label className="block text-sm font-medium">Actividad en la Sábana (dónde se suman los puntos)
-            <select required value={fila} onChange={e => elegir(e.target.value, categoria, clasificaciones)} className="block w-full border rounded-xl p-3 mt-1">
-              <option value="">Selecciona la actividad</option>
-              {GRUPOS.map(g => <optgroup key={g} label={g}>{ACTIVIDADES_CLASIFICACION.filter(a => a.grupo === g).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}</optgroup>)}
-            </select>
-          </label>
-        </div>}
-        {programada && !fila && <p className="text-sm text-amber-900 bg-amber-50 p-3 rounded-lg">«{programada.deporte}» no coincide con una actividad de la Sábana. Elige en cuál se suman los puntos.</p>}
-        {fila && categoria && <>
+        {destino && <>
+          <div className="bg-slate-100 rounded-xl p-3 text-sm"><span className="font-medium">Se suma en la Sábana:</span> {nombreActividad(destino.fila)} · columna {nombreCategoria(destino.categoria)}</div>
           {actual && <p role="status" className="text-amber-900 bg-amber-50 p-3 rounded-lg text-sm">Ya hay una clasificación registrada el {new Date(actual.actualizado).toLocaleString('es-PE', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}: {resumen(actual)}. Si guardas, se reemplaza y en la Sábana se aplica solo la diferencia de puntos.</p>}
           <div className="bg-blue-50 rounded-xl p-4 space-y-3">
             <div className="hidden sm:grid grid-cols-[1fr_7rem_7rem] gap-3 text-xs font-semibold text-slate-600"><span>House</span><span>Puesto</span><span>Puntos</span></div>
@@ -168,7 +161,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
               </select>
               <input aria-label={`Puntos de ${h.etiqueta}`} type="number" min="0" max="10000" step="1" required placeholder="Puntos" value={puntos[h.color]} onChange={e => setPuntos({...puntos,[h.color]:e.target.value})} className="min-w-0 border rounded-xl p-2 bg-white"/>
             </div>)}
-            <p className="text-xs text-slate-600">Cada puesto se asigna a una sola House. Los puntos se suman en la Sábana: {nombreActividad(Number(fila))} · {nombreCategoria(categoria)}.</p>
+            <p className="text-xs text-slate-600">Cada puesto se asigna a una sola House.</p>
           </div>
           <label className="block text-sm font-medium">Motivo del registro o corrección<input required minLength={3} maxLength={300} value={motivo} onChange={e => setMotivo(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"/></label>
           <button type="submit" disabled={!puestosValidos || !puntosValidos || motivo.trim().length < 3} className="rounded-xl bg-blue-600 text-white px-5 py-3 disabled:opacity-50">{busy ? 'Guardando…' : actual ? 'Corregir clasificación y puntos' : 'Guardar clasificación y puntos'}</button>

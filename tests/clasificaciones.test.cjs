@@ -18,7 +18,8 @@ function setup(){
  const match={id:'1:4',fecha:'2026-09-14',hora:'09:35',deporte:'Futsal',categoria:'Infantil',enfrentamiento:'BLANCO VS VERDE',fase:'Preliminar',lugar:'1',avisos:[]};
  c.leerFixture_=()=>({version:1,fuente:'14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg',partidos:[match],avisos:[]});
  const base={action:'clasificacion',id:crypto.randomUUID(),email:'ref@example.com',fila:19,categoria:'junior',version:0,
-  puestos:{white:2,blue:1,orange:4,green:3},puntos:{white:95,blue:100,orange:85,green:90},motivo:'Final de Carrera de Michi'};
+  puestos:{white:2,blue:1,orange:4,green:3},puntos:{white:95,blue:100,orange:85,green:90},motivo:'Final de Carrera de Michi',
+  actividad:'a'.repeat(64),detalle:'30/09 · 12:00 a 12:30 · CARRERA DE MICHI · Juvenil A, Juvenil B'};
  function send(patch={}){const payload=JSON.stringify({...base,...patch}),timestamp=Date.now();return c.doPost({postData:{contents:JSON.stringify({payload,timestamp,signature:crypto.createHmac('sha256',props.ARBITRAJE_SECRET).update(timestamp+'.'+payload).digest('hex')})}});}
  return {c,base,send,cells,journal,manual,public:()=>JSON.parse(JSON.stringify(c.enriquecerMarcadores_(c.leerFixture_()))),fail:key=>{failCell=key;}};
 }
@@ -31,6 +32,7 @@ test('one signed ranking awards all four Houses, is idempotent and is published 
  const pub=s.public();assert.equal(pub.clasificaciones.length,1);
  assert.deepEqual(pub.clasificaciones[0].puestos,{white:2,blue:1,orange:4,green:3});
  assert.equal(pub.clasificaciones[0].fila,19);assert.equal(pub.clasificaciones[0].categoria,'junior');assert.equal(pub.clasificaciones[0].version,1);
+ assert.equal(pub.clasificaciones[0].actividad,'a'.repeat(64));assert.equal(pub.clasificaciones[0].detalle,s.base.detalle);
  assert.equal(JSON.stringify(pub).includes('ref@example.com'),false);
  assert.equal(pub.partidos[0].marcador,null,'a ranking never becomes a match marker');
 });
@@ -41,16 +43,20 @@ test('corrections apply only the difference, keep other points and reject stale 
  assert.equal(r.success,true);assert.deepEqual(['F19','L19','R19','X19'].map(k=>score(s,k)),[100,135,90,0]);
  assert.deepEqual(s.public().clasificaciones[0].puestos,{white:1,blue:2,orange:3,green:4});assert.equal(s.public().clasificaciones[0].version,2);
 });
-test('different categories and activities are independent rankings',()=>{
- const s=setup();s.send();assert.equal(s.send({id:crypto.randomUUID(),categoria:'promesas'}).success,true);
- assert.equal(s.send({id:crypto.randomUUID(),fila:34}).success,true);
- assert.equal(score(s,'D19'),95);assert.equal(score(s,'F34'),95);assert.equal(s.public().clasificaciones.length,3);
+test('each programmed activity keeps its own ranking and their points add up in the same row',()=>{
+ const s=setup();s.send();assert.equal(s.send({id:crypto.randomUUID(),actividad:'b'.repeat(64),puestos:{white:1,blue:2,orange:3,green:4},puntos:{white:100,blue:95,orange:90,green:85}}).success,true);
+ assert.deepEqual(['F19','L19','R19','X19'].map(k=>score(s,k)),[195,195,175,175]);
+ assert.equal(s.send({id:crypto.randomUUID(),actividad:'sabana:34',fila:34,categoria:'juvenilb'}).success,true);
+ assert.equal(score(s,'H34'),95);assert.equal(s.public().clasificaciones.length,3);
+ // Correcting one activity leaves the other one's points untouched.
+ assert.equal(s.send({id:crypto.randomUUID(),version:1,puntos:{white:0,blue:0,orange:0,green:0}}).success,true);
+ assert.deepEqual(['F19','L19','R19','X19'].map(k=>score(s,k)),[100,95,90,85]);
 });
 test('ties, missing Houses and invalid values are rejected without writes',()=>{
  const s=setup();
  for(const patch of [{puestos:{white:1,blue:1,orange:3,green:4}},{puestos:{white:1,blue:2,orange:3}},{puestos:{white:1,blue:2,orange:3,green:5}},
   {puestos:{white:1,blue:2,orange:3,green:4,red:4}},{puntos:{white:-1,blue:100,orange:85,green:90}},{puntos:{white:1.5,blue:100,orange:85,green:90}},
-  {puntos:{white:10001,blue:100,orange:85,green:90}},{fila:99},{fila:'19'},{categoria:'otra'},{motivo:'x'},{version:-1}]){
+  {puntos:{white:10001,blue:100,orange:85,green:90}},{fila:99},{fila:'19'},{categoria:'otra'},{motivo:'x'},{version:-1},{actividad:'x'},{actividad:'sabana:abc'},{actividad:null},{detalle:'x'},{detalle:null}]){
   const r=s.send({id:crypto.randomUUID(),...patch});assert.equal(r.code,'INVALID');assert.equal(r.pending,false);
  }
  assert.equal(s.journal.length,1);assert.equal(Object.keys(s.cells).length,0);
@@ -65,7 +71,7 @@ test('a protected cell refuses the whole ranking',()=>{
 test('a failure midway stays pending, blocks other writes and completes on retry or recovery',()=>{
  const s=setup();s.fail('R19');const r=s.send();assert.equal(r.success,false);assert.equal(r.pending,true);
  assert.equal(score(s,'F19'),95);assert.equal(score(s,'R19'),0);assert.equal(s.public().clasificaciones.length,0);
- assert.equal(s.send({id:crypto.randomUUID(),categoria:'promesas'}).code,'OTHER_PENDING');
+ assert.equal(s.send({id:crypto.randomUUID(),actividad:'b'.repeat(64)}).code,'OTHER_PENDING');
  assert.equal(s.send({action:'manual',id:crypto.randomUUID(),house:'white',operacion:'sumar',puntos:10}).pending,true);
  s.fail('');assert.equal(s.send().success,true);assert.deepEqual(['F19','L19','R19','X19'].map(k=>score(s,k)),[95,100,85,90]);assert.equal(s.journal.length,2);
  const t=setup();t.fail('R19');t.send();t.fail('');t.c.recuperarResultadoPendiente_();

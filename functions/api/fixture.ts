@@ -18,7 +18,8 @@ function publicRanking(value: unknown) {
   if (!FILAS_ACTIVIDAD.includes(c.fila as number) || !IDS_CATEGORIA.includes(c.categoria as string) ||
       typeof c.actualizado !== 'string' || Number.isNaN(Date.parse(c.actualizado)) || !puestos || typeof puestos !== 'object' ||
       !COLORES_HOUSE.every(h => Number.isSafeInteger(puestos[h])) || COLORES_HOUSE.map(h => puestos[h]).sort().join() !== '1,2,3,4') return null;
-  return { fila: c.fila, categoria: c.categoria, actualizado: c.actualizado, puestos: pick(puestos, [...COLORES_HOUSE]) };
+  return { fila: c.fila, categoria: c.categoria, detalle: typeof c.detalle === 'string' ? c.detalle.slice(0, 200) : '',
+    actualizado: c.actualizado, puestos: pick(puestos, [...COLORES_HOUSE]) };
 }
 
 // Expose only the public programme and scores, never the private scoring history.

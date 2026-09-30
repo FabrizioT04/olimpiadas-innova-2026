@@ -2,15 +2,17 @@
 // Clasificación por puestos de una actividad en la que participan las cuatro Houses.
 // Se guarda en la hoja privada «Marcadores» con el mismo formato de 19 columnas que los
 // resultados: comparte el bloqueo, el estado PENDIENTE y recuperarResultadoPendiente_.
-// Columnas propias: B = clasificacion:<fila>:<categoria>, J = 'clasificacion',
-// M = {puestos, puntos} en JSON; P = fila y Q = categoría de la Sábana.
+// Cada actividad tiene su propia clasificación y sus puntos se suman: una actividad del fixture
+// se identifica por su encuentroId y una actividad fuera del fixture por «sabana:<fila>».
+// Columnas propias: B = clasificacion:<actividad>, J = 'clasificacion',
+// M = {puestos, puntos, actividad, detalle} en JSON; P = fila y Q = columna de categoría de la Sábana.
 var CLASIFICACION_HOUSES = ['white','blue','orange','green'];
 
-function clasificacionClave_(fila, categoria) { return 'clasificacion:' + fila + ':' + categoria; }
+function clasificacionClave_(actividad) { return 'clasificacion:' + actividad; }
 function clasificacionRespuesta_(r) {
   var datos = JSON.parse(r[12]);
-  return {version:Number(r[2]), fila:Number(r[15]), categoria:r[16], puestos:datos.puestos, puntos:datos.puntos,
-    actualizado:new Date(r[3]).toISOString(), integrado:r[17] === 'CONFIRMADO'};
+  return {version:Number(r[2]), fila:Number(r[15]), categoria:r[16], actividad:datos.actividad, detalle:datos.detalle,
+    puestos:datos.puestos, puntos:datos.puntos, actualizado:new Date(r[3]).toISOString(), integrado:r[17] === 'CONFIRMADO'};
 }
 function clasificacionValores_(value, min, max) {
   if (!value || typeof value !== 'object' || Object.keys(value).length !== CLASIFICACION_HOUSES.length) return null;
@@ -29,7 +31,9 @@ function guardarClasificacion_(d, raw, lock) {
     var puestos = d && clasificacionValores_(d.puestos, 1, 4), puntos = d && clasificacionValores_(d.puntos, 0, 10000);
     if (!d || d.action !== 'clasificacion' || typeof d.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(d.id) ||
         typeof d.email !== 'string' || !d.email.includes('@') || !Number.isSafeInteger(d.version) || d.version < 0 ||
-        !puestos || !puntos || typeof d.motivo !== 'string' || d.motivo.trim().length < 3 || d.motivo.length > 300) throw new Error('INVALID');
+        !puestos || !puntos || typeof d.motivo !== 'string' || d.motivo.trim().length < 3 || d.motivo.length > 300 ||
+        typeof d.actividad !== 'string' || !/^([0-9a-f]{64}|sabana:[0-9]{1,2})$/.test(d.actividad) ||
+        typeof d.detalle !== 'string' || d.detalle.trim().length < 3 || d.detalle.length > 200) throw new Error('INVALID');
     // Each position from 1st to 4th belongs to exactly one House: no ties.
     if (CLASIFICACION_HOUSES.map(function(h) { return puestos[h]; }).sort().join() !== '1,2,3,4') throw new Error('INVALID');
     resultadoCelda_('white', d.categoria, d.fila);
@@ -47,7 +51,7 @@ function guardarClasificacion_(d, raw, lock) {
     if (rows.some(function(r) { return r[17] === 'PENDIENTE'; })) throw new Error('OTHER_PENDING');
     var manual = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('HistorialArbitraje');
     if (manual && manual.getLastRow() > 1 && manual.getRange(2,12,manual.getLastRow()-1,1).getValues().some(function(r) { return r[0] === 'PENDIENTE'; })) throw new Error('OTHER_PENDING');
-    var clave = clasificacionClave_(d.fila, d.categoria);
+    var clave = clasificacionClave_(d.actividad);
     var records = rows.filter(function(r) { return r[1] === clave; }), current = records.length ? records[records.length-1] : null;
     if (d.version !== (current ? Number(current[2]) : 0)) throw new Error('CONFLICT');
     // A correction replaces the previous award: only the difference reaches the Sábana.
@@ -63,7 +67,7 @@ function guardarClasificacion_(d, raw, lock) {
       return {cell:key, before:before, after:after};
     });
     var record = [d.id, clave, d.version+1, new Date(), arbitrajeTexto_(d.email), '', '', '', '', 'clasificacion',
-      arbitrajeTexto_(d.motivo.trim()), fingerprint, JSON.stringify({puestos:puestos, puntos:puntos}), '', '', d.fila, d.categoria, 'PENDIENTE', JSON.stringify(plan)];
+      arbitrajeTexto_(d.motivo.trim()), fingerprint, JSON.stringify({puestos:puestos, puntos:puntos, actividad:d.actividad, detalle:d.detalle.trim()}), '', '', d.fila, d.categoria, 'PENDIENTE', JSON.stringify(plan)];
     sheet.getRange(sheet.getLastRow()+1,1,1,19).setValues([record]);
     prepared = true; SpreadsheetApp.flush();
     resultadoCompletar_(sheet, rows.length, record);

@@ -43,8 +43,8 @@ function marcadorPublico_(r) {
 // Clasificación por puestos guardada por Clasificaciones.gs (proyecto de puntajes).
 function clasificacionPublica_(r) {
   var datos = JSON.parse(r[12]);
-  return { version:Number(r[2]), fila:Number(r[15]), categoria:r[16], puestos:datos.puestos, puntos:datos.puntos,
-    actualizado:new Date(r[3]).toISOString() };
+  return { version:Number(r[2]), fila:Number(r[15]), categoria:r[16], actividad:datos.actividad || '', detalle:datos.detalle || '',
+    puestos:datos.puestos, puntos:datos.puntos, actualizado:new Date(r[3]).toISOString() };
 }
 function enriquecerMarcadores_(fixture) {
   var counts = {}, latest = {}, enabled = false, clasificaciones = {};

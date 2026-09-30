@@ -7,6 +7,8 @@ export const LUGARES = ['1.º', '2.º', '3.º', '4.º'];
 export interface Clasificacion {
   version: number; fila: number; categoria: string; actualizado: string;
   puestos: Record<string, number>; puntos?: Record<string, number>;
+  // Programme activity (encuentroId or «sabana:<fila>») and its description, e.g. «30/09 · 10:40 · Resistencia».
+  actividad?: string; detalle?: string;
 }
 
 // Each House holds a distinct place from 1st to 4th: no ties and no missing Houses.
@@ -34,7 +36,13 @@ export function categoriasDe(texto: string): string[] {
   return encontradas.length ? encontradas : [...IDS_CATEGORIA];
 }
 
-// Score sheet row suggested for a programme name; the referee can still choose another one.
+// Rankings have no category: points go to the column of the last category taking part.
+export function columnaDe(texto: string) {
+  const categorias = categoriasDe(texto);
+  return categorias[categorias.length - 1];
+}
+
+// Score sheet row for a programme name; activities without one (ceremonies) cannot be ranked.
 const ALIAS_FILA: [RegExp, number][] = [[/RESISTENCIA/, 16], [/RELEVO|POSTA/, 15], [/VELOCIDAD|25 METROS/, 14],
   [/SALTA SOGA/, 18], [/MICHI/, 19], [/AROS/, 20], [/CANALETA/, 21], [/COMELON/, 22], [/GLOBO/, 23], [/CUCHARA/, 24],
   [/GANCHO/, 25], [/TRES PIERNAS/, 26], [/MATEMATICA/, 27], [/COMUNICACION/, 28], [/DPSC/, 29], [/INGLES/, 30],
