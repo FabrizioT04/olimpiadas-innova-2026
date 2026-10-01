@@ -158,7 +158,7 @@ export default function Fixture() {
     {data?.avisos.map(message => <p key={message} className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{message}</p>)}
     <div className="flex flex-wrap gap-3 items-center rounded-2xl bg-white border border-slate-200 p-3">
       <button onClick={() => setView('programacion')} aria-pressed={view === 'programacion'} className={`rounded-lg px-4 py-2 ${view === 'programacion' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}>Programación</button>
-      <button onClick={() => setView('puestos')} aria-pressed={view === 'puestos'} className={`rounded-lg px-4 py-2 ${view === 'puestos' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}>Puestos</button>
+      <button onClick={() => setView('puestos')} aria-pressed={view === 'puestos'} className={`rounded-lg px-4 py-2 ${view === 'puestos' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}>Resultados</button>
     </div>
     {data && view === 'programacion' && <div ref={fechasRef} role="group" aria-label="Fecha" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
       {['todos', ...days].map(day => <button key={day || 'sin-fecha'} onClick={() => setFilter(day)} aria-pressed={selected === day}

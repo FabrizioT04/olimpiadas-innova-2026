@@ -68,7 +68,7 @@ export function PodioCompacto({ titulo, clasificacion, mascotas, cargado }:
     <p className="mb-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-amber-300">
       <Trophy aria-hidden="true" className="h-3.5 w-3.5" />{titulo}
     </p>
-    <ol className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+    <ol className="grid grid-cols-1 gap-1.5">
       {orden.map(h => <li key={h} className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2"><span className="w-7 text-sm font-black italic text-slate-400">{clasificacion.puestos[h]}.º</span>
           <HouseChip color={h} mascotas={mascotas} cargado={cargado} /></span>

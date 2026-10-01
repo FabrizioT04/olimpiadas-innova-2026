@@ -1,6 +1,6 @@
 # Clasificación por puestos
 
-Para actividades en las que participan las cuatro Houses (carreras, gymkana, retos académicos, concursos y reconocimientos). El árbitro asigna el 1.º, 2.º, 3.º y 4.º puesto y los puntos de cada House; los cuatro puntajes se guardan juntos en la `Sábana` y los puestos se publican en la pestaña «Puestos» del fixture.
+Para actividades en las que participan las cuatro Houses (carreras, gymkana, retos académicos, concursos y reconocimientos). El árbitro asigna el 1.º, 2.º, 3.º y 4.º puesto y los puntos de cada House; los cuatro puntajes se guardan juntos en la `Sábana` y los puestos se publican en la pestaña «Resultados» del fixture.
 
 Los partidos por el 1.º-2.º y el 3.º-4.º puesto entre dos Houses también se registran desde esta pestaña: su resultado decide los puestos del podio deportivo. Los partidos normales entre dos Houses siguen en «Resultado del partido», y los puntos sueltos de una House en «Penalidades y bonos».
 
@@ -26,7 +26,7 @@ Coordinar la actualización sin registros en curso. No cambiar las URLs de las i
    - Publicar una nueva versión de su implementación existente; conservar `FIXTURE_SCRIPT_URL`.
 3. Comprobar:
    - La URL `/exec` del fixture incluye `clasificaciones` (una lista, vacía si aún no hay registros).
-   - Registrar una clasificación real desde el panel: debe confirmarse, sumar los cuatro puntajes en la `Sábana` y aparecer en la pestaña «Puestos» del fixture.
+   - Registrar una clasificación real desde el panel: debe confirmarse, sumar los cuatro puntajes en la `Sábana` y aparecer en la pestaña «Resultados» del fixture.
    - Si el panel muestra «El script de puntajes rechazó la clasificación sin guardar nada», falta `Clasificaciones.gs` o la rama del `doPost`, o no se publicó la nueva versión.
 
 No hay variables nuevas en Cloudflare.

@@ -4,7 +4,7 @@
 
 Archivo: https://docs.google.com/spreadsheets/d/14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg/edit
 
-Se leen SEMANA 1, SEMANA 2, SEMANA 3, las pestañas de martes a viernes y Finalistas. No se escribe en ellas ni se modifica su formato. BaseDatosWeb deja de ser la fuente de la web. El script todavía devuelve `finalistas`, pero la web ya no lo usa: la pestaña «Puestos» se forma con las clasificaciones registradas en el panel y con los resultados de los partidos por puesto (ver `CLASIFICACIONES.md`).
+Se leen SEMANA 1, SEMANA 2, SEMANA 3, las pestañas de martes a viernes y Finalistas. No se escribe en ellas ni se modifica su formato. BaseDatosWeb deja de ser la fuente de la web. El script todavía devuelve `finalistas`, pero la web ya no lo usa: la pestaña «Resultados» se forma con las clasificaciones registradas en el panel y con los resultados de los partidos por puesto (ver `CLASIFICACIONES.md`).
 
 ## Publicación (en este orden)
 
@@ -14,7 +14,7 @@ Se leen SEMANA 1, SEMANA 2, SEMANA 3, las pestañas de martes a viernes y Finali
 4. En **Implementar → Gestionar implementaciones → lápiz**, selecciona **Nueva versión** y actualiza la implementación web existente. Conserva la misma URL `/exec` y su configuración de lectura pública. Guardar el editor por sí solo no actualiza la implementación.
 5. Abre la URL `/exec`. Debe mostrar `version: 1`, `fuente: 14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg`, `partidos` y `avisos`; con `Marcadores.gs`, también `marcadoresHabilitados`, `resultadosVersion: 2` y `clasificaciones`. Si devuelve `error`, resuelve el permiso o la lectura antes de publicar el cambio web.
 6. Fusiona el PR del fixture y espera que Cloudflare termine el despliegue. Cloudflare consulta el script mediante la variable `FIXTURE_SCRIPT_URL`. Si se creó una implementación con una URL diferente, actualiza esa variable en Cloudflare Pages y vuelve a desplegar.
-7. Abre la página de inicio (`/`), compara una actividad de cada formato y la pestaña Puestos. Cambia un dato real en Sheets y pulsa **Actualizar**; también se consulta automáticamente cada 30 segundos con la pestaña visible.
+7. Abre la página de inicio (`/`), compara una actividad de cada formato y la pestaña Resultados. Cambia un dato real en Sheets y pulsa **Actualizar**; también se consulta automáticamente cada 30 segundos con la pestaña visible.
 
 ## Comportamiento
 

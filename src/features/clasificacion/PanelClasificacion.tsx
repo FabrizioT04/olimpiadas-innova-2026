@@ -172,7 +172,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
         throw new Error(result.error || 'No se pudo confirmar la clasificación. Reintenta la misma operación.');
       }
       sessionStorage.removeItem(CLASIFICACION_PENDIENTE); setPending(null);
-      setMessage(`Clasificación de ${intent.detalle} confirmada. El puntaje oficial y la pestaña «Puestos» del fixture la mostrarán en su siguiente consulta.`);
+      setMessage(`Clasificación de ${intent.detalle} confirmada. El puntaje oficial y la pestaña «Resultados» del fixture la mostrarán en su siguiente consulta.`);
       setLoading(true);
       await load(undefined, intent.actividad);
     } catch (err) { setError(err instanceof Error && !['AbortError','TimeoutError','SyntaxError'].includes(err.name) ? err.message : 'No se pudo confirmar el guardado. Reintenta la misma operación.'); }
@@ -183,7 +183,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
 
   return <section className="bg-white/70 backdrop-blur-2xl rounded-[2rem] border border-white/80 p-5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-5">
     <h2 className="text-xl font-bold">Clasificación por puestos</h2>
-    <p className="text-sm text-slate-500">Para actividades en las que participan las cuatro Houses: asigna el 1.º, 2.º, 3.º y 4.º puesto y los puntos que decidan los árbitros. Los cuatro puntajes se guardan juntos en la Sábana y los puestos se publican en la pestaña «Puestos» del fixture.</p>
+    <p className="text-sm text-slate-500">Para actividades en las que participan las cuatro Houses: asigna el 1.º, 2.º, 3.º y 4.º puesto y los puntos que decidan los árbitros. Los cuatro puntajes se guardan juntos en la Sábana y los puestos se publican en la pestaña «Resultados» del fixture.</p>
     {message && <p role="status" className="text-green-800 bg-green-50 p-3 rounded-lg">{message}</p>}
     {error && <p role="alert" className="text-red-800 bg-red-50 p-3 rounded-lg">{error}</p>}
     {!loading && !!huerfanas.length && <p role="status" className="text-amber-900 bg-amber-50 p-3 rounded-lg text-sm">{huerfanas.length === 1 ? 'Hay 1 clasificación registrada' : `Hay ${huerfanas.length} clasificaciones registradas`} cuya actividad ya no aparece igual en el fixture, por ejemplo porque se corrigió su nombre, fecha u hora en Sheets. Sus puntos siguen en la Sábana: no la registres de nuevo. Para corregirla, elige «Otras actividades» → «Registradas que ya no están en el fixture».</p>}
