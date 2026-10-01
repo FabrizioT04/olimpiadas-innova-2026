@@ -49,3 +49,25 @@ test('sport podiums join the final and the 3rd-place match by sport and category
  // A level final and a pending 3rd-place match leave every place undecided.
  assert.ok(podios[0].lugares.every(l=>l.house===null));
 });
+test('rankings whose programme activity was edited away are orphans; panel rankings outside the programme never are',async()=>{
+ const {clasificacionesHuerfanas}=await model;
+ const base={version:1,categoria:'juvenilb',actualizado:'2026-09-30T18:16:27.858Z',puestos:{white:1,blue:3,green:2,orange:4}};
+ const drill={...base,fila:35,actividad:'a'.repeat(64),detalle:'25/09 · 10:55 - 11:15 · DRILL GIMNASITICO · TODAS LAS HOUSE'};
+ const barras={...base,fila:34,actividad:'b'.repeat(64),detalle:'25/09 · 9:55 - 10:15 · CONCURSO DE BARRAS · TODAS LAS HOUSE'};
+ const reto={...base,fila:27,actividad:'sabana:27:juvenilb',detalle:'Matemática · ¡Corre, Resuelve y Gana! · Juvenil B'};
+ const sinClave={...base,fila:36,detalle:'Sana convivencia'};
+ assert.deepEqual(clasificacionesHuerfanas([drill,barras,reto,sinClave],new Set(['b'.repeat(64)])),[drill]);
+ assert.deepEqual(clasificacionesHuerfanas([drill,barras],new Set(['a'.repeat(64),'b'.repeat(64)])),[]);
+});
+test('a programme activity on the same day, row and column as an orphan is a possible duplicate',async()=>{
+ const {posibleDuplicado}=await model;
+ const huerfana={version:1,fila:35,categoria:'juvenilb',actualizado:'2026-09-30T18:16:27.858Z',puestos:{white:1,blue:3,green:2,orange:4},
+  actividad:'a'.repeat(64),detalle:'25/09 · 10:55 - 11:15 · DRILL GIMNASITICO · TODAS LAS HOUSE'};
+ const renombrada={actividad:'c'.repeat(64),fila:35,categoria:'juvenilb',detalle:'25/09 · 10:55 - 11:15 · DRILL COREOGRÁFICO · TODAS LAS HOUSE'};
+ assert.equal(posibleDuplicado(renombrada,[huerfana]),huerfana);
+ // Another day, row or column is a different activity; the orphan itself is a correction, not a duplicate.
+ for(const patch of [{detalle:'26/09 · 10:55 · DRILL COREOGRÁFICO'},{fila:34},{categoria:'juvenila'},{actividad:'a'.repeat(64)}])
+  assert.equal(posibleDuplicado({...renombrada,...patch},[huerfana]),undefined);
+ // Rankings outside the programme carry no date and are never flagged.
+ assert.equal(posibleDuplicado({actividad:'sabana:35',fila:35,categoria:'juvenilb',detalle:'25/09 Drill'},[huerfana]),undefined);
+});

@@ -106,6 +106,24 @@ export function podiosDeportivos(partidos: PartidoPuesto[]): PodioDeportivo[] {
     .sort((a, b) => orden(a) - orden(b));
 }
 
+// --- Rankings whose programme activity no longer exists ---
+// A programme activity is identified by its date, time, name, category, teams, phase and place in Sheets.
+// Editing any of them (e.g. fixing a typo in the name) leaves its ranking without an activity: its points
+// stay in the score sheet, so the panel lists it to be corrected instead of registered again.
+const ACTIVIDAD_FIXTURE = /^[0-9a-f]{64}$/;
+export function clasificacionesHuerfanas(clasificaciones: Clasificacion[], idsFixture: ReadonlySet<string>) {
+  return clasificaciones.filter(c => typeof c.actividad === 'string' && ACTIVIDAD_FIXTURE.test(c.actividad) && !idsFixture.has(c.actividad));
+}
+
+// A programme activity probably repeats an orphan ranking when it adds to the same row and column on the
+// same day. The detail of a programme ranking starts with its «dd/mm» date.
+export function posibleDuplicado(destino: { actividad: string; fila: number; categoria: string; detalle: string }, huerfanas: Clasificacion[]) {
+  const dia = destino.detalle.slice(0, 5);
+  if (!ACTIVIDAD_FIXTURE.test(destino.actividad) || !/^\d{2}\/\d{2}$/.test(dia)) return undefined;
+  return huerfanas.find(c => c.actividad !== destino.actividad && c.fila === destino.fila
+    && c.categoria === destino.categoria && (c.detalle || '').slice(0, 5) === dia);
+}
+
 export function hayClasificacionPendiente() {
   try { return !!sessionStorage.getItem(CLASIFICACION_PENDIENTE); } catch { return false; }
 }
