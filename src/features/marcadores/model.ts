@@ -1,6 +1,14 @@
 import { ACTIVIDADES as LISTA_ACTIVIDADES, CATEGORIAS as LISTA_CATEGORIAS, HOUSES } from '../../../shared/olimpiadas';
 
 export const HOUSE_NAMES: Record<string,string> = Object.fromEntries(HOUSES.map(h => [h.color, h.etiqueta]));
+// The two Houses of a programme matchup such as "BLANCO VS VERDE", with the same rules as marcadorHouses_
+// in Apps Script; null for anything else ("todas las house", "Por definir"…).
+const NOMBRES_HOUSE: Record<string,string> = { BLANCO:'white', BLANCA:'white', AZUL:'blue', ANARANJADO:'orange', ANARANJADA:'orange', NARANJA:'orange', VERDE:'green' };
+export function housesDeEnfrentamiento(texto:string): [string,string] | null {
+  const partes = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toUpperCase().split(/\s+VS\.?\s+/);
+  const [a, b] = partes.map(p => NOMBRES_HOUSE[p]);
+  return partes.length === 2 && a && b && a !== b ? [a, b] : null;
+}
 export const STATUS_NAMES = { pendiente:'Pendiente', 'en-juego':'En juego', finalizado:'Finalizado' };
 export interface Marcador { version:number; houseA:string; houseB:string; a:number; b:number; estado:keyof typeof STATUS_NAMES; actualizado:string;
   integrado?:boolean; puntosA?:number; puntosB?:number; fila?:number|null; categoria?:string }

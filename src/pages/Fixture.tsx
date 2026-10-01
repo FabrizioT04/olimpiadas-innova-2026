@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Calendar, Clock, RefreshCw, Trophy } from 'lucide-react';
-import { HOUSE_NAMES, STATUS_NAMES, isMarcador } from '../features/marcadores/model';
+import { STATUS_NAMES, housesDeEnfrentamiento, isMarcador } from '../features/marcadores/model';
+import { useContenido } from '../features/contenido/useContenido';
+import { HouseChip, MarcadorDeportivo } from '../components/HouseDistintivo';
 import type { Marcador } from '../features/marcadores/model';
 import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
 import { LUGARES, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
@@ -42,6 +44,17 @@ function isFixture(value: unknown): value is FixtureData {
 // Most recent rankings first: during the event the latest podium is the one people look for.
 const ordenClasificacion = (a: Clasificacion, b: Clasificacion) => b.actualizado.localeCompare(a.actualizado);
 
+// «BLANCO VS VERDE» as the two House badges; any other text («todas las house», «Por definir») as is.
+function Enfrentamiento({ texto, mascotas, cargado }: { texto: string; mascotas: Record<string, string>; cargado: boolean }) {
+  const houses = housesDeEnfrentamiento(texto);
+  if (!houses) return <p className="font-medium text-slate-700">{texto}</p>;
+  return <p className="flex flex-wrap items-center gap-2" aria-label={texto}>
+    <HouseChip color={houses[0]} mascotas={mascotas} cargado={cargado} />
+    <span aria-hidden="true" className="text-xs font-black italic text-slate-400">VS</span>
+    <HouseChip color={houses[1]} mascotas={mascotas} cargado={cargado} />
+  </p>;
+}
+
 function lastFixture(): FixtureData | null {
   try {
     const value: unknown = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || 'null');
@@ -50,6 +63,7 @@ function lastFixture(): FixtureData | null {
 }
 
 export default function Fixture() {
+  const { mascotas, cargado } = useContenido();
   const [data, setData] = useState<FixtureData | null>(lastFixture);
   const [stale, setStale] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -136,8 +150,10 @@ export default function Fixture() {
       {groups.map(date => <section key={date} className="space-y-3"><h2 className="font-bold text-lg text-slate-800 capitalize">{displayDate(date)}</h2>
         <div className="grid md:grid-cols-2 gap-4">{matches.filter(p => p.fecha === date).map(p => <article key={p.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
           <div className="flex justify-between gap-3"><span className="flex gap-2 text-blue-700 font-semibold"><Clock size={18}/>{p.hora}</span><span className="text-sm text-slate-500">Lugar: {p.lugar}</span></div>
-          <h3 className="font-bold text-slate-800">{p.deporte}</h3><p className="font-medium text-slate-700">{p.enfrentamiento}</p>
-          {isMarcador(p.marcador) && <div className="rounded-xl bg-blue-50 p-3 text-center"><p className="text-xs font-semibold text-blue-700">{STATUS_NAMES[p.marcador.estado]}</p><p className="text-2xl font-bold text-slate-900">{p.marcador.a} – {p.marcador.b}</p><p className="text-xs text-slate-600">{HOUSE_NAMES[p.marcador.houseA]} / {HOUSE_NAMES[p.marcador.houseB]}</p></div>}
+          <h3 className="font-black uppercase italic tracking-wide text-slate-900">{p.deporte}</h3>
+          {/* With a registered result the scoreboard already shows both Houses. */}
+          {isMarcador(p.marcador) ? <MarcadorDeportivo marcador={p.marcador} mascotas={mascotas} cargado={cargado} />
+            : <Enfrentamiento texto={p.enfrentamiento} mascotas={mascotas} cargado={cargado} />}
           <p className="text-sm font-medium text-slate-700">{categoryWithGrades(p.categoria)}</p>
           {p.fase && <p className="text-sm text-slate-500">{p.fase}</p>}
           {p.bloque && <p className="text-xs text-slate-500">Bloque: {p.bloque}</p>}
@@ -154,7 +170,7 @@ export default function Fixture() {
         <div className="grid md:grid-cols-2 gap-4">{[...clasificaciones].sort(ordenClasificacion).map(c => <article key={`${c.fila}:${c.detalle}:${c.actualizado}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
           <h3 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{ACTIVIDADES.find(a => a.fila === c.fila)?.etiqueta}</h3>
           {c.detalle && <p className="text-sm text-slate-600">{c.detalle}</p>}
-          <ol className="grid grid-cols-2 gap-2 text-sm">{[...COLORES_HOUSE].sort((a,b) => c.puestos[a] - c.puestos[b]).map(h => <li key={h} className="rounded bg-slate-50 p-2 flex justify-between gap-2"><span>{LUGARES[c.puestos[h]-1]}: {HOUSE_NAMES[h]}</span>{Number.isSafeInteger(c.puntos?.[h]) && <span className="font-semibold text-slate-800 whitespace-nowrap">{c.puntos?.[h]} pts</span>}</li>)}</ol>
+          <ol className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">{[...COLORES_HOUSE].sort((a,b) => c.puestos[a] - c.puestos[b]).map(h => <li key={h} className="rounded bg-slate-50 p-2 flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="font-black italic text-slate-500">{LUGARES[c.puestos[h]-1]}</span><HouseChip color={h} mascotas={mascotas} cargado={cargado} /></span>{Number.isSafeInteger(c.puntos?.[h]) && <span className="font-semibold text-slate-800 whitespace-nowrap">{c.puntos?.[h]} pts</span>}</li>)}</ol>
           <p className="text-xs text-slate-400">Registrada: {new Date(c.actualizado).toLocaleString('es-PE')}</p>
         </article>)}</div>
       </section>
@@ -164,7 +180,7 @@ export default function Fixture() {
         <div className="grid md:grid-cols-2 gap-4">{podios.map(p => <article key={p.clave} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
           <h3 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{p.deporte} · {CATEGORIAS.find(c => c.id === p.categoria)?.nombre}</h3>
           {([['1.º y 2.º', p.final], ['3.º y 4.º', p.tercero]] as const).map(([titulo, m]) => m && <p key={titulo} className="text-xs text-slate-500">{titulo} ({m.fecha.slice(8,10)}/{m.fecha.slice(5,7)}): {m.enfrentamiento}{m.marcador ? ` · ${m.marcador.a} – ${m.marcador.b} · ${STATUS_NAMES[m.marcador.estado as keyof typeof STATUS_NAMES] || ''}` : ''}</p>)}
-          <ol className="grid grid-cols-2 gap-2 text-sm">{p.lugares.map(l => <li key={l.puesto} className="rounded bg-slate-50 p-2 flex justify-between gap-2"><span>{LUGARES[l.puesto-1]}: {l.house ? HOUSE_NAMES[l.house] : 'Por definir'}</span>{l.puntos !== undefined && <span className="font-semibold text-slate-800 whitespace-nowrap">{l.puntos} pts</span>}</li>)}</ol>
+          <ol className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">{p.lugares.map(l => <li key={l.puesto} className="rounded bg-slate-50 p-2 flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="font-black italic text-slate-500">{LUGARES[l.puesto-1]}</span>{l.house ? <HouseChip color={l.house} mascotas={mascotas} cargado={cargado} /> : <span className="text-slate-500">Por definir</span>}</span>{l.puntos !== undefined && <span className="font-semibold text-slate-800 whitespace-nowrap">{l.puntos} pts</span>}</li>)}</ol>
         </article>)}</div>
       </section>}
     </div>}

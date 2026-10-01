@@ -18,3 +18,10 @@ test('activities for all four Houses are left out of the match list',async()=>{
  assert.equal(paraTodasLasHouses({enfrentamiento:'Equipos por definir',categoria:'TODAS LAS HOUSE'}),true);
  assert.equal(paraTodasLasHouses({enfrentamiento:'AZUL VS VERDE',categoria:'Juvenil A'}),false);
 });
+test('matchups name two different Houses like the score script; anything else shows as text',async()=>{
+ const {housesDeEnfrentamiento}=await model;
+ assert.deepEqual(housesDeEnfrentamiento('BLANCO VS VERDE'),['white','green']);
+ assert.deepEqual(housesDeEnfrentamiento('  anaranjado  vs.  Azul '),['orange','blue']);
+ assert.deepEqual(housesDeEnfrentamiento('Naranja VS Blanca'),['orange','white']);
+ for(const texto of ['todas las house','VS','Equipos por definir','BLANCO VS BLANCO','ROJO VS AZUL','BLANCO VERDE'])assert.equal(housesDeEnfrentamiento(texto),null);
+});
