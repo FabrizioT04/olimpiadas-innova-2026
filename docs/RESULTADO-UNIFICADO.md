@@ -1,20 +1,20 @@
 # Registro unificado de resultados y puntos
 
-Los profesores deciden los puntos de cada House. No hay una tabla automática de premios. Al finalizar un partido se guardan marcador, estado, puntos de ambas Houses, categoría, actividad y motivo con una sola operación identificada. Retos y penalidades independientes siguen disponibles en otra opción del mismo panel.
+Los profesores deciden los puntos de cada House. No hay una tabla automática de premios. Al finalizar un partido se guardan marcador, estado, puntos de ambas Houses, categoría, actividad y motivo con una sola operación identificada. Las actividades con las cuatro Houses se registran en «Clasificación por puestos» (ver `CLASIFICACIONES.md`) y los puntos sueltos de una House en «Penalidades y bonos», en el mismo panel.
 
 ## Activación (antes de fusionar la propuesta web)
 
 Coordinar la actualización sin registros en curso. No cambiar las URLs de las implementaciones ni el secreto.
 
 1. En el proyecto Apps Script de **PUNTAJES**, el vinculado al archivo que contiene la pestaña `Sábana`:
-   - Si usas el código completo de diagnósticos, sustituir el contenido de `Código.gs` por `CodigoCompletoDiagnostico.gs` de esta propuesta: conserva el lector de puntajes y los diagnósticos actuales.
+   - Si usas el código completo de diagnósticos, sustituir el contenido de `Código.gs` por `CodigoCompletoDiagnostico.gs` de esta propuesta: conserva el lector de puntajes y los diagnósticos actuales. Las dos variantes de `doPost` reconocen también las clasificaciones por puestos.
    - Si tienes el `doPost` separado, usar `ArbitrajeSeguro.gs` en su lugar y conservar el `doGet` existente. **Son alternativas: debe quedar un solo `doPost` en todo el proyecto.**
    - Añadir `ResultadoUnificado.gs` como archivo de script en ese mismo proyecto de puntajes. Si se creó antes en el proyecto del fixture, no ejecutarlo allí; conservar una copia y retirarlo de ese proyecto una vez instalado en puntajes.
    - Añadir la propiedad `MARCADORES_SPREADSHEET_ID` con el valor `1uPgQq1NnPCEZ_QweQriNktIeAkFdV9zlN7L7Znwzi6s`.
    - Ejecutar `verificarResultadoUnificado` desde el editor y autorizar el acceso a las hojas y la consulta externa cuando Google lo solicite. La cuenta que ejecuta la implementación debe tener acceso de edición al archivo privado de marcadores.
    - Publicar una **nueva versión de la implementación existente**; conservar la URL configurada como `APPS_SCRIPT_URL`.
 2. En el proyecto Apps Script del **FIXTURE**:
-   - Sustituir `Marcadores.gs` por la versión de esta propuesta. Conservar `FixtureOficial.gs` y `Finalistas2026.gs`, con sus actualizaciones recientes.
+   - Sustituir `Marcadores.gs` por la versión de esta propuesta y conservar `FixtureOficial.gs`, con sus actualizaciones recientes. `Finalistas2026.gs` ya no se usa: los puestos se registran en «Clasificación por puestos». Si sigue en el proyecto, puede eliminarse.
    - Publicar una nueva versión de su implementación existente; conservar `FIXTURE_SCRIPT_URL`.
    - Su respuesta debe incluir `resultadosVersion: 2`. El POST antiguo de marcadores se desactiva para que todas las escrituras usen el mismo bloqueo.
 3. Fusionar la propuesta web y comprobar Cloudflare Pages. Se conserva el respaldo público KV y la consulta protegida reciente; no hay nuevas variables de Cloudflare.

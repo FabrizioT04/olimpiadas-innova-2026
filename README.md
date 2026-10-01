@@ -7,10 +7,10 @@ Producción: https://olimpiadas-innova-2026.pages.dev
 
 | Ruta | Acceso | Contenido |
 |---|---|---|
-| `/` | Público | Fixture oficial y finalistas, leídos de Google Sheets |
+| `/` | Público | Fixture oficial leído de Google Sheets, con marcadores y puestos |
 | `/medallero` | Público | Puntaje oficial de las Houses |
 | `/momentos` | Público | Galería de fotos y videos |
-| `/arbitraje` | Cloudflare Access | Panel para registrar resultados, retos y penalidades, y publicar fotos y mascotas |
+| `/arbitraje` | Cloudflare Access | Panel para registrar resultados, clasificaciones por puestos, penalidades y bonos, y publicar fotos y mascotas |
 
 ## Arquitectura
 
@@ -70,4 +70,5 @@ Variables y enlaces de Cloudflare Pages (producción):
 - [Fixture oficial](docs/FIXTURE-OFICIAL.md)
 - [Marcadores](docs/MARCADORES.md)
 - [Registro unificado de resultados](docs/RESULTADO-UNIFICADO.md)
+- [Clasificación por puestos](docs/CLASIFICACIONES.md)
 - [PDF de actividades](docs/ACTIVIDADES-PDF.md) (sección retirada del sitio)
