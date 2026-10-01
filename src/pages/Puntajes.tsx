@@ -23,11 +23,12 @@ function hace(ms: number, fecha: number) {
   if (segundos < 60) return `hace ${segundos} s`;
   const minutos = Math.round(segundos / 60);
   if (minutos < 60) return `hace ${minutos} min`;
-  return 'el ' + new Date(fecha).toLocaleString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return 'del ' + new Date(fecha).toLocaleString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 // Muestra cuándo se leyeron los puntajes de Google. Tiene su propio reloj para no redibujar la tabla cada segundo.
-function EstadoActualizacion({ actualizado }: { actualizado: number | null }) {
+// `renovando`: el servidor entregó su última copia mientras pide la lectura nueva (p. ej. tras horas sin visitas).
+function EstadoActualizacion({ actualizado, renovando }: { actualizado: number | null; renovando: boolean }) {
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
     const reloj = setInterval(() => setAhora(Date.now()), 1000);
@@ -39,9 +40,15 @@ function EstadoActualizacion({ actualizado }: { actualizado: number | null }) {
     </p>;
   }
   const antiguedad = ahora - actualizado;
+  if (antiguedad > ANTIGUEDAD_MAXIMA_MS && renovando) {
+    return <p role="status" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 text-sm font-bold text-indigo-700">
+      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+      Actualizando puntajes… (última lectura {hace(antiguedad, actualizado)})
+    </p>;
+  }
   if (antiguedad > ANTIGUEDAD_MAXIMA_MS) {
     return <p role="status" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-sm font-bold text-amber-800">
-      Puntajes de {hace(antiguedad, actualizado)}. No se pudo actualizar; reintentando…
+      Puntajes {hace(antiguedad, actualizado)} · No se pudo actualizar; reintentando…
     </p>;
   }
   return <p className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-100 text-sm font-bold text-green-700">
@@ -56,10 +63,12 @@ export default function Puntajes() {
   const [cargando, setCargando] = useState(true);
   // Momento en que el servidor leyó los puntajes de Google (null si nunca se cargaron).
   const [actualizado, setActualizado] = useState<number | null>(null);
+  const [renovando, setRenovando] = useState(false);
 
   useEffect(() => {
     let datosUltimos: PuntajeHouse[] = [];
     let consultando = false;
+    let reintento: ReturnType<typeof setTimeout> | undefined;
 
     const obtenerPuntajes = async () => {
       if (consultando || document.hidden) return;
@@ -82,8 +91,14 @@ export default function Puntajes() {
         actualizarVista(datosUltimos);
         const leido = typeof datosBackend.actualizado === 'string' ? Date.parse(datosBackend.actualizado) : NaN;
         setActualizado(Number.isNaN(leido) ? Date.now() : leido);
+        // A copy served while the server renews it: ask again shortly instead of waiting a full cycle.
+        const desactualizado = datosBackend.desactualizado === true;
+        setRenovando(desactualizado);
+        clearTimeout(reintento);
+        if (desactualizado) reintento = setTimeout(obtenerPuntajes, 4000);
       } catch (error) {
         console.error("Error al cargar los puntajes:", error);
+        setRenovando(false);
         // Solo muestra ceros si nunca hubo datos; un fallo puntual conserva los últimos puntajes.
         if (datosUltimos.length === 0) {
           datosUltimos = HOUSES.map(h => ({ houseId: h.id, points: 0 }));
@@ -138,6 +153,7 @@ export default function Puntajes() {
     return () => {
       clearInterval(intervaloDatos);
       clearInterval(intervaloRotacion);
+      clearTimeout(reintento);
       document.removeEventListener('visibilitychange', obtenerPuntajes);
     };
   }, []);
@@ -161,7 +177,7 @@ export default function Puntajes() {
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 mb-3">
           Tabla de <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">Puntajes</span>
         </h1>
-        <EstadoActualizacion actualizado={actualizado} />
+        <EstadoActualizacion actualizado={actualizado} renovando={renovando} />
       </div>
 
       <div className="w-full space-y-5">
