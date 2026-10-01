@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ACTIVIDADES, ACTIVIDADES_CLASIFICACION, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE, HOUSES, RETOS_ACADEMICOS } from '../../../shared/olimpiadas';
-import { CLASIFICACION_PENDIENTE, LUGARES, categoriasNombradas, claveParcial, clasificacionesHuerfanas, columnaDe, detalleVigente, filaSugerida, gruposDe, isClasificacion, porCategoria, posibleDuplicado } from './model';
+import { CLASIFICACION_PENDIENTE, LUGARES, categoriasNombradas, claveParcial, clasificacionesHuerfanas, clasificacionesPosibles, columnaDe, detalleVigente, filaSugerida, gruposDe, isClasificacion, porCategoria, posibleDuplicado } from './model';
 import type { Clasificacion } from './model';
 import { isActividad, isEncuentro, paraTodasLasHouses } from '../marcadores/model';
 import type { Actividad } from '../marcadores/model';
@@ -36,13 +36,7 @@ function destinoDe(p:Actividad, categoria = '', grupo = ''): Destino|null {
     detalle:`${fechaCorta(p.fecha)} · ${p.hora} · ${p.deporte} · ${porCat ? nombreCategoria(columna) : p.categoria}${elegido ? ` · ${elegido.nombre}` : ''}`.slice(0, 200) };
 }
 // Every ranking key a programme activity can have, to tell its rankings apart from orphan ones.
-function clavesDe(p:Actividad): string[] {
-  const fila = filaSugerida(p.deporte);
-  if (fila === null) return [p.encuentroId];
-  const nombradas = categoriasNombradas(p.categoria);
-  const columnas = nombradas.length > 1 ? nombradas : [columnaDe(p.categoria)];
-  return [p.encuentroId, ...columnas.flatMap(c => ['', ...gruposDe(fila, c).map(g => g.id)].map(g => claveParcial(p.encuentroId, c, g)))];
-}
+const clavesDe = (p:Actividad) => clasificacionesPosibles(p).map(x => x.clave);
 // Outside the programme: one ranking per activity, except academic challenges, where each category
 // plays its own challenge and is chosen as «<fila>:<categoria>».
 function destinoOtra(valor:string, huerfanas:Clasificacion[], programadas:Actividad[]): Destino|null {

@@ -2,15 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { Calendar, Clock, RefreshCw, Trophy } from 'lucide-react';
 import { STATUS_NAMES, housesDeEnfrentamiento, isMarcador } from '../features/marcadores/model';
 import { useContenido } from '../features/contenido/useContenido';
-import { HouseChip, MarcadorDeportivo } from '../components/HouseDistintivo';
+import { HouseChip, MarcadorDeportivo, PodioCompacto } from '../components/HouseDistintivo';
 import type { Marcador } from '../features/marcadores/model';
 import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
-import { LUGARES, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
+import { GRUPOS_VELOCIDAD, LUGARES, clasificacionesPorActividad, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
 import type { Clasificacion } from '../features/clasificacion/model';
 import { fechaInicial, hoyLocal, ordenarFechas } from '../features/fixture/fechas';
 
 interface Partido {
-  id: string; fecha: string; hora: string; deporte: string; enfrentamiento: string;
+  id: string; encuentroId?: string; fecha: string; hora: string; deporte: string; enfrentamiento: string;
   categoria: string; arbitro: string; lugar: string; fase: string; bloque: string;
   seccion: string; origen: string; fila: number; avisos: string[];
   marcador?: Marcador | null;
@@ -57,6 +57,11 @@ function Enfrentamiento({ texto, mascotas, cargado }: { texto: string; mascotas:
     <HouseChip color={houses[1]} mascotas={mascotas} cargado={cargado} />
   </p>;
 }
+
+// Title of a ranking in a card: the category (and group) when the activity is split, otherwise «Resultado».
+const tituloPodio = (r: { categoria: string; grupo: string }) => r.categoria
+  ? `${CATEGORIAS.find(c => c.id === r.categoria)?.nombre || r.categoria}${r.grupo ? ` · ${GRUPOS_VELOCIDAD.grupos.find(g => g.id === r.grupo)?.nombre || r.grupo}` : ''}`
+  : 'Resultado';
 
 function lastFixture(): FixtureData | null {
   try {
@@ -137,6 +142,8 @@ export default function Fixture() {
   const groups = Array.from(new Set(matches.map(p => p.fecha)));
   // Sport podiums come from the registered results of each final and 3rd-place match.
   const clasificaciones = (data?.clasificaciones || []).filter(isClasificacion);
+  // Rankings registered for each activity, shown in its card instead of «Equipos por definir».
+  const porActividad = clasificacionesPorActividad(data?.partidos || [], clasificaciones);
   const podios = podiosDeportivos((data?.partidos || []).map(p => ({ ...p, marcador: isMarcador(p.marcador) ? p.marcador : null })));
 
   return <div className="space-y-6">
@@ -174,6 +181,9 @@ export default function Fixture() {
           </div>
           {/* With a registered result the scoreboard already shows both Houses. */}
           {isMarcador(p.marcador) ? <MarcadorDeportivo marcador={p.marcador} mascotas={mascotas} cargado={cargado} />
+            : p.encuentroId && porActividad.has(p.encuentroId) ? <div className="space-y-2">
+              {porActividad.get(p.encuentroId)!.map(r => <PodioCompacto key={`${r.categoria}:${r.grupo}`} titulo={tituloPodio(r)} clasificacion={r.clasificacion} mascotas={mascotas} cargado={cargado} />)}
+            </div>
             : <Enfrentamiento texto={p.enfrentamiento} mascotas={mascotas} cargado={cargado} />}
           {(p.arbitro || p.bloque) && <p className="text-xs text-slate-500">{[p.arbitro && `Responsables: ${p.arbitro}`, p.bloque && `Bloque: ${p.bloque}`].filter(Boolean).join(' · ')}</p>}
           {p.avisos.map(a => <p key={a} className="text-sm text-amber-800 bg-amber-50 rounded p-2">{a}</p>)}

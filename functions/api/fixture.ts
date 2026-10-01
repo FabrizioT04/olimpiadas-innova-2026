@@ -21,7 +21,10 @@ function publicRanking(value: unknown) {
   if (!FILAS_ACTIVIDAD.includes(c.fila as number) || !IDS_CATEGORIA.includes(c.categoria as string) ||
       typeof c.actualizado !== 'string' || Number.isNaN(Date.parse(c.actualizado)) || !puestos || typeof puestos !== 'object' ||
       !COLORES_HOUSE.every(h => Number.isSafeInteger(puestos[h])) || COLORES_HOUSE.map(h => puestos[h]).sort().join() !== '1,2,3,4') return null;
-  return { fila: c.fila, categoria: c.categoria, detalle: typeof c.detalle === 'string' ? c.detalle.slice(0, 200) : '',
+  // The activity key lets the programme show each ranking in its card. It is a hash of public programme
+  // data («sabana:<fila>…» outside the programme), never who registered it.
+  const actividad = typeof c.actividad === 'string' && /^([0-9a-f]{64}|sabana:[0-9]{1,2}(:[a-z]+)?)$/.test(c.actividad) ? c.actividad : undefined;
+  return { fila: c.fila, categoria: c.categoria, ...(actividad ? { actividad } : {}), detalle: typeof c.detalle === 'string' ? c.detalle.slice(0, 200) : '',
     actualizado: c.actualizado, puestos: pick(puestos, [...COLORES_HOUSE]),
     ...(puntosValidos ? { puntos: pick(puntos, [...COLORES_HOUSE]) } : {}) };
 }
@@ -37,7 +40,8 @@ export function publicFixture(value: unknown) {
     version: 1, fuente: sourceId, actualizado: data.actualizado,
     avisos: data.avisos.filter(item => typeof item === 'string'),
     partidos: data.partidos.map(p => ({
-      ...pick(p, ['id','fecha','hora','deporte','enfrentamiento','categoria','arbitro','lugar','fase','bloque','seccion','origen','fila','avisos']),
+      // encuentroId links an activity to its rankings; it is a hash of the public fields above.
+      ...pick(p, ['id','encuentroId','fecha','hora','deporte','enfrentamiento','categoria','arbitro','lugar','fase','bloque','seccion','origen','fila','avisos']),
       // Awarded points are public (they make up the official totals); referee and reason are not.
       marcador: p.marcador ? pick(p.marcador, ['version','houseA','houseB','a','b','estado','actualizado','puntosA','puntosB','integrado']) : null,
     })),

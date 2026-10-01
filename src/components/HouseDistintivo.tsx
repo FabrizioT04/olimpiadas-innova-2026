@@ -59,3 +59,21 @@ export function MarcadorDeportivo({ marcador, mascotas, cargado }: { marcador: M
     </div>
   </div>;
 }
+
+// Places of a ranking inside a programme card, in the same dark style as the scoreboard.
+export function PodioCompacto({ titulo, clasificacion, mascotas, cargado }:
+  { titulo: string; clasificacion: { puestos: Record<string, number>; puntos?: Record<string, number> } } & Contenido) {
+  const orden = Object.keys(clasificacion.puestos).sort((a, b) => clasificacion.puestos[a] - clasificacion.puestos[b]);
+  return <div className="rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 p-3 text-white">
+    <p className="mb-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-amber-300">
+      <Trophy aria-hidden="true" className="h-3.5 w-3.5" />{titulo}
+    </p>
+    <ol className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+      {orden.map(h => <li key={h} className="flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2"><span className="w-7 text-sm font-black italic text-slate-400">{clasificacion.puestos[h]}.º</span>
+          <HouseChip color={h} mascotas={mascotas} cargado={cargado} /></span>
+        {Number.isSafeInteger(clasificacion.puntos?.[h]) && <span className="whitespace-nowrap text-xs font-bold text-slate-300">{clasificacion.puntos?.[h]} pts</span>}
+      </li>)}
+    </ol>
+  </div>;
+}

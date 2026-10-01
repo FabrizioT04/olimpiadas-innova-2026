@@ -160,6 +160,41 @@ export function claveParcial(encuentroId: string, categoria: string, grupo: stri
   return clave;
 }
 
+// Every ranking a programme activity can have: the whole activity (its own key) and, when it is split, one per
+// category and group. Shared by the panel and the public programme so both find the same rankings.
+export function clasificacionesPosibles(p: { encuentroId: string; deporte: string; categoria: string }) {
+  const posibles: { clave: string; categoria: string; grupo: string }[] = [{ clave: p.encuentroId, categoria: '', grupo: '' }];
+  const fila = filaSugerida(p.deporte);
+  if (fila === null) return posibles;
+  const nombradas = categoriasNombradas(p.categoria);
+  for (const c of nombradas.length > 1 ? nombradas : [columnaDe(p.categoria)])
+    for (const g of ['', ...gruposDe(fila, c).map(x => x.id)]) posibles.push({ clave: claveParcial(p.encuentroId, c, g), categoria: c, grupo: g });
+  return posibles;
+}
+
+// Rankings to show in each programme card, by encuentroId, with the category and group they belong to when
+// the activity is split. A ranking left without its activity (its name, time… edited in Sheets) is shown in the
+// only unranked activity of the same day, row and column, like the panel's correction does.
+export function clasificacionesPorActividad(partidos: { encuentroId?: string; fecha: string; deporte: string; categoria: string }[], clasificaciones: Clasificacion[]) {
+  const resultado = new Map<string, { categoria: string; grupo: string; clasificacion: Clasificacion }[]>();
+  const conClave = partidos.filter((p): p is typeof p & { encuentroId: string } => typeof p.encuentroId === 'string' && ACTIVIDAD_FIXTURE.test(p.encuentroId));
+  const claves = new Set<string>();
+  for (const p of conClave) for (const x of clasificacionesPosibles(p)) {
+    claves.add(x.clave);
+    const clasificacion = clasificaciones.find(c => c.actividad === x.clave);
+    if (clasificacion) resultado.set(p.encuentroId, [...(resultado.get(p.encuentroId) || []), { categoria: x.categoria, grupo: x.grupo, clasificacion }]);
+  }
+  for (const huerfana of clasificacionesHuerfanas(clasificaciones, claves)) {
+    const candidatas = conClave.filter(p => {
+      const fila = filaSugerida(p.deporte);
+      return fila !== null && categoriasNombradas(p.categoria).length <= 1 && !resultado.has(p.encuentroId) && posibleDuplicado(
+        { actividad: p.encuentroId, fila, categoria: columnaDe(p.categoria), detalle: `${p.fecha.slice(8, 10)}/${p.fecha.slice(5, 7)}` }, [huerfana]) === huerfana;
+    });
+    if (new Set(candidatas.map(p => p.encuentroId)).size === 1) resultado.set(candidatas[0].encuentroId, [{ categoria: '', grupo: '', clasificacion: huerfana }]);
+  }
+  return resultado;
+}
+
 export function hayClasificacionPendiente() {
   try { return !!sessionStorage.getItem(CLASIFICACION_PENDIENTE); } catch { return false; }
 }

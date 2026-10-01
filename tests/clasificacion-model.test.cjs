@@ -99,3 +99,27 @@ test('each category and group of an activity gets its own stable key, never the 
  assert.equal(claves.size,15);
  assert.notEqual(claveParcial('f'.repeat(64),'promesas',''),claveParcial(id,'promesas',''),'another activity, another key');
 });
+test('each programme card gets its rankings, split by category and group, and a renamed activity keeps its result',async()=>{
+ const {clasificacionesPorActividad,claveParcial}=await model;
+ const id=c=>c.repeat(64);
+ const act=(c,deporte,categoria)=>({encuentroId:id(c),fecha:'2026-09-29',deporte,categoria});
+ const PIJ='Promesas - 1ª y 2ª - Infantil 3ª y 4ª Junior 5° y 6°';
+ const barras={...act('b','CONCURSO DE BARRAS','TODAS LAS HOUSE'),fecha:'2026-09-25'},drill={...act('c','DRILL COREOGRÁFICO','TODAS LAS HOUSE'),fecha:'2026-09-25'};
+ const relevos=act('1','Carreras de relevos',PIJ),velocidad=act('2','Carreras de Velocidad',PIJ),sinClave={fecha:'2026-09-29',deporte:'Futsal',categoria:'Junior'};
+ const base={version:1,actualizado:'2026-09-30T18:00:00.000Z',puestos:{white:1,blue:2,green:3,orange:4}};
+ const r=(actividad,fila,categoria,detalle)=>({...base,actividad,fila,categoria,detalle});
+ const cBarras=r(id('b'),34,'juvenilb','25/09 · CONCURSO DE BARRAS'),cDrill=r(id('a'),35,'juvenilb','25/09 · 10:55 · DRILL GIMNASITICO');
+ const cProm=r(claveParcial(id('1'),'promesas',''),15,'promesas','29/09 · relevos · Promesas'),cInf=r(claveParcial(id('1'),'infantil',''),15,'infantil','29/09 · relevos · Infantil');
+ const cNinas=r(claveParcial(id('2'),'junior','ninas'),14,'junior','29/09 · velocidad · Junior · Niñas');
+ const mapa=clasificacionesPorActividad([barras,drill,relevos,velocidad,sinClave],[cBarras,cDrill,cInf,cProm,cNinas]);
+ const ver=e=>(mapa.get(id(e))||[]).map(x=>[x.categoria,x.grupo,x.clasificacion.detalle]);
+ assert.deepEqual(ver('b'),[['','',cBarras.detalle]]);
+ assert.deepEqual(ver('c'),[['','',cDrill.detalle]],'the renamed Drill shows its orphan ranking');
+ assert.deepEqual(ver('1'),[['promesas','',cProm.detalle],['infantil','',cInf.detalle]],'one podium per category, in category order');
+ assert.deepEqual(ver('2'),[['junior','ninas',cNinas.detalle]]);
+ assert.equal(mapa.size,4);
+ // Two possible activities for the orphan: it is not guessed.
+ const otroDrill={...drill,encuentroId:id('d')};
+ const ambiguo=clasificacionesPorActividad([drill,otroDrill],[cDrill]);
+ assert.equal(ambiguo.size,0);
+});

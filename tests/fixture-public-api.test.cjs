@@ -4,7 +4,7 @@ const fs=require('node:fs'),ts=require('typescript');
 const source=require('./shared-module.cjs')(ts.transpileModule(fs.readFileSync('functions/api/fixture.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText);
 let instance=0;
 const load=()=>import('data:text/javascript;base64,'+Buffer.from(source).toString('base64')+'#'+(++instance));
-const fixture={version:1,fuente:'14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg',actualizado:new Date().toISOString(),avisos:[],finalistas:[],partidos:[{id:'one',marcador:{version:1,a:3,b:2,email:'private@example.com',motivo:'private'}}],history:['private']};
+const fixture={version:1,fuente:'14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg',actualizado:new Date().toISOString(),avisos:[],finalistas:[],partidos:[{id:'one',encuentroId:'e'.repeat(64),marcador:{version:1,a:3,b:2,email:'private@example.com',motivo:'private'}}],history:['private']};
 const env={FIXTURE_SCRIPT_URL:'https://script.google.com/macros/s/example/exec'};
 test('public fixture needs no session, reads the original URL, and strips private metadata',async()=>{
   const {onRequest}=await load(),original=global.fetch;let calls=0;
@@ -12,7 +12,7 @@ test('public fixture needs no session, reads the original URL, and strips privat
   try {
     const result=await onRequest({request:new Request('https://example.com/api/fixture'),env});
     assert.equal(result.status,200);assert.equal(calls,1);
-    const data=await result.json();assert.equal(data.partidos[0].marcador.a,3);
+    const data=await result.json();assert.equal(data.partidos[0].marcador.a,3);assert.equal(data.partidos[0].encuentroId,'e'.repeat(64));
     assert.equal(data.history,undefined);assert.equal(data.partidos[0].marcador.email,undefined);assert.equal(data.partidos[0].marcador.motivo,undefined);
   }finally{global.fetch=original;}
 });
@@ -123,12 +123,14 @@ test('public rankings show complete places and won points, never private data',a
  const {onRequest}=await load(),original=global.fetch;
  const valid={version:1,fila:19,categoria:'junior',actualizado:new Date().toISOString(),puestos:{white:2,blue:1,orange:4,green:3},puntos:{white:95,blue:100,orange:85,green:90},email:'private@example.com',actividad:'a'.repeat(64),detalle:'30/09 · 12:00 a 12:30 · CARRERA DE MICHI'};
  global.fetch=async()=>Response.json({...fixture,clasificaciones:[valid,{...valid,puestos:{white:1,blue:1,orange:3,green:4}},{...valid,puestos:{white:'1',blue:'2',orange:'3',green:'4'}},{...valid,fila:99},{...valid,categoria:'otra'},null,
-  {...valid,detalle:'Sin puntos válidos',puntos:{white:-1,blue:100,orange:85,green:90}}]});
+  {...valid,detalle:'Sin puntos válidos',puntos:{white:-1,blue:100,orange:85,green:90}},{...valid,detalle:'Actividad inválida',actividad:'<script>'}]});
  try {
   const data=await(await onRequest({request:new Request('https://example.com/api/fixture'),env})).json();
-  assert.deepEqual(data.clasificaciones,[{fila:19,categoria:'junior',detalle:valid.detalle,actualizado:valid.actualizado,puestos:{blue:1,white:2,green:3,orange:4},puntos:{blue:100,white:95,green:90,orange:85}},
-   {fila:19,categoria:'junior',detalle:'Sin puntos válidos',actualizado:valid.actualizado,puestos:{blue:1,white:2,green:3,orange:4}}]);
-  assert.equal(JSON.stringify(data).includes('private@example.com'),false);assert.equal(data.finalistas,undefined);assert.equal(data.clasificaciones[0].actividad,undefined);
+  // The activity key is published only in its valid format, so the programme can show each ranking in its card.
+  assert.deepEqual(data.clasificaciones,[{fila:19,categoria:'junior',actividad:valid.actividad,detalle:valid.detalle,actualizado:valid.actualizado,puestos:{blue:1,white:2,green:3,orange:4},puntos:{blue:100,white:95,green:90,orange:85}},
+   {fila:19,categoria:'junior',actividad:valid.actividad,detalle:'Sin puntos válidos',actualizado:valid.actualizado,puestos:{blue:1,white:2,green:3,orange:4}},
+   {fila:19,categoria:'junior',detalle:'Actividad inválida',actualizado:valid.actualizado,puestos:{blue:1,white:2,green:3,orange:4},puntos:{blue:100,white:95,green:90,orange:85}}]);
+  assert.equal(JSON.stringify(data).includes('private@example.com'),false);assert.equal(data.finalistas,undefined);
  }finally{global.fetch=original;}
 });
 test('scripts without rankings publish an empty list',async()=>{
