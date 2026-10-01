@@ -7,6 +7,7 @@ import type { Marcador } from '../features/marcadores/model';
 import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
 import { LUGARES, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
 import type { Clasificacion } from '../features/clasificacion/model';
+import { fechaInicial, hoyLocal, ordenarFechas } from '../features/fixture/fechas';
 
 interface Partido {
   id: string; fecha: string; hora: string; deporte: string; enfrentamiento: string;
@@ -21,6 +22,8 @@ interface FixtureData {
 }
 const WEB_APP_URL = '/api/fixture';
 const SNAPSHOT_KEY = 'fixture-publico-v1';
+// Short label of a date button, e.g. «lun, 14 sept».
+const etiquetaDia = (date: string) => date ? new Date(`${date}T12:00:00`).toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Por definir';
 const displayDate = (date: string) => date ? new Date(`${date}T12:00:00`).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha por definir';
 const categoryWithGrades = (category: string) => {
   const grades: Record<string, string> = Object.fromEntries(CATEGORIAS.map(c => [c.id, c.grados + ' grado']));
@@ -68,7 +71,9 @@ export default function Fixture() {
   const [stale, setStale] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState('todos');
+  // null until the visitor picks a date: then the page opens on today (or the next date with activities).
+  const [filter, setFilter] = useState<string | null>(null);
+  const fechasRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<'programacion' | 'puestos'>('programacion');
   const refresh = useRef<() => void>(() => {});
 
@@ -118,8 +123,16 @@ export default function Fixture() {
     return () => { disposed = true; active?.abort(); window.clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
   }, []);
 
-  const days = Array.from(new Set((data?.partidos || []).map(p => p.fecha)));
-  const selected = days.includes(filter) ? filter : 'todos';
+  const days = ordenarFechas((data?.partidos || []).map(p => p.fecha));
+  const hoy = hoyLocal();
+  const selected = filter === null ? fechaInicial(days, hoy) : days.includes(filter) ? filter : 'todos';
+  const hayDatos = !!data;
+  // On phones the chosen date may be off screen: scroll the row of dates (not the page) to show it.
+  useEffect(() => {
+    const barra = fechasRef.current, boton = barra?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!barra || !boton) return;
+    barra.scrollLeft += boton.getBoundingClientRect().left - barra.getBoundingClientRect().left - barra.clientWidth / 2 + boton.offsetWidth / 2;
+  }, [selected, view, hayDatos]);
   const matches = (data?.partidos || []).filter(p => selected === 'todos' || p.fecha === selected);
   const groups = Array.from(new Set(matches.map(p => p.fecha)));
   // Sport podiums come from the registered results of each final and 3rd-place match.
@@ -139,27 +152,31 @@ export default function Fixture() {
     <div className="flex flex-wrap gap-3 items-center rounded-2xl bg-white border border-slate-200 p-3">
       <button onClick={() => setView('programacion')} aria-pressed={view === 'programacion'} className={`rounded-lg px-4 py-2 ${view === 'programacion' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}>Programación</button>
       <button onClick={() => setView('puestos')} aria-pressed={view === 'puestos'} className={`rounded-lg px-4 py-2 ${view === 'puestos' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}>Puestos</button>
-      {view === 'programacion' && <label className="flex gap-2 items-center text-sm text-slate-600">Fecha
-        <select value={selected} onChange={e => setFilter(e.target.value)} className="border rounded-lg p-2 max-w-full"><option value="todos">Todas</option>{days.map(day => <option key={day} value={day}>{displayDate(day)}</option>)}</select>
-      </label>}
     </div>
+    {data && view === 'programacion' && <div ref={fechasRef} role="group" aria-label="Fecha" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
+      {['todos', ...days].map(day => <button key={day || 'sin-fecha'} onClick={() => setFilter(day)} aria-pressed={selected === day}
+        className={`shrink-0 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${selected === day ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>
+        <span className="inline-block first-letter:uppercase">{day === 'todos' ? 'Todas' : etiquetaDia(day)}</span>
+        {day === hoy && <span className="ml-1.5 rounded bg-amber-400 px-1 text-[10px] font-black uppercase text-slate-900">Hoy</span>}
+      </button>)}
+    </div>}
     {!data && <p className="py-12 text-center text-slate-500">{loading ? 'Leyendo la programación oficial…' : 'La programación no está disponible en este momento.'}</p>}
     {data && view === 'programacion' && <>
       <p className="text-xs text-slate-500">Los horarios son los publicados en Sheets. Los marcadores y estados aparecen cuando los registra un árbitro.</p>
       {!matches.length && <p className="py-8 text-center text-slate-500">No hay actividades publicadas para esta selección.</p>}
-      {groups.map(date => <section key={date} className="space-y-3"><h2 className="font-bold text-lg text-slate-800 capitalize">{displayDate(date)}</h2>
-        <div className="grid md:grid-cols-2 gap-4">{matches.filter(p => p.fecha === date).map(p => <article key={p.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <div className="flex justify-between gap-3"><span className="flex gap-2 text-blue-700 font-semibold"><Clock size={18}/>{p.hora}</span><span className="text-sm text-slate-500">Lugar: {p.lugar}</span></div>
+      {groups.map(date => <section key={date} className="space-y-3"><h2 className="font-bold text-lg text-slate-800 first-letter:uppercase">{displayDate(date)}</h2>
+        <div className="grid md:grid-cols-2 gap-4">{matches.filter(p => p.fecha === date).map(p => <article key={p.id} title={`${p.origen} · fila ${p.fila}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+          <div className="flex items-center justify-between gap-3"><span className="flex items-center gap-2 text-blue-700 font-semibold"><Clock size={18} aria-hidden="true"/>{p.hora}</span>{p.lugar && <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">Lugar {p.lugar}</span>}</div>
           <h3 className="font-black uppercase italic tracking-wide text-slate-900">{p.deporte}</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {p.categoria && <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">{categoryWithGrades(p.categoria)}</span>}
+            {p.fase && <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">{p.fase}</span>}
+          </div>
           {/* With a registered result the scoreboard already shows both Houses. */}
           {isMarcador(p.marcador) ? <MarcadorDeportivo marcador={p.marcador} mascotas={mascotas} cargado={cargado} />
             : <Enfrentamiento texto={p.enfrentamiento} mascotas={mascotas} cargado={cargado} />}
-          <p className="text-sm font-medium text-slate-700">{categoryWithGrades(p.categoria)}</p>
-          {p.fase && <p className="text-sm text-slate-500">{p.fase}</p>}
-          {p.bloque && <p className="text-xs text-slate-500">Bloque: {p.bloque}</p>}
-          {p.arbitro && <p className="text-sm text-slate-600">Responsables: {p.arbitro}</p>}
+          {(p.arbitro || p.bloque) && <p className="text-xs text-slate-500">{[p.arbitro && `Responsables: ${p.arbitro}`, p.bloque && `Bloque: ${p.bloque}`].filter(Boolean).join(' · ')}</p>}
           {p.avisos.map(a => <p key={a} className="text-sm text-amber-800 bg-amber-50 rounded p-2">{a}</p>)}
-          <p className="text-xs text-slate-400">{p.origen} · fila {p.fila}</p>
         </article>)}</div>
       </section>)}
     </>}
