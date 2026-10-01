@@ -35,8 +35,9 @@ function isFixture(value: unknown): value is FixtureData {
     && Array.isArray(data.partidos) && data.partidos.every(p => p && typeof p === 'object'
       && ['id','fecha','hora','deporte','enfrentamiento','categoria','arbitro','lugar','fase','bloque','seccion','origen'].every(k => typeof (p as unknown as Record<string,unknown>)[k] === 'string')
       && (p.fecha === '' || /^\d{4}-\d{2}-\d{2}$/.test(p.fecha)) && strings(p.avisos))
-    // Older snapshots have no rankings; when present every entry must be complete.
-    && (data.clasificaciones === undefined || (Array.isArray(data.clasificaciones) && data.clasificaciones.every(isClasificacion)));
+    // Older snapshots have no rankings. Invalid entries are skipped when shown, so one bad ranking
+    // never hides the whole programme.
+    && (data.clasificaciones === undefined || Array.isArray(data.clasificaciones));
 }
 // Most recent rankings first: during the event the latest podium is the one people look for.
 const ordenClasificacion = (a: Clasificacion, b: Clasificacion) => b.actualizado.localeCompare(a.actualizado);
@@ -108,6 +109,7 @@ export default function Fixture() {
   const matches = (data?.partidos || []).filter(p => selected === 'todos' || p.fecha === selected);
   const groups = Array.from(new Set(matches.map(p => p.fecha)));
   // Sport podiums come from the registered results of each final and 3rd-place match.
+  const clasificaciones = (data?.clasificaciones || []).filter(isClasificacion);
   const podios = podiosDeportivos((data?.partidos || []).map(p => ({ ...p, marcador: isMarcador(p.marcador) ? p.marcador : null })));
 
   return <div className="space-y-6">
@@ -148,8 +150,8 @@ export default function Fixture() {
     {data && view === 'puestos' && <div className="space-y-8"><section className="space-y-4">
         <h2 className="font-bold text-lg text-slate-800">Actividades con todas las Houses</h2>
         <p className="text-sm text-slate-500">Carreras, gymkana, retos académicos y concursos, registrados por los árbitros.</p>
-        {!data.clasificaciones?.length && <p className="py-6 text-center text-slate-500">Todavía no hay puestos registrados.</p>}
-        <div className="grid md:grid-cols-2 gap-4">{[...(data.clasificaciones || [])].sort(ordenClasificacion).map(c => <article key={`${c.fila}:${c.detalle}:${c.actualizado}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+        {!clasificaciones.length && <p className="py-6 text-center text-slate-500">Todavía no hay puestos registrados.</p>}
+        <div className="grid md:grid-cols-2 gap-4">{[...clasificaciones].sort(ordenClasificacion).map(c => <article key={`${c.fila}:${c.detalle}:${c.actualizado}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
           <h3 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{ACTIVIDADES.find(a => a.fila === c.fila)?.etiqueta}</h3>
           {c.detalle && <p className="text-sm text-slate-600">{c.detalle}</p>}
           <ol className="grid grid-cols-2 gap-2 text-sm">{[...COLORES_HOUSE].sort((a,b) => c.puestos[a] - c.puestos[b]).map(h => <li key={h} className="rounded bg-slate-50 p-2 flex justify-between gap-2"><span>{LUGARES[c.puestos[h]-1]}: {HOUSE_NAMES[h]}</span>{Number.isSafeInteger(c.puntos?.[h]) && <span className="font-semibold text-slate-800 whitespace-nowrap">{c.puntos?.[h]} pts</span>}</li>)}</ol>

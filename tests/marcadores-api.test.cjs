@@ -181,6 +181,17 @@ test('rejections without a started record are released; possibly started ones st
     }
   }finally{global.fetch=original;}
 });
+test('rankings outside the programme only add to their own row',async()=>{
+  const {onRequest}=await modulePromise,original=global.fetch;let calls=0;
+  global.fetch=async()=>{calls++;return Response.json({success:true,id:ranking.id,clasificacion:{integrado:true}});};
+  try {
+    const fuera={...ranking,fila:34,actividad:'sabana:34',detalle:'Concurso de Barras'};
+    assert.equal((await onRequest({request:rankingRequest(fuera),env})).status,200);
+    for(const patch of [{fila:35},{actividad:'sabana:35'},{fila:27,actividad:'sabana:28:juvenilb',categoria:'juvenilb'}])
+      assert.equal((await onRequest({request:rankingRequest({...fuera,...patch}),env})).status,400);
+    assert.equal(calls,1);
+  }finally{global.fetch=original;}
+});
 test('academic rankings carry their category in the activity key and it must match',async()=>{
   const {onRequest}=await modulePromise,original=global.fetch;let calls=0;
   global.fetch=async(url,options)=>{calls++;const p=JSON.parse(JSON.parse(options.body).payload);assert.equal(p.actividad,'sabana:27:junior');assert.equal(p.categoria,'junior');return Response.json({success:true,id:ranking.id,clasificacion:{integrado:true}});};

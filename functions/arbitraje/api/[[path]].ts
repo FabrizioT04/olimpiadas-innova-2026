@@ -119,6 +119,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       !FILAS_CLASIFICACION.includes(data.fila) || !IDS_CATEGORIA.includes(data.categoria) ||
       typeof data.actividad !== 'string' || !/^([0-9a-f]{64}|sabana:[0-9]{1,2}(:[a-z]+)?)$/.test(data.actividad) ||
       (data.actividad.split(':')[2] || data.categoria) !== data.categoria ||
+      // An activity outside the programme («sabana:<fila>…») can only add to its own row.
+      (data.actividad.startsWith('sabana:') && Number(data.actividad.split(':')[1]) !== data.fila) ||
       typeof data.detalle !== 'string' || data.detalle.trim().length < 3 || data.detalle.length > 200 ||
       !Number.isSafeInteger(data.version) || data.version < 0 ||
       typeof data.motivo !== 'string' || data.motivo.trim().length < 3 || data.motivo.length > 300 ||
