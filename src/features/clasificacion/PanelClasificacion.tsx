@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ACTIVIDADES, ACTIVIDADES_CLASIFICACION, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE, HOUSES, RETOS_ACADEMICOS } from '../../../shared/olimpiadas';
-import { CLASIFICACION_PENDIENTE, LUGARES, clasificacionesHuerfanas, columnaDe, detalleVigente, filaSugerida, isClasificacion, porCategoria, posibleDuplicado } from './model';
+import { CLASIFICACION_PENDIENTE, LUGARES, categoriasNombradas, claveParcial, clasificacionesHuerfanas, columnaDe, detalleVigente, filaSugerida, gruposDe, isClasificacion, porCategoria, posibleDuplicado } from './model';
 import type { Clasificacion } from './model';
 import { isActividad, isEncuentro, paraTodasLasHouses } from '../marcadores/model';
 import type { Actividad } from '../marcadores/model';
@@ -20,10 +20,28 @@ const HUERFANA = 'huerfana:';
 const fechaLarga = (fecha:string) => new Date(`${fecha}T12:00:00`).toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long' });
 const fechaCorta = (fecha:string) => `${fecha.slice(8,10)}/${fecha.slice(5,7)}`;
 
-function destinoDe(p:Actividad): Destino|null {
+// An activity naming several categories ranks each one apart, in its own column (chosen as `categoria`);
+// otherwise its points go to the last category. Speed races also rank boys and girls apart (`grupo`).
+// Without the needed choice there is no target yet.
+function destinoDe(p:Actividad, categoria = '', grupo = ''): Destino|null {
   const fila = filaSugerida(p.deporte);
-  return fila === null ? null : { actividad:p.encuentroId, fila, categoria:columnaDe(p.categoria),
-    detalle:`${fechaCorta(p.fecha)} · ${p.hora} · ${p.deporte} · ${p.categoria}`.slice(0, 200) };
+  if (fila === null) return null;
+  const nombradas = categoriasNombradas(p.categoria), porCat = nombradas.length > 1;
+  const columna = porCat ? categoria : columnaDe(p.categoria);
+  if (!columna || (porCat && !nombradas.includes(columna))) return null;
+  const grupos = gruposDe(fila, columna), elegido = grupos.find(g => g.id === grupo);
+  if (grupos.length && !elegido) return null;
+  const parcial = porCat || !!elegido;
+  return { actividad:parcial ? claveParcial(p.encuentroId, columna, elegido?.id || '') : p.encuentroId, fila, categoria:columna,
+    detalle:`${fechaCorta(p.fecha)} · ${p.hora} · ${p.deporte} · ${porCat ? nombreCategoria(columna) : p.categoria}${elegido ? ` · ${elegido.nombre}` : ''}`.slice(0, 200) };
+}
+// Every ranking key a programme activity can have, to tell its rankings apart from orphan ones.
+function clavesDe(p:Actividad): string[] {
+  const fila = filaSugerida(p.deporte);
+  if (fila === null) return [p.encuentroId];
+  const nombradas = categoriasNombradas(p.categoria);
+  const columnas = nombradas.length > 1 ? nombradas : [columnaDe(p.categoria)];
+  return [p.encuentroId, ...columnas.flatMap(c => ['', ...gruposDe(fila, c).map(g => g.id)].map(g => claveParcial(p.encuentroId, c, g)))];
 }
 // Outside the programme: one ranking per activity, except academic challenges, where each category
 // plays its own challenge and is chosen as «<fila>:<categoria>».
@@ -32,7 +50,7 @@ function destinoOtra(valor:string, huerfanas:Clasificacion[], programadas:Activi
   // Its detail takes the current programme name when the renamed activity can be identified.
   if (valor.startsWith(HUERFANA)) {
     const c = huerfanas.find(h => HUERFANA + h.actividad === valor);
-    const vigente = c && detalleVigente(c, programadas.map(destinoDe).filter((d):d is Destino => d !== null));
+    const vigente = c && detalleVigente(c, programadas.map(p => destinoDe(p)).filter((d):d is Destino => d !== null));
     return c?.actividad ? { actividad:c.actividad, fila:c.fila, categoria:c.categoria, detalle:(vigente || nombreActividad(c.fila)).slice(0, 200) } : null;
   }
   const [texto, categoria] = valor.split(':'), fila = Number(texto);
@@ -54,6 +72,8 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
   // Activity keys in the current programme, to find rankings whose activity was edited away in Sheets.
   const [idsFixture,setIdsFixture] = useState<ReadonlySet<string>>(new Set());
   const [confirmaDistinta,setConfirmaDistinta] = useState(false);
+  // Category and group chosen inside a programme activity, when it needs them.
+  const [categoriaSel,setCategoriaSel] = useState(''), [grupoSel,setGrupoSel] = useState('');
   const [fecha,setFecha] = useState(''), [seleccion,setSeleccion] = useState('');
   const [puestos,setPuestos] = useState<Record<string,string>>(aTexto());
   const [puntos,setPuntos] = useState<Record<string,string>>(aTexto());
@@ -71,7 +91,11 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
   const programada = fecha !== OTRAS ? programadas.find(p => p.id === seleccion) : undefined;
   const partido = fecha !== OTRAS ? puestosDelDia.find(p => p.id === seleccion) : undefined;
   const huerfanas = clasificacionesHuerfanas(clasificaciones, idsFixture);
-  const destino = programada ? destinoDe(programada) : fecha === OTRAS && seleccion ? destinoOtra(seleccion, huerfanas, programadas) : null;
+  const nombradasSel = programada ? categoriasNombradas(programada.categoria) : [];
+  const filaSel = programada ? filaSugerida(programada.deporte) : null;
+  const columnaSel = programada ? (nombradasSel.length > 1 ? categoriaSel : columnaDe(programada.categoria)) : '';
+  const gruposSel = filaSel !== null && columnaSel ? gruposDe(filaSel, columnaSel) : [];
+  const destino = programada ? destinoDe(programada, categoriaSel, grupoSel) : fecha === OTRAS && seleccion ? destinoOtra(seleccion, huerfanas, programadas) : null;
   const actual = destino ? clasificaciones.find(c => c.actividad === destino.actividad) : undefined;
   // Same row, column and day as a ranking left without its activity: probably the same activity renamed.
   const duplicado = programada && destino ? posibleDuplicado(destino, huerfanas) : undefined;
@@ -86,10 +110,18 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
   }
   function elegirFecha(nextFecha:string) { setFecha(nextFecha); setSeleccion(''); cargar(null, clasificaciones); }
   function elegirActividad(valor:string) {
-    setSeleccion(valor);
+    setSeleccion(valor); setCategoriaSel(''); setGrupoSel('');
     const p = programadas.find(x => x.id === valor);
     const d = fecha === OTRAS ? (valor ? destinoOtra(valor, huerfanas, programadas) : null) : p ? destinoDe(p) : null;
     cargar(d?.actividad || null, clasificaciones);
+  }
+  function elegirCategoria(valor:string) {
+    setCategoriaSel(valor); setGrupoSel('');
+    cargar(programada ? destinoDe(programada, valor)?.actividad || null : null, clasificaciones);
+  }
+  function elegirGrupo(valor:string) {
+    setGrupoSel(valor);
+    cargar(programada ? destinoDe(programada, categoriaSel, valor)?.actividad || null : null, clasificaciones);
   }
   async function load(signal?: AbortSignal, actividad:string|null = null) {
     const controller = new AbortController();
@@ -107,9 +139,11 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
       if (signal?.aborted) return;
       const lista:Clasificacion[] = data.clasificaciones.filter((c:unknown) => isClasificacion(c) && Number.isSafeInteger(c.version) && c.version > 0);
       setError(''); setClasificaciones(lista); cargar(actividad, lista);
-      setIdsFixture(new Set(Array.isArray(data.partidos) ? data.partidos.map((p:{encuentroId?:unknown}) => p?.encuentroId).filter((id:unknown): id is string => typeof id === 'string') : []));
+      const partidos:unknown[] = Array.isArray(data.partidos) ? data.partidos : [];
+      setIdsFixture(new Set(partidos.flatMap(p => isActividad(p) ? clavesDe(p)
+        : typeof (p as {encuentroId?:unknown})?.encuentroId === 'string' ? [(p as {encuentroId:string}).encuentroId] : [])));
       setPartidosPuesto(Array.isArray(data.partidos) ? data.partidos.filter((p:unknown) => isEncuentro(p) && isActividad(p) && tipoPuesto(p.fase ?? '') !== null) : []);
-      setProgramadas(Array.isArray(data.partidos) ? data.partidos.filter((p:unknown) => isActividad(p) && paraTodasLasHouses(p) && filaSugerida(p.deporte) !== null) : []);
+      setProgramadas(Array.isArray(data.partidos) ? data.partidos.filter((p:unknown) => isActividad(p) && (paraTodasLasHouses(p) || !p.houses) && filaSugerida(p.deporte) !== null) : []);
     } catch (err) {
       if (!signal?.aborted) setError(err instanceof Error && err.name !== 'AbortError' ? err.message : 'La lectura tardó demasiado. Pulsa «Recargar clasificaciones» para reintentar.');
     } finally {
@@ -187,6 +221,21 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
             </select>
           </label>}
         </div>
+        {programada && (nombradasSel.length > 1 || gruposSel.length > 0) && <div className="grid sm:grid-cols-2 gap-4">
+          {nombradasSel.length > 1 && <label className="block text-sm font-medium">Categoría
+            <select required value={categoriaSel} onChange={e => elegirCategoria(e.target.value)} className="block w-full border rounded-xl p-3 mt-1">
+              <option value="">Selecciona una categoría</option>
+              {nombradasSel.map(c => <option key={c} value={c}>{nombreCategoria(c)}</option>)}
+            </select>
+          </label>}
+          {gruposSel.length > 0 && <label className="block text-sm font-medium">Grupo
+            <select required value={grupoSel} onChange={e => elegirGrupo(e.target.value)} className="block w-full border rounded-xl p-3 mt-1">
+              <option value="">Selecciona niños o niñas</option>
+              {gruposSel.map(g => <option key={g.id} value={g.id}>{g.nombre}</option>)}
+            </select>
+          </label>}
+          <p className="sm:col-span-2 text-xs text-slate-600">{nombradasSel.length > 1 ? 'Cada categoría tiene su propia clasificación y suma en su columna. ' : ''}{gruposSel.length ? 'En velocidad, niños y niñas se clasifican por separado y los puntos de ambos se suman en la misma celda.' : ''}</p>
+        </div>}
         {destino && <>
           <div className="bg-slate-100 rounded-xl p-3 text-sm"><span className="font-medium">Se suma en la Sábana:</span> {nombreActividad(destino.fila)} · columna {nombreCategoria(destino.categoria)}</div>
           {duplicado && <div role="alert" className="text-red-900 bg-red-50 p-3 rounded-lg text-sm space-y-2">

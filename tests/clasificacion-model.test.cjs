@@ -82,3 +82,20 @@ test('an orphan ranking takes the current name of the only renamed activity on i
  assert.equal(detalleVigente(huerfana,[barras]),huerfana.detalle);
  assert.equal(detalleVigente(huerfana,[renombrada,{...renombrada,actividad:'d'.repeat(64),detalle:'25/09 · 12:00 · DRILL · TODAS LAS HOUSE'}]),huerfana.detalle);
 });
+test('only explicitly named categories are listed; speed races alone split boys and girls in Promesas to Junior',async()=>{
+ const {categoriasNombradas,categoriasDe,gruposDe}=await model;
+ assert.deepEqual(categoriasNombradas('Promesas - 1ª y 2ª - Infantil 3ª y 4ª Junior 5° y 6°'),['promesas','infantil','junior']);
+ assert.deepEqual(categoriasNombradas('TODAS LAS HOUSE'),[]);
+ assert.equal(categoriasDe('TODAS LAS HOUSE').length,5,'none named still means all for the last-column rule');
+ assert.deepEqual(gruposDe(14,'infantil').map(g=>g.id),['ninos','ninas']);
+ for(const [fila,cat] of [[14,'juvenila'],[14,'juvenilb'],[15,'promesas'],[16,'junior'],[34,'juvenilb']]) assert.deepEqual(gruposDe(fila,cat),[]);
+});
+test('each category and group of an activity gets its own stable key, never the activity key itself',async()=>{
+ const {claveParcial}=await model;
+ const id='e'.repeat(64),claves=new Set();
+ for(const c of ['promesas','infantil','junior','juvenila','juvenilb'])for(const g of ['','ninos','ninas']){
+  const k=claveParcial(id,c,g);assert.match(k,/^[0-9a-f]{64}$/);assert.equal(claveParcial(id,c,g),k);assert.notEqual(k,id);claves.add(k);
+ }
+ assert.equal(claves.size,15);
+ assert.notEqual(claveParcial('f'.repeat(64),'promesas',''),claveParcial(id,'promesas',''),'another activity, another key');
+});

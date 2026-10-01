@@ -27,12 +27,17 @@ export function isClasificacion(value: unknown): value is Clasificacion {
 
 const normalizar = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ');
 
-// Categories named in a programme cell ("Promesas - 1ª y 2ª, Infantil 3ª y4ª…"); none named means all.
-export function categoriasDe(texto: string): string[] {
+// Categories explicitly named in a programme cell ("Promesas - 1ª y 2ª, Infantil 3ª y4ª…"), possibly none.
+export function categoriasNombradas(texto: string): string[] {
   const t = normalizar(texto);
   const patrones: [string, RegExp][] = [['promesas', /PROMESAS/], ['infantil', /INFANTIL/], ['junior', /JUNIOR/],
     ['juvenila', /JUVENIL ?A\b/], ['juvenilb', /JUVENIL ?B\b/]];
-  const encontradas = patrones.filter(([, re]) => re.test(t)).map(([id]) => id);
+  return patrones.filter(([, re]) => re.test(t)).map(([id]) => id);
+}
+
+// Categories taking part in a programme cell; none named means all.
+export function categoriasDe(texto: string): string[] {
+  const encontradas = categoriasNombradas(texto);
   return encontradas.length ? encontradas : [...IDS_CATEGORIA];
 }
 
@@ -129,6 +134,30 @@ export function posibleDuplicado(destino: { actividad: string; fila: number; cat
 export function detalleVigente(huerfana: Clasificacion, destinos: { actividad: string; fila: number; categoria: string; detalle: string }[]) {
   const coincidencias = destinos.filter(d => posibleDuplicado(d, [huerfana]) === huerfana);
   return coincidencias.length === 1 ? coincidencias[0].detalle : huerfana.detalle;
+}
+
+// --- Rankings per category and group ---
+// A programme activity that names several categories (e.g. a relay for Promesas, Infantil and Junior) has one
+// ranking per category, in its own column. Only in speed races do boys and girls of these categories run
+// apart: each group has its own ranking, chosen points, and both add to the same cell.
+export const GRUPOS_VELOCIDAD = { fila: 14, categorias: ['promesas', 'infantil', 'junior'],
+  grupos: [{ id: 'ninos', nombre: 'Niños' }, { id: 'ninas', nombre: 'Niñas' }] } as const;
+export function gruposDe(fila: number, categoria: string): readonly { id: string; nombre: string }[] {
+  return fila === GRUPOS_VELOCIDAD.fila && (GRUPOS_VELOCIDAD.categorias as readonly string[]).includes(categoria) ? GRUPOS_VELOCIDAD.grupos : [];
+}
+
+// Key of the ranking of one category (and group) of a programme activity: 64 hex characters like an activity
+// key, so the server and Apps Script accept it unchanged. It is derived from the activity, category and group
+// (eight FNV-1a passes with different seeds), so the same choice always finds its ranking again.
+export function claveParcial(encuentroId: string, categoria: string, grupo: string) {
+  const texto = `${encuentroId}|${categoria}|${grupo}`;
+  let clave = '';
+  for (let semilla = 1; semilla <= 8; semilla++) {
+    let h = (0x811c9dc5 ^ Math.imul(semilla, 0x9e3779b1)) >>> 0;
+    for (let i = 0; i < texto.length; i++) h = Math.imul(h ^ texto.charCodeAt(i), 0x01000193) >>> 0;
+    clave += h.toString(16).padStart(8, '0');
+  }
+  return clave;
 }
 
 export function hayClasificacionPendiente() {
