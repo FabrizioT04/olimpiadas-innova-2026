@@ -124,6 +124,13 @@ export function posibleDuplicado(destino: { actividad: string; fila: number; cat
     && c.categoria === destino.categoria && (c.detalle || '').slice(0, 5) === dia);
 }
 
+// The current programme name for an orphan ranking: the detail of the only programme activity on the same
+// day, row and column (e.g. the activity renamed in Sheets). With none or several, the saved detail is kept.
+export function detalleVigente(huerfana: Clasificacion, destinos: { actividad: string; fila: number; categoria: string; detalle: string }[]) {
+  const coincidencias = destinos.filter(d => posibleDuplicado(d, [huerfana]) === huerfana);
+  return coincidencias.length === 1 ? coincidencias[0].detalle : huerfana.detalle;
+}
+
 export function hayClasificacionPendiente() {
   try { return !!sessionStorage.getItem(CLASIFICACION_PENDIENTE); } catch { return false; }
 }

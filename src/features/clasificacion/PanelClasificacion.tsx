@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ACTIVIDADES, ACTIVIDADES_CLASIFICACION, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE, HOUSES, RETOS_ACADEMICOS } from '../../../shared/olimpiadas';
-import { CLASIFICACION_PENDIENTE, LUGARES, clasificacionesHuerfanas, columnaDe, filaSugerida, isClasificacion, porCategoria, posibleDuplicado } from './model';
+import { CLASIFICACION_PENDIENTE, LUGARES, clasificacionesHuerfanas, columnaDe, detalleVigente, filaSugerida, isClasificacion, porCategoria, posibleDuplicado } from './model';
 import type { Clasificacion } from './model';
 import { isActividad, isEncuentro, paraTodasLasHouses } from '../marcadores/model';
 import type { Actividad } from '../marcadores/model';
@@ -27,11 +27,13 @@ function destinoDe(p:Actividad): Destino|null {
 }
 // Outside the programme: one ranking per activity, except academic challenges, where each category
 // plays its own challenge and is chosen as «<fila>:<categoria>».
-function destinoOtra(valor:string, huerfanas:Clasificacion[]): Destino|null {
+function destinoOtra(valor:string, huerfanas:Clasificacion[], programadas:Actividad[]): Destino|null {
   // A ranking left without its programme activity is corrected under its own key, so nothing is added twice.
+  // Its detail takes the current programme name when the renamed activity can be identified.
   if (valor.startsWith(HUERFANA)) {
     const c = huerfanas.find(h => HUERFANA + h.actividad === valor);
-    return c?.actividad ? { actividad:c.actividad, fila:c.fila, categoria:c.categoria, detalle:(c.detalle || nombreActividad(c.fila)).slice(0, 200) } : null;
+    const vigente = c && detalleVigente(c, programadas.map(destinoDe).filter((d):d is Destino => d !== null));
+    return c?.actividad ? { actividad:c.actividad, fila:c.fila, categoria:c.categoria, detalle:(vigente || nombreActividad(c.fila)).slice(0, 200) } : null;
   }
   const [texto, categoria] = valor.split(':'), fila = Number(texto);
   if (!categoria) return porCategoria(fila) ? null : { actividad:`sabana:${fila}`, fila, categoria:columnaDe(''), detalle:nombreActividad(fila) };
@@ -69,7 +71,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
   const programada = fecha !== OTRAS ? programadas.find(p => p.id === seleccion) : undefined;
   const partido = fecha !== OTRAS ? puestosDelDia.find(p => p.id === seleccion) : undefined;
   const huerfanas = clasificacionesHuerfanas(clasificaciones, idsFixture);
-  const destino = programada ? destinoDe(programada) : fecha === OTRAS && seleccion ? destinoOtra(seleccion, huerfanas) : null;
+  const destino = programada ? destinoDe(programada) : fecha === OTRAS && seleccion ? destinoOtra(seleccion, huerfanas, programadas) : null;
   const actual = destino ? clasificaciones.find(c => c.actividad === destino.actividad) : undefined;
   // Same row, column and day as a ranking left without its activity: probably the same activity renamed.
   const duplicado = programada && destino ? posibleDuplicado(destino, huerfanas) : undefined;
@@ -86,7 +88,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
   function elegirActividad(valor:string) {
     setSeleccion(valor);
     const p = programadas.find(x => x.id === valor);
-    const d = fecha === OTRAS ? (valor ? destinoOtra(valor, huerfanas) : null) : p ? destinoDe(p) : null;
+    const d = fecha === OTRAS ? (valor ? destinoOtra(valor, huerfanas, programadas) : null) : p ? destinoDe(p) : null;
     cargar(d?.actividad || null, clasificaciones);
   }
   async function load(signal?: AbortSignal, actividad:string|null = null) {
@@ -191,6 +193,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
             <p>Ya hay una clasificación del mismo día en esta fila y columna, registrada como «{duplicado.detalle}», cuya actividad ya no aparece igual en el fixture. Si es la misma actividad, no la registres aquí: corrígela en «Otras actividades» → «Registradas que ya no están en el fixture», o sus puntos se sumarán dos veces.</p>
             <label className="flex items-start gap-2"><input type="checkbox" checked={confirmaDistinta} onChange={e => setConfirmaDistinta(e.target.checked)} className="mt-1"/><span>Es una actividad distinta de la ya registrada.</span></label>
           </div>}
+          {actual?.detalle && fecha === OTRAS && destino.detalle !== actual.detalle && <p role="status" className="text-blue-900 bg-blue-50 p-3 rounded-lg text-sm">Se guardará con el nombre actual del fixture: «{destino.detalle}» (antes «{actual.detalle}»). Si los puestos y los puntos no cambian, la Sábana queda igual.</p>}
           {actual && <p role="status" className="text-amber-900 bg-amber-50 p-3 rounded-lg text-sm">Ya hay una clasificación registrada el {new Date(actual.actualizado).toLocaleString('es-PE', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}: {resumen(actual)}. Si guardas, se reemplaza y en la Sábana se aplica solo la diferencia de puntos.</p>}
           <div className="bg-blue-50 rounded-xl p-4 space-y-3">
             <div className="hidden sm:grid grid-cols-[1fr_7rem_7rem] gap-3 text-xs font-semibold text-slate-600"><span>House</span><span>Puesto</span><span>Puntos</span></div>

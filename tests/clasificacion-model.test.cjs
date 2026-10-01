@@ -71,3 +71,14 @@ test('a programme activity on the same day, row and column as an orphan is a pos
  // Rankings outside the programme carry no date and are never flagged.
  assert.equal(posibleDuplicado({actividad:'sabana:35',fila:35,categoria:'juvenilb',detalle:'25/09 Drill'},[huerfana]),undefined);
 });
+test('an orphan ranking takes the current name of the only renamed activity on its day, row and column',async()=>{
+ const {detalleVigente}=await model;
+ const huerfana={version:2,fila:35,categoria:'juvenilb',actualizado:'2026-09-30T20:00:42.000Z',puestos:{white:1,blue:3,green:2,orange:4},
+  actividad:'a'.repeat(64),detalle:'25/09 · 10:55 - 11:15 · DRILL GIMNASITICO · TODAS LAS HOUSE'};
+ const renombrada={actividad:'c'.repeat(64),fila:35,categoria:'juvenilb',detalle:'25/09 · 10:55 - 11:15 · DRILL COREOGRÁFICO · TODAS LAS HOUSE'};
+ const barras={actividad:'b'.repeat(64),fila:34,categoria:'juvenilb',detalle:'25/09 · 9:55 - 10:15 · CONCURSO DE BARRAS · TODAS LAS HOUSE'};
+ assert.equal(detalleVigente(huerfana,[barras,renombrada]),renombrada.detalle);
+ // No match keeps the saved name; two matches are ambiguous and keep it too.
+ assert.equal(detalleVigente(huerfana,[barras]),huerfana.detalle);
+ assert.equal(detalleVigente(huerfana,[renombrada,{...renombrada,actividad:'d'.repeat(64),detalle:'25/09 · 12:00 · DRILL · TODAS LAS HOUSE'}]),huerfana.detalle);
+});
