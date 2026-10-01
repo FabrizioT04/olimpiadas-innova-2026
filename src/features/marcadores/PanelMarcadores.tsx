@@ -100,7 +100,8 @@ export default function PanelMarcadores({onLockedChange, embebido}:{onLockedChan
       const response = await fetch('/arbitraje/api/marcadores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(intent),signal:AbortSignal.timeout(70000)});
       const result = await response.json();
       if (!response.ok || result.success !== true || result.id !== intent.id || !isMarcador(result.marcador) || result.marcador.integrado !== true) {
-        if ([400,401,403,503].includes(response.status) || (result.pending === false && ['CONFLICT','FIXTURE_CHANGED','ID_REUSED','NOT_CONFIGURED','UPDATE_REQUIRED','INVALID','CELL_INVALID','INSUFFICIENT_POINTS','OTHER_PENDING'].includes(result.code))) {
+        // A 409 means Apps Script answered; unless it may hold a started record, nothing is left to retry.
+        if ([400,401,403,503].includes(response.status) || (response.status === 409 && result.pending !== true)) {
           sessionStorage.removeItem(STORAGE); setPending(null);
           if (embebido) embebido.onGuardado(); else { setMatches([]); choose(); }
         }

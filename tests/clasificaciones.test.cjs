@@ -1,7 +1,8 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto');
-function setup(){
+// doPost: the deployed variant of the score script (ArbitrajeSeguro or CodigoCompletoDiagnostico).
+function setup(doPost='ArbitrajeSeguro'){
  const cells={},journal=[Array(19).fill('header')],manual=[Array(13).fill('header')],props={ARBITRAJE_SECRET:'test-secret-'.repeat(5),MARCADORES_SPREADSHEET_ID:'private'};
  let locked=false,failCell='';
  const values=(rows,r,c,n=1,w=1)=>Array.from({length:n},(_,i)=>Array.from({length:w},(_,j)=>rows[r-1+i]?.[c-1+j]??''));
@@ -14,7 +15,7 @@ function setup(){
  Utilities:{Charset:{UTF_8:"UTF-8"},DigestAlgorithm:{SHA_256:'sha256'},computeDigest:(_,s)=>[...crypto.createHash('sha256').update(s).digest()],computeHmacSha256Signature:(s,k)=>[...crypto.createHmac('sha256',k).update(s).digest()]},
  ContentService:{MimeType:{JSON:'json'},createTextOutput:s=>({setMimeType:()=>JSON.parse(s)})},
  UrlFetchApp:{fetch:()=>({getResponseCode:()=>200,getContentText:()=>JSON.stringify(c.enriquecerMarcadores_(c.leerFixture_()))})}});
- for(const name of ['FixtureOficial','Marcadores','ResultadoUnificado','ArbitrajeSeguro','Clasificaciones'])vm.runInContext(fs.readFileSync('apps-script/'+name+'.gs','utf8'),c);
+ for(const name of ['FixtureOficial','Marcadores','ResultadoUnificado',doPost,'Clasificaciones'])vm.runInContext(fs.readFileSync('apps-script/'+name+'.gs','utf8'),c);
  const match={id:'1:4',fecha:'2026-09-14',hora:'09:35',deporte:'Futsal',categoria:'Infantil',enfrentamiento:'BLANCO VS VERDE',fase:'Preliminar',lugar:'1',avisos:[]};
  c.leerFixture_=()=>({version:1,fuente:'14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg',partidos:[match],avisos:[]});
  const base={action:'clasificacion',id:crypto.randomUUID(),email:'ref@example.com',fila:19,categoria:'junior',version:0,
@@ -76,6 +77,14 @@ test('a failure midway stays pending, blocks other writes and completes on retry
  s.fail('');assert.equal(s.send().success,true);assert.deepEqual(['F19','L19','R19','X19'].map(k=>score(s,k)),[95,100,85,90]);assert.equal(s.journal.length,2);
  const t=setup();t.fail('R19');t.send();t.fail('');t.c.recuperarResultadoPendiente_();
  assert.equal(score(t,'R19'),85);assert.equal(t.journal[1][17],'CONFIRMADO');assert.equal(t.public().clasificaciones.length,1);
+});
+test('the full diagnostic doPost variant also saves rankings and reports a missing ranking file',()=>{
+ const s=setup('CodigoCompletoDiagnostico');const r=s.send();
+ assert.equal(r.success,true);assert.equal(r.clasificacion.integrado,true);
+ assert.deepEqual(['F19','L19','R19','X19'].map(k=>score(s,k)),[95,100,85,90]);
+ assert.equal(s.send().success,true);assert.equal(s.journal.length,2);
+ const sinArchivo=setup('CodigoCompletoDiagnostico');sinArchivo.c.guardarClasificacion_=undefined;
+ assert.equal(sinArchivo.send().code,'UPDATE_REQUIRED');assert.equal(sinArchivo.journal.length,1);
 });
 test('scripts without the ranking file answer UPDATE_REQUIRED',()=>{
  const s=setup();delete s.c.guardarClasificacion_;s.c.guardarClasificacion_=undefined;

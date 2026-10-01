@@ -165,7 +165,12 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
         CELL_INVALID:'La actividad y categoría elegidas no tienen una celda habilitada para las cuatro Houses.',
         INSUFFICIENT_POINTS:'La corrección dejaría puntos negativos. Revisa los ajustes anteriores en Sheets.',
         INVALID:'Revisa la actividad, la categoría, los puestos y los puntos.' };
-      return json({error:errors[result.code || ''] || 'No se confirmó la clasificación completa. Reintenta el mismo guardado.',code:result.code || 'UNCONFIRMED',pending:result.pending},409);
+      // Pending only when Apps Script may hold a started record: it said so, or it reported success
+      // without full confirmation. Otherwise nothing was written and the panel can release the attempt.
+      const pendiente = result.success === true || result.pending === true;
+      return json({error:errors[result.code || ''] || (pendiente ? 'No se confirmó la clasificación completa. Reintenta el mismo guardado.'
+        : 'El script de puntajes rechazó la clasificación sin guardar nada. Comprueba que tenga Clasificaciones.gs y la versión actual de doPost.'),
+        code:result.code || 'UNCONFIRMED',pending:pendiente},409);
     }
     if (isMarker) {
       if (result.success === true && result.id === data.id && result.marcador && (result.marcador as {integrado?:boolean}).integrado === true) return json({success:true,id:result.id,marcador:result.marcador});
@@ -178,7 +183,11 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
         CELL_INVALID:'La actividad y categoría elegidas no tienen una celda habilitada para ambas Houses.',
         INSUFFICIENT_POINTS:'La corrección dejaría puntos negativos. Revisa los ajustes anteriores en Sheets.',
         INVALID:'Revisa los datos del resultado y los puntos.', FIXTURE_UNAVAILABLE:'No se pudo consultar el fixture. Reintenta el mismo guardado.' };
-      return json({error:errors[result.code || ''] || 'No se confirmó el resultado completo. Reintenta el mismo guardado.',code:result.code || 'UNCONFIRMED',pending:result.pending},409);
+      // Same rule as rankings: without a possibly started record the panel can release the attempt.
+      const pendiente = result.success === true || result.pending === true;
+      return json({error:errors[result.code || ''] || (pendiente ? 'No se confirmó el resultado completo. Reintenta el mismo guardado.'
+        : 'El script de puntajes rechazó el resultado sin guardar nada. Comprueba que tenga ResultadoUnificado.gs y la versión actual de doPost.'),
+        code:result.code || 'UNCONFIRMED',pending:pendiente},409);
     }
     const pointErrors = new Map<string, string>([
       ['No autorizado', 'Apps Script rechazó la autorización. Revisa que la clave del servidor y la del script coincidan y que la URL corresponda a la implementación correcta.'],

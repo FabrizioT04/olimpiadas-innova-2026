@@ -121,7 +121,8 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
       const response = await fetch('/arbitraje/api/clasificacion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(intent),signal:AbortSignal.timeout(70000)});
       const result = await response.json();
       if (!response.ok || result.success !== true || result.id !== intent.id || result.clasificacion?.integrado !== true) {
-        if ([400,401,403,503].includes(response.status) || (result.pending === false && ['CONFLICT','ID_REUSED','NOT_CONFIGURED','UPDATE_REQUIRED','INVALID','CELL_INVALID','INSUFFICIENT_POINTS','OTHER_PENDING'].includes(result.code))) {
+        // A 409 means Apps Script answered; unless it may hold a started record, nothing is left to retry.
+        if ([400,401,403,503].includes(response.status) || (response.status === 409 && result.pending !== true)) {
           sessionStorage.removeItem(CLASIFICACION_PENDIENTE); setPending(null);
         }
         throw new Error(result.error || 'No se pudo confirmar la clasificación. Reintenta la misma operación.');

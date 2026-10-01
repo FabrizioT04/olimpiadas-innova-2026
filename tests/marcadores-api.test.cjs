@@ -161,6 +161,26 @@ test('ranking rejections are actionable and an unconfirmed ranking is never succ
     assert.equal((await onRequest({request:rankingRequest(ranking),env})).status,502);
   }finally{global.fetch=original;}
 });
+test('rejections without a started record are released; possibly started ones stay pending',async()=>{
+  const {onRequest}=await modulePromise,original=global.fetch;
+  try {
+    for(const [send,ok] of [[()=>onRequest({request:rankingRequest(ranking),env}),{success:true,id:ranking.id,clasificacion:{version:1,integrado:false}}],
+      [()=>onRequest({request:request(body),env}),{success:true,id:body.id,marcador:{version:1,integrado:false}}]]){
+      // An old doPost without the action rejects it as manual points; a script without the file answers UPDATE_REQUIRED.
+      for(const reply of [{success:false,error:'Solicitud rechazada o no confirmada',diagnostico:'Datos inválidos'},{success:false,code:'UPDATE_REQUIRED'},{success:false,code:'CONFLICT',pending:false}]){
+        global.fetch=async()=>Response.json(reply);
+        const response=await send(),data=await response.json();
+        assert.equal(response.status,409);assert.equal(data.pending,false);
+        if(!reply.code) assert.match(data.error,/sin guardar nada/);
+      }
+      for(const reply of [{success:false,code:'UNCONFIRMED',pending:true},ok]){
+        global.fetch=async()=>Response.json(reply);
+        const data=await (await send()).json();
+        assert.equal(data.pending,true);assert.match(data.error,/Reintenta el mismo guardado/);
+      }
+    }
+  }finally{global.fetch=original;}
+});
 test('academic rankings carry their category in the activity key and it must match',async()=>{
   const {onRequest}=await modulePromise,original=global.fetch;let calls=0;
   global.fetch=async(url,options)=>{calls++;const p=JSON.parse(JSON.parse(options.body).payload);assert.equal(p.actividad,'sabana:27:junior');assert.equal(p.categoria,'junior');return Response.json({success:true,id:ranking.id,clasificacion:{integrado:true}});};
