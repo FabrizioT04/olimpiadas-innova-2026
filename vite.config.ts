@@ -7,4 +7,8 @@ export default defineConfig({
     tailwindcss(),
     react(),
   ],
+  build: {
+    // Fonts always as files: the CSP (font-src 'self') blocks the data: URIs Vite uses for small assets.
+    assetsInlineLimit: (file) => (/\.woff2?$/.test(file) ? false : undefined),
+  },
 })
