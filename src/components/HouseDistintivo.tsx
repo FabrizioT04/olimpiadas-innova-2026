@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { HOUSES } from '../features/arbitraje/hooks/useArbitraje';
 import { STATUS_NAMES } from '../features/marcadores/model';
@@ -90,26 +91,60 @@ export function PodioCompacto({ titulo, clasificacion, mascotas, cargado }:
 const MEDALLA = ['from-amber-300 to-amber-500 text-amber-950', 'from-slate-200 to-slate-400 text-slate-800', 'from-orange-300 to-orange-500 text-orange-950'];
 const ALTURA_PODIO = ['h-16', 'h-11', 'h-8'];
 
+// True once the element has been on screen, so its entrance animation plays when it is seen.
+function useVisto<T extends Element>() {
+  const ref = useRef<T>(null);
+  const [visto, setVisto] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || visto) return;
+    if (!('IntersectionObserver' in window)) { setVisto(true); return; }
+    const observador = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisto(true); observador.disconnect(); } }, { threshold: 0.35 });
+    observador.observe(el);
+    return () => observador.disconnect();
+  }, [visto]);
+  return [ref, visto] as const;
+}
+
+// Entrance order: the steps rise from 3rd to 1st, then each mascot drops onto its step.
+const RETRASO_ESCALON = [300, 150, 0], RETRASO_MASCOTA = [750, 600, 450];
+const DESTELLOS = ['-left-3 top-1', '-right-4 top-6', 'left-1/2 -top-4'];
+
 // 1st in the middle and highest, 2nd and 3rd at its sides, 4th on a line below. A place still to be
-// decided (a sports match without result) shows «Por definir».
+// decided (a sports match without result) shows «Por definir». The winner floats with sparkles and the
+// gold step shines; with reduced motion everything is shown still.
 export function PodioMedallas({ lugares, mascotas, cargado }: { lugares: Lugar[] } & Contenido) {
+  const [ref, visto] = useVisto<HTMLOListElement>();
   const de = (puesto: number) => lugares.find(l => l.puesto === puesto);
   const cuarto = de(4);
   return <div>
-    <ol className="grid grid-cols-3 items-end gap-2">{[2, 1, 3].map(puesto => {
+    <ol ref={ref} className="grid grid-cols-3 items-end gap-2">{[2, 1, 3].map(puesto => {
       const lugar = de(puesto), estilo = lugar?.house ? ESTILO_HOUSE[lugar.house] : undefined, house = HOUSES.find(h => h.color === lugar?.house);
+      const ganador = puesto === 1 && !!estilo;
       return <li key={puesto} className="flex min-w-0 flex-col items-center gap-1 text-center">
-        <div className={`esfera relative rounded-full bg-white p-0.5 ring-4 ${puesto === 1 ? 'h-16 w-16' : 'h-12 w-12'} ${estilo?.anillo ?? 'ring-slate-200'}`}>
-          {estilo ? <MascotaHouse house={house} mascotas={mascotas} cargado={cargado} className="h-full w-full rounded-full object-contain" />
-            : <span className="flex h-full w-full items-center justify-center rounded-full bg-slate-100 font-extrabold text-slate-300">?</span>}
-          {puesto === 1 && estilo && <Trophy aria-hidden="true" className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-amber-400 p-1 text-slate-900" />}
+        <div style={{ animationDelay: `${RETRASO_MASCOTA[puesto - 1]}ms` }}
+          className={`flex min-w-0 max-w-full flex-col items-center gap-1 ${visto ? 'motion-safe:animate-[aparecer_0.6s_ease-out_both]' : 'motion-safe:opacity-0'}`}>
+          <div className={`relative ${ganador ? 'motion-safe:animate-[flotar_3s_ease-in-out_1.4s_infinite]' : ''}`}>
+            <div className={`esfera relative rounded-full bg-white p-0.5 ring-4 ${puesto === 1 ? 'h-16 w-16' : 'h-12 w-12'} ${estilo?.anillo ?? 'ring-slate-200'}`}>
+              {estilo ? <MascotaHouse house={house} mascotas={mascotas} cargado={cargado} className="h-full w-full rounded-full object-contain" />
+                : <span className="flex h-full w-full items-center justify-center rounded-full bg-slate-100 font-extrabold text-slate-300">?</span>}
+              {ganador && <Trophy aria-hidden="true" className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-amber-400 p-1 text-slate-900" />}
+            </div>
+            {ganador && DESTELLOS.map((lugarDestello, i) => <span key={i} aria-hidden="true" style={{ animationDelay: `${1.2 + i * 0.7}s` }}
+              className={`pointer-events-none absolute text-sm text-amber-400 opacity-0 motion-safe:animate-[destello_2.4s_ease-in-out_infinite] motion-reduce:hidden ${lugarDestello}`}>✦</span>)}
+          </div>
+          <span className={`max-w-full truncate text-xs font-extrabold ${estilo ? 'text-slate-900' : 'text-slate-400'}`}>{estilo?.nombre ?? 'Por definir'}</span>
+          <span className="text-[11px] font-semibold text-slate-500">{lugar?.puntos !== undefined ? `${lugar.puntos} pts` : '\u00a0'}</span>
         </div>
-        <span className={`max-w-full truncate text-xs font-extrabold ${estilo ? 'text-slate-900' : 'text-slate-400'}`}>{estilo?.nombre ?? 'Por definir'}</span>
-        <span className="text-[11px] font-semibold text-slate-500">{lugar?.puntos !== undefined ? `${lugar.puntos} pts` : '\u00a0'}</span>
-        <span className={`flex w-full items-start justify-center rounded-t-2xl bg-gradient-to-b pt-1 text-base font-extrabold shadow-[inset_0_1px_0_rgb(255_255_255/0.7),0_12px_20px_-12px_rgb(15_23_42/0.45)] ${MEDALLA[puesto - 1]} ${ALTURA_PODIO[puesto - 1]}`}>{puesto}.º</span>
+        <span style={{ animationDelay: `${RETRASO_ESCALON[puesto - 1]}ms` }}
+          className={`relative flex w-full origin-bottom items-start justify-center overflow-hidden rounded-t-2xl bg-gradient-to-b pt-1 text-base font-extrabold shadow-[inset_0_1px_0_rgb(255_255_255/0.7),0_12px_20px_-12px_rgb(15_23_42/0.45)] ${MEDALLA[puesto - 1]} ${ALTURA_PODIO[puesto - 1]} ${
+            visto ? 'motion-safe:animate-[subir_0.6s_cubic-bezier(0.2,0.9,0.3,1.15)_both]' : 'motion-safe:scale-y-0'}`}>
+          {puesto}.º
+          {ganador && <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0 motion-safe:animate-[brillo_4s_ease-in-out_1.5s_infinite]" />}
+        </span>
       </li>;
     })}</ol>
-    {cuarto && <p className="flex items-center justify-between gap-2 rounded-b-xl bg-white/70 px-3 py-1.5 text-sm ring-1 ring-white">
+    {cuarto && <p style={{ animationDelay: '900ms' }} className={`flex items-center justify-between gap-2 rounded-b-xl bg-white/70 px-3 py-1.5 text-sm ring-1 ring-white ${visto ? 'motion-safe:animate-[aparecer_0.5s_ease-out_both]' : 'motion-safe:opacity-0'}`}>
       <span className="flex items-center gap-2"><Medalla puesto={4} className="h-6 w-6 text-[11px]" />
         {cuarto.house ? <HouseChip color={cuarto.house} mascotas={mascotas} cargado={cargado} /> : <span className="text-slate-400">Por definir</span>}</span>
       {cuarto.puntos !== undefined && <span className="text-xs font-semibold text-slate-500">{cuarto.puntos} pts</span>}

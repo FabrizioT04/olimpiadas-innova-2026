@@ -37,3 +37,21 @@
   color: transparent;
   filter: drop-shadow(0 6px 6px rgb(37 99 235 / 0.27));
 }
+
+/* Podium effects (see PodioMedallas): steps rising, mascots dropping in, the winner floating with
+   sparkles and a shine across the gold step. */
+@keyframes subir { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes aparecer {
+  0% { opacity: 0; transform: translateY(-18px) scale(0.6); }
+  60% { opacity: 1; transform: translateY(3px) scale(1.06); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes flotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes destello {
+  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(90deg); }
+}
+@keyframes brillo {
+  0% { opacity: 1; transform: translateX(-120%) skewX(-20deg); }
+  50%, 100% { opacity: 1; transform: translateX(320%) skewX(-20deg); }
+}
