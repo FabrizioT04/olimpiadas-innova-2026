@@ -6,10 +6,14 @@ type Snapshot = { savedAt:number; puntajes:Puntajes };
 const CACHE_KEY = 'puntajes-publico-v1';
 const FRESH_MS = 10000;
 const FAILURE_COOLDOWN_MS = 15000;
+// KV's free tier allows only 1,000 writes a day: save the totals when they change, and unchanged ones
+// at most every ten minutes so new instances still find a reasonably recent copy.
+const SNAPSHOT_REFRESH_MS = 600000;
 // Per-instance protection complements the shared KV snapshot, as in /api/fixture.
 let recent: Snapshot | null = null;
 let retryAfter = 0;
 let pending: Promise<Snapshot> | null = null;
+let stored: {content:string; savedAt:number} | null = null;
 
 // Expose only the four totals, never the recent history rows Apps Script also returns.
 export function publicPuntajes(value: unknown): Puntajes {
@@ -31,7 +35,13 @@ async function refreshPuntajes(env: Env) {
     const snapshot = {savedAt:Date.now(), puntajes:publicPuntajes(JSON.parse(text.replace(/^procesarPodio\(/, '').replace(/\);?$/, '')))};
     recent = snapshot;
     retryAfter = 0;
-    try { await env.FIXTURE_CACHE?.put(CACHE_KEY, JSON.stringify(snapshot)); } catch { console.warn('Scores snapshot could not be saved'); }
+    const content = JSON.stringify(snapshot.puntajes);
+    if (env.FIXTURE_CACHE && (stored?.content !== content || snapshot.savedAt - stored.savedAt >= SNAPSHOT_REFRESH_MS)) {
+      try {
+        await env.FIXTURE_CACHE.put(CACHE_KEY, JSON.stringify(snapshot));
+        stored = {content, savedAt:snapshot.savedAt};
+      } catch { console.warn('Scores snapshot could not be saved'); }
+    }
     return snapshot;
   } catch {
     retryAfter = Date.now() + FAILURE_COOLDOWN_MS;
@@ -46,10 +56,13 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, waitUntil })
   if (request.method !== 'GET') return Response.json({error:'Método no permitido.'}, {status:405, headers:{...headers, Allow:'GET'}});
   if (!env.APPS_SCRIPT_URL) return Response.json({error:'Los puntajes no están configurados.'}, {status:503, headers});
   let cached: Snapshot | null = null;
+  // A recent local read already answers this request, so it costs no KV read.
+  if (recent && Date.now() - recent.savedAt < FRESH_MS) return reply(recent, false);
   try {
     const snapshot = await env.FIXTURE_CACHE?.get<{savedAt:number; puntajes:unknown}>(CACHE_KEY, {type:'json', cacheTtl:30});
     if (snapshot && Number.isFinite(snapshot.savedAt) && snapshot.savedAt <= Date.now()) {
       cached = {savedAt:snapshot.savedAt, puntajes:publicPuntajes(snapshot.puntajes)};
+      stored ??= {content:JSON.stringify(cached.puntajes), savedAt:cached.savedAt};
     }
   } catch { /* A missing or damaged snapshot must not prevent a live read. */ }
   if (recent && (!cached || recent.savedAt > cached.savedAt)) cached = recent;
