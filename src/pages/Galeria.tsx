@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Camera, Search, X, Images, ArrowUpRight, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { combinarAlbumes, fotosGaleria as fotosOriginales } from '../data/galeria';
 import type { FotoGaleria } from '../data/galeria';
+import Revelar from '../components/Revelar';
 
 const normalizar = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const carpetasEco = [{ id: 'asamblea', titulo: 'Asamblea' }, { id: 'mariquitas', titulo: 'Maraquitas' }, { id: 'carteles', titulo: 'Elaboración de carteles' }] as const;
@@ -85,8 +86,9 @@ export default function Galeria() {
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">{busqueda ? 'Prueba con otro título o actividad.' : 'Aquí compartiremos las fotografías de las olimpiadas a medida que se publiquen.'}</p>
         {busqueda && <button onClick={() => setBusqueda('')} className="mt-4 font-semibold text-indigo-600">Limpiar búsqueda</button>}
       </div> : <div className="grid grid-flow-dense auto-rows-[8.5rem] grid-cols-2 gap-2 sm:auto-rows-[10rem] sm:gap-3 md:grid-cols-4 lg:auto-rows-[12rem]">
-        {fotos.map((f, i) => <button key={f.id} onClick={() => setSeleccionada(f)} aria-label={`${f.tipo === 'video' ? 'Reproducir video' : 'Ampliar foto'}: ${f.titulo}`}
-          className={`group relative overflow-hidden rounded-2xl bg-slate-200 text-left shadow-[0_18px_34px_-18px_rgb(15_23_42/0.55)] ring-1 ring-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${tamanoDe(i)}`}>
+        {/* The tiles appear in a cascade with a slight zoom as they scroll into view. */}
+        {fotos.map((f, i) => <Revelar key={f.id} animacion="zoom" retraso={(i % 8) * 60} className={tamanoDe(i)}><button onClick={() => setSeleccionada(f)} aria-label={`${f.tipo === 'video' ? 'Reproducir video' : 'Ampliar foto'}: ${f.titulo}`}
+          className="group relative h-full w-full overflow-hidden rounded-2xl bg-slate-200 text-left shadow-[0_18px_34px_-18px_rgb(15_23_42/0.55)] ring-1 ring-white transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
           <Imagen foto={f}/>
           {f.tipo === 'video' && <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center"><span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-950/70 text-white ring-4 ring-white/30 transition-transform group-hover:scale-110"><Play className="ml-1 h-6 w-6" fill="currentColor" /></span></span>}
           {/* The featured photo always shows its title; the others on hover (or always on touch screens, which have no hover). */}
@@ -95,13 +97,13 @@ export default function Galeria() {
             <span {...sinTraducir(f.album)} className={`block font-extrabold leading-tight ${i === 0 ? 'text-lg sm:text-2xl' : 'text-xs sm:text-sm'} ${sinTraducir(f.album).className}`}>{f.titulo}</span>
             {i === 0 && f.descripcion && <span className="mt-1 hidden text-sm text-slate-200 sm:block">{f.descripcion}</span>}
           </span>
-        </button>)}
+        </button></Revelar>)}
       </div>}
     </section>
 
     <dialog ref={dialog} onCancel={cerrar} onClose={() => setSeleccionada(null)} aria-labelledby="foto-titulo"
       onKeyDown={e => { if (e.key === 'ArrowRight') mover(1); if (e.key === 'ArrowLeft') mover(-1); }}
-      className="fixed inset-0 m-auto max-h-[94vh] w-[min(96vw,1100px)] overflow-y-auto rounded-2xl bg-slate-950 p-0 text-white shadow-2xl backdrop:bg-slate-950/90">
+      className="visor fixed inset-0 m-auto max-h-[94vh] w-[min(96vw,1100px)] overflow-y-auto rounded-2xl bg-slate-950 p-0 text-white shadow-2xl backdrop:bg-slate-950/90">
       {seleccionada && <>
         <div className="flex items-center justify-between gap-4 p-4">
           <div className="min-w-0">
@@ -111,7 +113,10 @@ export default function Galeria() {
           <button autoFocus onClick={cerrar} aria-label="Cerrar foto" className="rounded-full p-2 hover:bg-white/10"><X /></button>
         </div>
         <div className="relative bg-black">
+          {/* Moving to another photo fades it in. */}
+          <div key={seleccionada.id} className="motion-safe:animate-[fundido_0.35s_ease-out]">
           {seleccionada.tipo === 'video' ? <video key={seleccionada.id} controls playsInline preload="none" poster={seleccionada.portada} className="max-h-[75vh] w-full bg-black" aria-label={seleccionada.titulo}><source src={seleccionada.url} type="video/mp4" />Tu navegador no puede reproducir este video.</video> : <Imagen key={seleccionada.id} foto={seleccionada} ampliada/>}
+          </div>
           {fotos.length > 1 && posicion >= 0 && <>
             <button onClick={() => mover(-1)} aria-label="Foto anterior" className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-slate-950/60 p-2 text-white hover:bg-slate-950/80 sm:left-4 sm:p-3"><ChevronLeft /></button>
             <button onClick={() => mover(1)} aria-label="Foto siguiente" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-slate-950/60 p-2 text-white hover:bg-slate-950/80 sm:right-4 sm:p-3"><ChevronRight /></button>

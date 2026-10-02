@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { HOUSES } from '../features/arbitraje/hooks/useArbitraje';
 import { STATUS_NAMES } from '../features/marcadores/model';
@@ -7,6 +6,7 @@ import type { Lugar } from '../features/clasificacion/model';
 import MascotaHouse from './MascotaHouse';
 import { inclinacion } from './inclinacion';
 import NumeroAnimado from './NumeroAnimado';
+import { useVisto } from './useVisto';
 
 // Colours of each House (keyed by its colour in the sheet), used wherever a House is shown.
 // Full class names so Tailwind keeps them.
@@ -91,21 +91,6 @@ export function PodioCompacto({ titulo, clasificacion, mascotas, cargado }:
 // Gold, silver and bronze, as podium steps and as the medal counts.
 const MEDALLA = ['from-amber-300 to-amber-500 text-amber-950', 'from-slate-200 to-slate-400 text-slate-800', 'from-orange-300 to-orange-500 text-orange-950'];
 const ALTURA_PODIO = ['h-16', 'h-11', 'h-8'];
-
-// True once the element has been on screen, so its entrance animation plays when it is seen.
-function useVisto<T extends Element>() {
-  const ref = useRef<T>(null);
-  const [visto, setVisto] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || visto) return;
-    if (!('IntersectionObserver' in window)) { setVisto(true); return; }
-    const observador = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisto(true); observador.disconnect(); } }, { threshold: 0.35 });
-    observador.observe(el);
-    return () => observador.disconnect();
-  }, [visto]);
-  return [ref, visto] as const;
-}
 
 // Entrance order: the steps rise from 3rd to 1st, then each mascot drops onto its step.
 const RETRASO_ESCALON = [300, 150, 0], RETRASO_MASCOTA = [750, 600, 450];

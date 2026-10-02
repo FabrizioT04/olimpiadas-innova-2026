@@ -4,6 +4,7 @@ import { STATUS_NAMES, housesDeEnfrentamiento, isMarcador, paraTodasLasHouses } 
 import { useContenido } from '../features/contenido/useContenido';
 import { HouseChip, MarcadorDeportivo, Medallero, PodioCompacto, PodioMedallas } from '../components/HouseDistintivo';
 import { inclinacion } from '../components/inclinacion';
+import Revelar from '../components/Revelar';
 import type { Marcador } from '../features/marcadores/model';
 import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
 import { GRUPOS_VELOCIDAD, clasificacionesPorActividad, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
@@ -232,10 +233,12 @@ export default function Fixture() {
               <div aria-hidden="true" className="relative flex justify-center">
                 <span className={`absolute w-0.5 bg-slate-200 ${i === 0 ? 'top-5' : 'top-0'} ${i === delDia.length - 1 ? 'h-5' : 'bottom-0'}`} />
                 <span className={`relative mt-4 flex h-3.5 w-3.5 items-center justify-center rounded-full ring-4 sm:mt-5 ${PUNTO[estado || 'ninguno']}`}>
+                  {/* «En curso» sends out waves like a radar. */}
+                  {estado === 'en-curso' && <span className="absolute inset-0 rounded-full bg-red-400 motion-safe:animate-ping" />}
                   {estado === 'pasada' && <Check className="h-2.5 w-2.5" strokeWidth={4} />}
                 </span>
               </div>
-              <article title={`${p.origen} · fila ${p.fila}`} className={`relative mb-3 space-y-2.5 overflow-hidden rounded-2xl border bg-white/75 p-3 pl-5 shadow-[0_14px_30px_-20px_rgb(51_65_85/0.5)] backdrop-blur-xl sm:p-4 sm:pl-6 ${
+              <Revelar className="min-w-0"><article title={`${p.origen} · fila ${p.fila}`} className={`relative mb-3 space-y-2.5 overflow-hidden rounded-2xl border bg-white/75 p-3 pl-5 shadow-[0_14px_30px_-20px_rgb(51_65_85/0.5)] backdrop-blur-xl transition-transform duration-200 hover:-translate-y-0.5 sm:p-4 sm:pl-6 ${
                 estado === 'en-curso' ? 'border-red-300 shadow-lg shadow-red-500/10 ring-2 ring-red-500/20' : estado === 'sigue' ? 'border-indigo-200' : 'border-white'} ${
                 estado === 'pasada' && !resultado ? 'opacity-70' : ''}`}>
                 <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${acentoDe(p.deporte)}`} />
@@ -257,7 +260,7 @@ export default function Fixture() {
                   : <Enfrentamiento texto={p.enfrentamiento} mascotas={mascotas} cargado={cargado} />}
                 {(p.arbitro || p.bloque) && <p className="flex items-start gap-1.5 text-xs text-slate-500"><Users aria-hidden="true" className="mt-px h-3.5 w-3.5 shrink-0" />{[p.arbitro, p.bloque && `Bloque: ${p.bloque}`].filter(Boolean).join(' · ')}</p>}
                 {p.avisos.map(a => <p key={a} className="rounded bg-amber-50 p-2 text-sm text-amber-800">{a}</p>)}
-              </article>
+              </article></Revelar>
             </li>;
           })}</ol>
         </section>;
