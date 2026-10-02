@@ -21,3 +21,18 @@ test('today uses the same YYYY-MM-DD format as the programme',async()=>{
  const {hoyLocal}=await fechas;
  assert.match(hoyLocal(),/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
 });
+test('programme times are read as minutes, with or without an end',async()=>{
+ const {rangoHora}=await fechas;
+ assert.deepEqual(rangoHora('08:20 a 09:00'),{inicio:500,fin:540});
+ assert.deepEqual(rangoHora('9:40 a 10:00'),{inicio:580,fin:600});
+ assert.deepEqual(rangoHora('08:00'),{inicio:480,fin:480});
+ assert.equal(rangoHora('Por definir'),null);
+});
+test('today marks finished, in-progress and next activities',async()=>{
+ const {estadosDelDia}=await fechas;
+ const horas=['08:00 a 08:10','08:20 a 09:00','08:20 a 09:00','09:00 a 9:20','9:20 a 9:40','09:20','Por definir'];
+ assert.deepEqual(estadosDelDia(horas,8*60+30),['pasada','en-curso','en-curso','sigue','pendiente','pendiente',null]);
+ assert.deepEqual(estadosDelDia(horas,9*60),['pasada','pasada','pasada','en-curso','sigue','sigue',null],'an activity ends when the next one starts');
+ assert.deepEqual(estadosDelDia(horas,7*60),['sigue','pendiente','pendiente','pendiente','pendiente','pendiente',null]);
+ assert.deepEqual(estadosDelDia(horas,12*60),['pasada','pasada','pasada','pasada','pasada','pasada',null]);
+});

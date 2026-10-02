@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Calendar, Clock, RefreshCw, Trophy } from 'lucide-react';
-import { STATUS_NAMES, housesDeEnfrentamiento, isMarcador } from '../features/marcadores/model';
+import { Calendar, Check, MapPin, RefreshCw, Trophy, Users } from 'lucide-react';
+import { STATUS_NAMES, housesDeEnfrentamiento, isMarcador, paraTodasLasHouses } from '../features/marcadores/model';
 import { useContenido } from '../features/contenido/useContenido';
 import { HouseChip, MarcadorDeportivo, PodioCompacto } from '../components/HouseDistintivo';
 import type { Marcador } from '../features/marcadores/model';
 import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
 import { GRUPOS_VELOCIDAD, LUGARES, clasificacionesPorActividad, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
 import type { Clasificacion } from '../features/clasificacion/model';
-import { fechaInicial, hoyLocal, ordenarFechas } from '../features/fixture/fechas';
+import { estadosDelDia, fechaInicial, hoyLocal, minutosAhora, ordenarFechas, rangoHora } from '../features/fixture/fechas';
+import type { EstadoHorario } from '../features/fixture/fechas';
 
 interface Partido {
   id: string; encuentroId?: string; fecha: string; hora: string; deporte: string; enfrentamiento: string;
@@ -47,10 +48,15 @@ function isFixture(value: unknown): value is FixtureData {
 // Most recent rankings first: during the event the latest podium is the one people look for.
 const ordenClasificacion = (a: Clasificacion, b: Clasificacion) => b.actualizado.localeCompare(a.actualizado);
 
-// «BLANCO VS VERDE» as the two House badges; any other text («todas las house», «Por definir») as is.
+// «BLANCO VS VERDE» as the two House badges, «todas las house» as the four House colours; any other
+// text («Por definir») as is.
 function Enfrentamiento({ texto, mascotas, cargado }: { texto: string; mascotas: Record<string, string>; cargado: boolean }) {
   const houses = housesDeEnfrentamiento(texto);
-  if (!houses) return <p className="font-medium text-slate-700">{texto}</p>;
+  if (!houses && paraTodasLasHouses({ enfrentamiento: texto })) return <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+    <span aria-hidden="true" className="flex -space-x-1">{['bg-white ring-slate-300', 'bg-blue-600 ring-white', 'bg-orange-500 ring-white', 'bg-green-600 ring-white'].map(c => <span key={c} className={`h-4 w-4 rounded-full ring-2 ${c}`} />)}</span>
+    Todas las Houses
+  </p>;
+  if (!houses) return <p className="text-sm font-medium text-slate-700">{texto}</p>;
   return <p className="flex flex-wrap items-center gap-2" aria-label={texto}>
     <HouseChip color={houses[0]} mascotas={mascotas} cargado={cargado} />
     <span aria-hidden="true" className="text-xs font-black italic text-slate-400">VS</span>
@@ -62,6 +68,16 @@ function Enfrentamiento({ texto, mascotas, cargado }: { texto: string; mascotas:
 const tituloPodio = (r: { categoria: string; grupo: string }) => r.categoria
   ? `${CATEGORIAS.find(c => c.id === r.categoria)?.nombre || r.categoria}${r.grupo ? ` · ${GRUPOS_VELOCIDAD.grupos.find(g => g.id === r.grupo)?.nombre || r.grupo}` : ''}`
   : 'Resultado';
+
+// Each sport keeps the same accent colour in every card, so the day reads at a glance.
+// Full class names so Tailwind keeps them.
+const ACENTOS = ['bg-sky-500', 'bg-violet-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-400', 'bg-cyan-500', 'bg-fuchsia-500', 'bg-lime-500'];
+const acentoDe = (deporte: string) => ACENTOS[[...deporte.trim().toUpperCase()].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % ACENTOS.length];
+const hhmm = (minutos: number) => `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(minutos % 60).padStart(2, '0')}`;
+const PUNTO: Record<EstadoHorario | 'ninguno', string> = {
+  pasada: 'bg-slate-300 text-white ring-slate-100', 'en-curso': 'bg-red-500 ring-red-200 animate-pulse', sigue: 'bg-blue-600 ring-blue-200',
+  pendiente: 'bg-white ring-slate-200 border-2 border-slate-300', ninguno: 'bg-white ring-slate-200 border-2 border-slate-300',
+};
 
 function lastFixture(): FixtureData | null {
   try {
@@ -81,6 +97,9 @@ export default function Fixture() {
   const fechasRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<'programacion' | 'puestos'>('programacion');
   const refresh = useRef<() => void>(() => {});
+  // Today's activities in progress and next follow the clock, not only each read of the programme.
+  const [ahora, setAhora] = useState(minutosAhora);
+  useEffect(() => { const reloj = window.setInterval(() => setAhora(minutosAhora()), 30000); return () => window.clearInterval(reloj); }, []);
 
   useEffect(() => {
     let disposed = false;
@@ -171,24 +190,58 @@ export default function Fixture() {
     {data && view === 'programacion' && <>
       <p className="text-xs text-slate-500">Los horarios son los publicados en Sheets. Los marcadores y estados aparecen cuando los registra un árbitro.</p>
       {!matches.length && <p className="py-8 text-center text-slate-500">No hay actividades publicadas para esta selección.</p>}
-      {groups.map(date => <section key={date} className="space-y-3"><h2 className="font-bold text-lg text-slate-800 first-letter:uppercase">{displayDate(date)}</h2>
-        <div className="grid md:grid-cols-2 gap-4">{matches.filter(p => p.fecha === date).map(p => <article key={p.id} title={`${p.origen} · fila ${p.fila}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <div className="flex items-center justify-between gap-3"><span className="flex items-center gap-2 text-blue-700 font-semibold"><Clock size={18} aria-hidden="true"/>{p.hora}</span>{p.lugar && <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">Lugar {p.lugar}</span>}</div>
-          <h3 className="font-black uppercase italic tracking-wide text-slate-900">{p.deporte}</h3>
-          <div className="flex flex-wrap gap-1.5">
-            {p.categoria && <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">{categoryWithGrades(p.categoria)}</span>}
-            {p.fase && <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">{p.fase}</span>}
-          </div>
-          {/* With a registered result the scoreboard already shows both Houses. */}
-          {isMarcador(p.marcador) ? <MarcadorDeportivo marcador={p.marcador} mascotas={mascotas} cargado={cargado} />
-            : p.encuentroId && porActividad.has(p.encuentroId) ? <div className="space-y-2">
-              {porActividad.get(p.encuentroId)!.map(r => <PodioCompacto key={`${r.categoria}:${r.grupo}`} titulo={tituloPodio(r)} clasificacion={r.clasificacion} mascotas={mascotas} cargado={cargado} />)}
-            </div>
-            : <Enfrentamiento texto={p.enfrentamiento} mascotas={mascotas} cargado={cargado} />}
-          {(p.arbitro || p.bloque) && <p className="text-xs text-slate-500">{[p.arbitro && `Responsables: ${p.arbitro}`, p.bloque && `Bloque: ${p.bloque}`].filter(Boolean).join(' · ')}</p>}
-          {p.avisos.map(a => <p key={a} className="text-sm text-amber-800 bg-amber-50 rounded p-2">{a}</p>)}
-        </article>)}</div>
-      </section>)}
+      {groups.map(date => {
+        const delDia = matches.filter(p => p.fecha === date);
+        const estados = date === hoy ? estadosDelDia(delDia.map(p => p.hora), ahora) : delDia.map(() => null);
+        return <section key={date} className="space-y-4">
+          <h2 className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            {date === hoy && <span className="rounded-md bg-amber-400 px-2 py-0.5 text-xs font-black uppercase italic tracking-wider text-slate-900">Hoy</span>}
+            <span className="text-xl font-black uppercase italic tracking-tight text-slate-900">{displayDate(date)}</span>
+            <span className="text-sm font-semibold text-slate-400">{delDia.length} {delDia.length === 1 ? 'actividad' : 'actividades'}</span>
+          </h2>
+          <ol className="max-w-4xl">{delDia.map((p, i) => {
+            const rango = rangoHora(p.hora), estado = estados[i];
+            const resultado = isMarcador(p.marcador) || (!!p.encuentroId && porActividad.has(p.encuentroId));
+            return <li key={p.id} className="grid grid-cols-[3rem_1.25rem_minmax(0,1fr)] gap-x-2 sm:grid-cols-[4.5rem_1.5rem_minmax(0,1fr)] sm:gap-x-3">
+              <div className={`pt-3 text-right tabular-nums sm:pt-4 ${estado === 'pasada' ? 'text-slate-400' : 'text-slate-900'}`}>
+                {rango ? <><p className="text-sm font-black italic sm:text-lg">{hhmm(rango.inicio)}</p>
+                  {rango.fin > rango.inicio && <p className="text-[11px] font-semibold text-slate-400 sm:text-xs">{hhmm(rango.fin)}</p>}</>
+                  : <p className="text-[11px] font-semibold text-slate-400">{p.hora || 'Por definir'}</p>}
+              </div>
+              {/* Timeline: a line through every activity of the day, with a dot that shows its state. */}
+              <div aria-hidden="true" className="relative flex justify-center">
+                <span className={`absolute w-0.5 bg-slate-200 ${i === 0 ? 'top-5' : 'top-0'} ${i === delDia.length - 1 ? 'h-5' : 'bottom-0'}`} />
+                <span className={`relative mt-4 flex h-3.5 w-3.5 items-center justify-center rounded-full ring-4 sm:mt-5 ${PUNTO[estado || 'ninguno']}`}>
+                  {estado === 'pasada' && <Check className="h-2.5 w-2.5" strokeWidth={4} />}
+                </span>
+              </div>
+              <article title={`${p.origen} · fila ${p.fila}`} className={`relative mb-3 space-y-2.5 overflow-hidden rounded-2xl border bg-white p-3 pl-4 sm:p-4 sm:pl-5 ${
+                estado === 'en-curso' ? 'border-red-300 shadow-lg shadow-red-500/10 ring-2 ring-red-500/20' : estado === 'sigue' ? 'border-blue-200' : 'border-slate-200'} ${
+                estado === 'pasada' && !resultado ? 'opacity-70' : ''}`}>
+                <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${acentoDe(p.deporte)}`} />
+                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                  <h3 className="text-[15px] font-black uppercase italic leading-tight tracking-wide text-slate-900 sm:text-base">{p.deporte}</h3>
+                  {p.lugar && <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-slate-500"><MapPin aria-hidden="true" className="h-3.5 w-3.5" />Lugar {p.lugar}</span>}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {estado === 'en-curso' && <span className="flex items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-white"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />En curso</span>}
+                  {estado === 'sigue' && <span className="rounded-full bg-blue-600 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-white">A continuación</span>}
+                  {p.categoria && <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">{categoryWithGrades(p.categoria)}</span>}
+                  {p.fase && <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">{p.fase}</span>}
+                </div>
+                {/* With a registered result the scoreboard already shows both Houses. */}
+                {isMarcador(p.marcador) ? <MarcadorDeportivo marcador={p.marcador} mascotas={mascotas} cargado={cargado} />
+                  : p.encuentroId && porActividad.has(p.encuentroId) ? <div className="space-y-2">
+                    {porActividad.get(p.encuentroId)!.map(r => <PodioCompacto key={`${r.categoria}:${r.grupo}`} titulo={tituloPodio(r)} clasificacion={r.clasificacion} mascotas={mascotas} cargado={cargado} />)}
+                  </div>
+                  : <Enfrentamiento texto={p.enfrentamiento} mascotas={mascotas} cargado={cargado} />}
+                {(p.arbitro || p.bloque) && <p className="flex items-start gap-1.5 text-xs text-slate-500"><Users aria-hidden="true" className="mt-px h-3.5 w-3.5 shrink-0" />{[p.arbitro, p.bloque && `Bloque: ${p.bloque}`].filter(Boolean).join(' · ')}</p>}
+                {p.avisos.map(a => <p key={a} className="rounded bg-amber-50 p-2 text-sm text-amber-800">{a}</p>)}
+              </article>
+            </li>;
+          })}</ol>
+        </section>;
+      })}
     </>}
     {data && view === 'puestos' && <div className="space-y-8"><section className="space-y-4">
         <h2 className="font-bold text-lg text-slate-800">Actividades con todas las Houses</h2>
