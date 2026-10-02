@@ -1,7 +1,7 @@
 import { useContenido } from '../features/contenido/useContenido';
 import { Trophy, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { HOUSES, type House } from '../features/arbitraje/hooks/useArbitraje';
 import MascotaHouse from '../components/MascotaHouse';
 import { Medalla } from '../components/HouseDistintivo';
@@ -70,6 +70,29 @@ function EstadoActualizacion({ actualizado, renovando }: { actualizado: number |
   </p>;
 }
 
+// Un número que cuenta desde su valor anterior (0 la primera vez) hasta el nuevo; quieto con «reducir movimiento».
+function NumeroAnimado({ valor }: { valor: number }) {
+  const quieto = useReducedMotion();
+  const [mostrado, setMostrado] = useState(quieto ? valor : 0);
+  const desde = useRef(quieto ? valor : 0);
+  useEffect(() => {
+    if (quieto) { setMostrado(valor); desde.current = valor; return; }
+    const inicio = performance.now(), origen = desde.current;
+    let marco = 0;
+    const paso = (t: number) => {
+      const k = Math.min(1, (t - inicio) / 1200), v = Math.round(origen + (valor - origen) * (1 - (1 - k) ** 3));
+      setMostrado(v); desde.current = v;
+      if (k < 1) marco = requestAnimationFrame(paso);
+    };
+    marco = requestAnimationFrame(paso);
+    return () => cancelAnimationFrame(marco);
+  }, [valor, quieto]);
+  return <>{mostrado}</>;
+}
+
+// Posiciones de los destellos alrededor de la mascota del líder.
+const DESTELLOS = ['-left-2 top-4', '-right-5 top-1/2', 'left-1/3 -top-5', '-bottom-2 right-6'];
+
 export default function Puntajes() {
   const { mascotas, cargado } = useContenido();
   const [rankings, setRankings] = useState<Ranking[]>([]);
@@ -77,6 +100,13 @@ export default function Puntajes() {
   // Momento en que el servidor leyó los puntajes de Google (null si nunca se cargaron).
   const [actualizado, setActualizado] = useState<number | null>(null);
   const [renovando, setRenovando] = useState(false);
+  const quieto = useReducedMotion();
+  // Las barras empiezan vacías y se llenan al mostrarse la tabla.
+  const [lleno, setLleno] = useState(false);
+  // Puntos ganados desde la lectura anterior, mostrados un momento como «+N» junto a cada House.
+  const [ganancias, setGanancias] = useState<Record<string, { n: number; clave: number }>>({});
+  const previos = useRef<Record<string, number> | null>(null);
+  const temporizadores = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
     let datosUltimos: PuntajeHouse[] = [];
@@ -171,6 +201,27 @@ export default function Puntajes() {
     };
   }, []);
 
+  useEffect(() => {
+    if (cargando) return;
+    const marco = requestAnimationFrame(() => setLleno(true));
+    return () => cancelAnimationFrame(marco);
+  }, [cargando]);
+
+  useEffect(() => {
+    if (!rankings.length) return;
+    const actuales = Object.fromEntries(rankings.map(r => [r.id, r.points]));
+    const antes = previos.current;
+    previos.current = actuales;
+    if (!antes) return;
+    const nuevas = Object.entries(actuales).filter(([id, puntos]) => puntos > (antes[id] ?? puntos));
+    if (!nuevas.length) return;
+    const clave = Date.now();
+    setGanancias(g => ({ ...g, ...Object.fromEntries(nuevas.map(([id, puntos]) => [id, { n: puntos - antes[id], clave }])) }));
+    temporizadores.current.push(setTimeout(() => setGanancias(g => Object.fromEntries(Object.entries(g).filter(([, v]) => v.clave !== clave))), 2600));
+  }, [rankings]);
+
+  useEffect(() => () => temporizadores.current.forEach(clearTimeout), []);
+
   if (cargando) {
     return (
       <div translate="no" className="notranslate flex flex-col items-center justify-center min-h-screen">
@@ -201,17 +252,22 @@ export default function Puntajes() {
       </div>
 
       {/* Marcador del líder */}
-      {lider && <section {...inclinacion} className="vidrio relative overflow-hidden rounded-[2rem] p-5 text-slate-900 transition-transform duration-200 sm:p-8">
+      {lider && <section key={empateArriba ? 'empate' : lider.id} {...inclinacion} className="vidrio relative overflow-hidden rounded-[2rem] p-5 text-slate-900 transition-transform duration-200 motion-safe:animate-[entrar_0.7s_ease-out_both] sm:p-8">
+        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0 motion-safe:animate-[brillo_6s_ease-in-out_1.5s_infinite]" />
         {colorLider && <span aria-hidden="true" className={`pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-50 blur-3xl ${colorLider.brillo}`} />}
         {empateArriba ? <div className="relative py-4 text-center">
           <p className="text-sm font-bold text-amber-600">Empate en el primer lugar</p>
-          <p className="mt-3 text-6xl font-extrabold tabular-nums sm:text-8xl"><span className="texto-3d">{lider.points}</span><span className="ml-2 text-xl text-slate-400 sm:text-2xl">pts</span></p>
+          <p className="mt-3 text-6xl font-extrabold tabular-nums sm:text-8xl"><span className="texto-3d"><NumeroAnimado valor={lider.points} /></span><span className="ml-2 text-xl text-slate-400 sm:text-2xl">pts</span></p>
           <p className="mt-2 text-lg font-bold text-slate-700">{rankings.filter(r => r.points === lider.points).map(r => nombre(r.house?.name)).join(' · ')}</p>
         </div>
         : <div className="relative flex flex-col items-center gap-5 text-center sm:flex-row sm:gap-8 sm:text-left">
-          <div className={`esfera relative h-32 w-32 shrink-0 rounded-full bg-white p-1 ring-4 sm:h-44 sm:w-44 ${colorLider?.anillo ?? 'ring-white'}`}>
-            <MascotaHouse house={lider.house} mascotas={mascotas} cargado={cargado} className="h-full w-full rounded-full object-contain" />
-            <Trophy aria-hidden="true" className="esfera absolute -right-1 -top-1 h-10 w-10 rounded-full bg-gradient-to-b from-amber-200 to-amber-500 p-2 text-amber-950" />
+          <div className="relative shrink-0 motion-safe:animate-[flotar_3.5s_ease-in-out_0.8s_infinite]">
+            <div className={`esfera relative h-32 w-32 rounded-full bg-white p-1 ring-4 sm:h-44 sm:w-44 ${colorLider?.anillo ?? 'ring-white'}`}>
+              <MascotaHouse house={lider.house} mascotas={mascotas} cargado={cargado} className="h-full w-full rounded-full object-contain" />
+              <Trophy aria-hidden="true" className="esfera absolute -right-1 -top-1 h-10 w-10 rounded-full bg-gradient-to-b from-amber-200 to-amber-500 p-2 text-amber-950" />
+            </div>
+            {DESTELLOS.map((lugar, i) => <span key={lugar} aria-hidden="true" style={{ animationDelay: `${0.8 + i * 0.6}s` }}
+              className={`pointer-events-none absolute text-lg text-amber-400 opacity-0 motion-safe:animate-[destello_2.4s_ease-in-out_infinite] motion-reduce:hidden ${lugar}`}>✦</span>)}
           </div>
           <div className="min-w-0 flex-1">
             <p className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500 sm:justify-start"><Medalla puesto={1} className="h-5 w-5 text-[10px]" />Primer lugar</p>
@@ -219,7 +275,7 @@ export default function Puntajes() {
             <p className="mt-2 inline-block rounded-full bg-white/80 px-3 py-0.5 text-sm font-semibold text-slate-600 ring-1 ring-white">{etiqueta(lider.house?.color)}</p>
           </div>
           <div className="sm:text-right">
-            <p className="texto-3d text-6xl font-extrabold tabular-nums leading-none sm:text-8xl">{lider.points}</p>
+            <p className="texto-3d text-6xl font-extrabold tabular-nums leading-none sm:text-8xl"><NumeroAnimado valor={lider.points} /></p>
             <p className="mt-1 text-sm font-semibold text-slate-400">puntos</p>
             {segundo && <p className="mt-3 inline-block rounded-full bg-indigo-50 px-3 py-1 text-sm font-bold text-indigo-600">+{lider.points - segundo.points} sobre {nombre(segundo.house?.name)}</p>}
           </div>
@@ -231,10 +287,12 @@ export default function Puntajes() {
         <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Tabla de posiciones</h2>
         <ol className="space-y-3">
           <AnimatePresence>
-            {rankings.map(team => {
+            {rankings.map((team, i) => {
               const color = COLOR_HOUSE[team.house?.color ?? ''];
               const diferencia = (lider?.points ?? 0) - team.points;
+              const ganancia = ganancias[team.id];
               return <motion.li key={team.id} layout transition={{ type: 'spring', stiffness: 250, damping: 25 }}
+                initial={quieto ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0, transition: { delay: quieto ? 0 : 0.15 + i * 0.1, duration: 0.45 } }}
                 className={`grid grid-cols-[2rem_3.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-white/75 p-3 shadow-[0_14px_30px_-20px_rgb(51_65_85/0.5)] backdrop-blur-xl sm:grid-cols-[3rem_4.5rem_minmax(0,1fr)_auto] sm:gap-5 sm:p-4 ${
                   team.isTied ? 'border-amber-300 ring-4 ring-amber-400/20' : team.rank === 1 ? 'border-indigo-200' : 'border-white'}`}>
                 <span className="flex justify-center"><Medalla puesto={team.rank} className="h-8 w-8 text-sm sm:h-10 sm:w-10 sm:text-base" /></span>
@@ -248,11 +306,12 @@ export default function Puntajes() {
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-slate-200/60 shadow-inner">
                     <div className={`h-full rounded-full bg-gradient-to-r shadow-[inset_0_1px_0_rgb(255_255_255/0.6)] transition-all duration-1000 ease-out ${color?.barra ?? 'from-indigo-500 to-blue-500'}`}
-                      style={{ width: `${Math.max(2, (team.points / maxPoints) * 100)}%` }} />
+                      style={{ width: lleno ? `${Math.max(2, (team.points / maxPoints) * 100)}%` : '0%', transitionDelay: lleno && !quieto ? `${0.3 + i * 0.1}s` : '0s' }} />
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-extrabold tabular-nums leading-none text-slate-900 sm:text-4xl">{team.points}<span className="ml-1 text-xs font-bold text-slate-400 sm:text-sm">pts</span></p>
+                <div className="relative text-right">
+                  {ganancia && <span key={ganancia.clave} aria-live="polite" className="pointer-events-none absolute -top-5 right-0 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-bold text-white shadow-[0_6px_14px_-6px_rgb(16_185_129/0.8)] motion-safe:animate-[ganancia_2.4s_ease-out_both]">+{ganancia.n}</span>}
+                  <p className="text-2xl font-extrabold tabular-nums leading-none text-slate-900 sm:text-4xl"><NumeroAnimado valor={team.points} /><span className="ml-1 text-xs font-bold text-slate-400 sm:text-sm">pts</span></p>
                   <p className={`mt-1 text-xs font-extrabold ${team.isTied ? 'text-amber-600' : diferencia === 0 ? 'text-indigo-600' : 'text-slate-400'}`}>
                     {team.isTied ? 'Empate' : diferencia === 0 ? 'Líder' : `−${diferencia}`}
                   </p>
