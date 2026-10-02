@@ -15,9 +15,11 @@ export function fechaInicial(fechas: string[], hoy: string) {
 }
 
 // Start and end of «08:20 a 09:00» (also «9:40 a 10:00» or «08:00») in minutes since midnight;
-// null when the cell has no time. Without an end the activity is a single moment.
+// null when the cell has no time. Without an end the activity is a single moment. The sheets write the
+// afternoon without «p. m.» («12:40 a 01:00», «01:00 a 02:00»): in a school day 1 to 6 o'clock is afternoon.
 export function rangoHora(hora: string) {
-  const horas = [...hora.matchAll(/(\d{1,2})[:.h](\d{2})/g)].map(m => Number(m[1]) * 60 + Number(m[2])).filter(m => m < 1440);
+  const horas = [...hora.matchAll(/(\d{1,2})[:.h](\d{2})/g)].map(m => Number(m[1]) * 60 + Number(m[2]))
+    .filter(m => m < 1440).map(m => m >= 60 && m < 420 ? m + 720 : m);
   if (!horas.length) return null;
   return { inicio: horas[0], fin: Math.max(horas[0], horas[1] ?? horas[0]) };
 }

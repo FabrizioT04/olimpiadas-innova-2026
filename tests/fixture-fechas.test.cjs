@@ -27,6 +27,9 @@ test('programme times are read as minutes, with or without an end',async()=>{
  assert.deepEqual(rangoHora('9:40 a 10:00'),{inicio:580,fin:600});
  assert.deepEqual(rangoHora('08:00'),{inicio:480,fin:480});
  assert.equal(rangoHora('Por definir'),null);
+ assert.deepEqual(rangoHora('12:40 a 01:00'),{inicio:760,fin:780},'the sheets write the afternoon without p. m.');
+ assert.deepEqual(rangoHora('01:00 a 02:00'),{inicio:780,fin:840});
+ assert.deepEqual(rangoHora('12:55 - 13:15'),{inicio:775,fin:795});
 });
 test('today marks finished, in-progress and next activities',async()=>{
  const {estadosDelDia}=await fechas;

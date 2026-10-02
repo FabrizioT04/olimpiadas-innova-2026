@@ -72,7 +72,9 @@ const tituloPodio = (r: { categoria: string; grupo: string }) => r.categoria
 // Each sport keeps the same accent colour in every card, so the day reads at a glance.
 // Full class names so Tailwind keeps them.
 const ACENTOS = ['bg-sky-500', 'bg-violet-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-400', 'bg-cyan-500', 'bg-fuchsia-500', 'bg-lime-500'];
-const acentoDe = (deporte: string) => ACENTOS[[...deporte.trim().toUpperCase()].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % ACENTOS.length];
+// Sheets writes some sports in different case or spacing («COMELONES», «Comelones»): they are the same sport.
+const nombreDeporte = (deporte: string) => deporte.trim().replace(/\s+/g, ' ').toUpperCase();
+const acentoDe = (deporte: string) => ACENTOS[[...nombreDeporte(deporte)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % ACENTOS.length];
 const hhmm = (minutos: number) => `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(minutos % 60).padStart(2, '0')}`;
 const PUNTO: Record<EstadoHorario | 'ninguno', string> = {
   pasada: 'bg-slate-300 text-white ring-slate-100', 'en-curso': 'bg-red-500 ring-red-200 animate-pulse', sigue: 'bg-blue-600 ring-blue-200',
@@ -159,6 +161,12 @@ export default function Fixture() {
   }, [selected, view, hayDatos]);
   const matches = (data?.partidos || []).filter(p => selected === 'todos' || p.fecha === selected);
   const groups = Array.from(new Set(matches.map(p => p.fecha)));
+  // Today's activities and their state, for the timeline and the side panel.
+  const deHoy = matches.filter(p => p.fecha === hoy);
+  const estadosHoy = estadosDelDia(deHoy.map(p => p.hora), ahora);
+  const conEstado = (estado: EstadoHorario) => deHoy.filter((_, i) => estadosHoy[i] === estado);
+  const deportes = Array.from(matches.reduce((m, p) => m.set(nombreDeporte(p.deporte), (m.get(nombreDeporte(p.deporte)) || 0) + 1), new Map<string, number>()));
+  const irA = (id: string) => document.getElementById(`actividad-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   // Sport podiums come from the registered results of each final and 3rd-place match.
   const clasificaciones = (data?.clasificaciones || []).filter(isClasificacion);
   // Rankings registered for each activity, shown in its card instead of «Equipos por definir».
@@ -190,19 +198,20 @@ export default function Fixture() {
     {data && view === 'programacion' && <>
       <p className="text-xs text-slate-500">Los horarios son los publicados en Sheets. Los marcadores y estados aparecen cuando los registra un árbitro.</p>
       {!matches.length && <p className="py-8 text-center text-slate-500">No hay actividades publicadas para esta selección.</p>}
-      {groups.map(date => {
+      {!!matches.length && <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="space-y-8">{groups.map(date => {
         const delDia = matches.filter(p => p.fecha === date);
-        const estados = date === hoy ? estadosDelDia(delDia.map(p => p.hora), ahora) : delDia.map(() => null);
+        const estados = date === hoy ? estadosHoy : delDia.map(() => null);
         return <section key={date} className="space-y-4">
           <h2 className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             {date === hoy && <span className="rounded-md bg-amber-400 px-2 py-0.5 text-xs font-black uppercase italic tracking-wider text-slate-900">Hoy</span>}
             <span className="text-xl font-black uppercase italic tracking-tight text-slate-900">{displayDate(date)}</span>
             <span className="text-sm font-semibold text-slate-400">{delDia.length} {delDia.length === 1 ? 'actividad' : 'actividades'}</span>
           </h2>
-          <ol className="max-w-4xl">{delDia.map((p, i) => {
+          <ol>{delDia.map((p, i) => {
             const rango = rangoHora(p.hora), estado = estados[i];
             const resultado = isMarcador(p.marcador) || (!!p.encuentroId && porActividad.has(p.encuentroId));
-            return <li key={p.id} className="grid grid-cols-[3rem_1.25rem_minmax(0,1fr)] gap-x-2 sm:grid-cols-[4.5rem_1.5rem_minmax(0,1fr)] sm:gap-x-3">
+            return <li key={p.id} id={`actividad-${p.id}`} className="grid grid-cols-[3rem_1.25rem_minmax(0,1fr)] gap-x-2 sm:grid-cols-[4.5rem_1.5rem_minmax(0,1fr)] sm:gap-x-3">
               <div className={`pt-3 text-right tabular-nums sm:pt-4 ${estado === 'pasada' ? 'text-slate-400' : 'text-slate-900'}`}>
                 {rango ? <><p className="text-sm font-black italic sm:text-lg">{hhmm(rango.inicio)}</p>
                   {rango.fin > rango.inicio && <p className="text-[11px] font-semibold text-slate-400 sm:text-xs">{hhmm(rango.fin)}</p>}</>
@@ -241,7 +250,39 @@ export default function Fixture() {
             </li>;
           })}</ol>
         </section>;
-      })}
+      })}</div>
+      {/* On wide screens the side stays in view: what is on now, what comes next and the sport colours. */}
+      <aside className="sticky top-4 hidden space-y-4 lg:block">
+        {!!deHoy.length && <section className="space-y-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-white">
+          <div>
+            <p className="flex items-baseline justify-between text-xs font-black uppercase italic tracking-wider text-amber-300">Hoy
+              <span className="font-semibold not-italic normal-case tracking-normal text-slate-300">{conEstado('pasada').length} de {deHoy.length} terminadas</span></p>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-700"><div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${conEstado('pasada').length / deHoy.length * 100}%` }} /></div>
+          </div>
+          {([['en-curso', 'En curso', 'bg-red-500 animate-pulse'], ['sigue', 'A continuación', 'bg-blue-500']] as const).map(([estado, titulo, punto]) => {
+            const lista = conEstado(estado);
+            return !!lista.length && <div key={estado} className="space-y-1.5">
+              <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-300"><span className={`h-2 w-2 rounded-full ${punto}`} />{titulo}</p>
+              <ul className="space-y-1">{lista.map(p => { const rango = rangoHora(p.hora); return <li key={p.id}>
+                <button onClick={() => irA(p.id)} className="w-full rounded-lg bg-white/5 px-2.5 py-1.5 text-left transition-colors hover:bg-white/10">
+                  <span className="block text-sm font-black uppercase italic leading-tight">{p.deporte}</span>
+                  <span className="block text-xs text-slate-400">{rango ? `${hhmm(rango.inicio)}–${hhmm(rango.fin)}` : p.hora}{p.categoria && ` · ${p.categoria}`}</span>
+                </button>
+              </li>; })}</ul>
+            </div>;
+          })}
+          {!conEstado('en-curso').length && !conEstado('sigue').length && <p className="text-sm text-slate-300">{conEstado('pasada').length ? 'La jornada de hoy terminó.' : 'Las actividades de hoy no tienen hora publicada.'}</p>}
+        </section>}
+        <section className="rounded-2xl border border-slate-200 bg-white p-4">
+          <p className="mb-2 text-[11px] font-black uppercase tracking-widest text-slate-400">Deportes</p>
+          <ul className="space-y-1.5">{deportes.map(([deporte, total]) => <li key={deporte} className="flex items-center gap-2 text-sm">
+            <span aria-hidden="true" className={`h-3 w-1.5 shrink-0 rounded-full ${acentoDe(deporte)}`} />
+            <span className="min-w-0 flex-1 truncate font-semibold uppercase italic text-slate-700">{deporte}</span>
+            <span className="text-xs font-semibold text-slate-400">{total}</span>
+          </li>)}</ul>
+        </section>
+      </aside>
+      </div>}
     </>}
     {data && view === 'puestos' && <div className="space-y-8"><section className="space-y-4">
         <h2 className="font-bold text-lg text-slate-800">Actividades con todas las Houses</h2>
