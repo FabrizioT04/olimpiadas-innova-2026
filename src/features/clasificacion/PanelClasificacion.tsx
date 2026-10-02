@@ -181,15 +181,15 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
   const resumen = (c:{puestos:Record<string,number>}) => COLORES_HOUSE.slice().sort((a,b) => c.puestos[a]-c.puestos[b])
     .map(h => `${LUGARES[c.puestos[h]-1]} ${HOUSES.find(x => x.color === h)?.etiqueta}`).join(' · ');
 
-  return <section className="bg-white/70 backdrop-blur-2xl rounded-[2rem] border border-white/80 p-5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-5">
-    <h2 className="text-xl font-bold">Clasificación por puestos</h2>
+  return <section className="vidrio rounded-[2rem] p-5 sm:p-8 space-y-5">
+    <h2 className="text-xl font-extrabold tracking-tight">Clasificación por puestos</h2>
     <p className="text-sm text-slate-500">Para actividades en las que participan las cuatro Houses: asigna el 1.º, 2.º, 3.º y 4.º puesto y los puntos que decidan los árbitros. Los cuatro puntajes se guardan juntos en la Sábana y los puestos se publican en la pestaña «Resultados» del fixture.</p>
     {message && <p role="status" className="text-green-800 bg-green-50 p-3 rounded-lg">{message}</p>}
     {error && <p role="alert" className="text-red-800 bg-red-50 p-3 rounded-lg">{error}</p>}
     {!loading && !!huerfanas.length && <p role="status" className="text-amber-900 bg-amber-50 p-3 rounded-lg text-sm">{huerfanas.length === 1 ? 'Hay 1 clasificación registrada' : `Hay ${huerfanas.length} clasificaciones registradas`} cuya actividad ya no aparece igual en el fixture, por ejemplo porque se corrigió su nombre, fecha u hora en Sheets. Sus puntos siguen en la Sábana: no la registres de nuevo. Para corregirla, elige «Otras actividades» → «Registradas que ya no están en el fixture».</p>}
     {pending && <div className="bg-amber-50 text-amber-900 rounded-lg p-3 space-y-2"><p>Hay una clasificación sin confirmar: {pending.detalle} ({resumen(pending)}). Reintenta para recuperar su confirmación.</p>
       <button type="button" disabled={busy || loading} onClick={() => void save()} className="underline font-semibold">{busy ? 'Confirmando…' : 'Reintentar el mismo guardado'}</button></div>}
-    <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); setError(''); void load(undefined, destino?.actividad || null); }} className="text-blue-700 underline disabled:opacity-50">{loading ? 'Leyendo clasificaciones…' : 'Recargar clasificaciones'}</button>
+    <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); setError(''); void load(undefined, destino?.actividad || null); }} className="font-semibold text-indigo-600 underline underline-offset-2 disabled:opacity-50">{loading ? 'Leyendo clasificaciones…' : 'Recargar clasificaciones'}</button>
     <form onSubmit={e => { e.preventDefault(); void save(); }} className="space-y-4">
       <fieldset disabled={busy || loading || !!pending || partidoLocked} className="space-y-4 disabled:opacity-60">
         <div className="grid sm:grid-cols-2 gap-4">
@@ -238,7 +238,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
           </div>}
           {actual?.detalle && fecha === OTRAS && destino.detalle !== actual.detalle && <p role="status" className="text-blue-900 bg-blue-50 p-3 rounded-lg text-sm">Se guardará con el nombre actual del fixture: «{destino.detalle}» (antes «{actual.detalle}»). Si los puestos y los puntos no cambian, la Sábana queda igual.</p>}
           {actual && <p role="status" className="text-amber-900 bg-amber-50 p-3 rounded-lg text-sm">Ya hay una clasificación registrada el {new Date(actual.actualizado).toLocaleString('es-PE', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}: {resumen(actual)}. Si guardas, se reemplaza y en la Sábana se aplica solo la diferencia de puntos.</p>}
-          <div className="bg-blue-50 rounded-xl p-4 space-y-3">
+          <div className="bg-indigo-50/70 ring-1 ring-indigo-100 rounded-2xl p-4 space-y-3">
             <div className="hidden sm:grid grid-cols-[1fr_7rem_7rem] gap-3 text-xs font-semibold text-slate-600"><span>House</span><span>Puesto</span><span>Puntos</span></div>
             {/* On phones the House name takes its own line, with place and points below it. */}
             {HOUSES.map(h => <div key={h.color} className="grid grid-cols-2 sm:grid-cols-[1fr_7rem_7rem] gap-x-3 gap-y-1 items-center">
@@ -252,7 +252,7 @@ export default function PanelClasificacion({onLockedChange}:{onLockedChange:(loc
             <p className="text-xs text-slate-600">Cada puesto se asigna a una sola House.</p>
           </div>
           <label className="block text-sm font-medium">Motivo del registro o corrección<input required minLength={3} maxLength={300} value={motivo} onChange={e => setMotivo(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"/></label>
-          <button type="submit" disabled={!puestosValidos || !puntosValidos || motivo.trim().length < 3 || (!!duplicado && !confirmaDistinta)} className="rounded-xl bg-blue-600 text-white px-5 py-3 disabled:opacity-50">{busy ? 'Guardando…' : actual ? 'Corregir clasificación y puntos' : 'Guardar clasificación y puntos'}</button>
+          <button type="submit" disabled={!puestosValidos || !puntosValidos || motivo.trim().length < 3 || (!!duplicado && !confirmaDistinta)} className="rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white shadow-[0_8px_18px_-8px_rgb(79_70_229/0.7)] transition-all hover:-translate-y-0.5 hover:bg-indigo-500 active:scale-95 disabled:opacity-50 disabled:hover:translate-y-0">{busy ? 'Guardando…' : actual ? 'Corregir clasificación y puntos' : 'Guardar clasificación y puntos'}</button>
         </>}
       </fieldset>
     </form>

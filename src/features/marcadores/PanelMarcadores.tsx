@@ -120,7 +120,7 @@ export default function PanelMarcadores({onLockedChange, embebido}:{onLockedChan
           <label className="text-sm font-medium">{HOUSE_NAMES[current.houses[1]]}<input aria-label="Marcador House B" type="number" min="0" max="999" step="1" required value={b} onChange={e=>setB(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"/></label>
         </div><label className="block text-sm font-medium">Estado<select value={status} onChange={e=>setStatus(e.target.value as Marcador['estado'])} className="block w-full border rounded-xl p-3 mt-1">{Object.entries(STATUS_NAMES).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
         {status === 'pendiente' && <p className="text-sm text-slate-500">Un encuentro pendiente debe tener ambos marcadores en cero.</p>}
-        {status === 'finalizado' && <div className="bg-blue-50 rounded-xl p-4 space-y-4">
+        {status === 'finalizado' && <div className="bg-indigo-50/70 ring-1 ring-indigo-100 rounded-2xl p-4 space-y-4">
           <h3 className="font-semibold">Puntos oficiales decididos por el profesor</h3>
           <p className="text-sm">Escribe los puntos totales que corresponde otorgar por este encuentro. En una corrección se aplica solamente la diferencia.</p>
           <div className="grid grid-cols-2 gap-4">
@@ -135,7 +135,7 @@ export default function PanelMarcadores({onLockedChange, embebido}:{onLockedChan
         </div>}
         {current.marcador?.integrado && status !== 'finalizado' && <p className="text-amber-900">Al reabrir este encuentro se retirarán los puntos que le habías otorgado mediante este formulario.</p>}
         <label className="block text-sm font-medium">Motivo del registro o corrección<input required minLength={3} maxLength={300} value={reason} onChange={e=>setReason(e.target.value)} className="block w-full border rounded-xl p-3 mt-1"/></label>
-        <button type="submit" disabled={(status === 'pendiente' && (Number(a)!==0 || Number(b)!==0)) || (status === 'finalizado' && !destinoValido)} className="rounded-xl bg-blue-600 text-white px-5 py-3 disabled:opacity-50">{busy ? 'Guardando…' : 'Guardar resultado y puntos'}</button></>;
+        <button type="submit" disabled={(status === 'pendiente' && (Number(a)!==0 || Number(b)!==0)) || (status === 'finalizado' && !destinoValido)} className="rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white shadow-[0_8px_18px_-8px_rgb(79_70_229/0.7)] transition-all hover:-translate-y-0.5 hover:bg-indigo-500 active:scale-95 disabled:opacity-50 disabled:hover:translate-y-0">{busy ? 'Guardando…' : 'Guardar resultado y puntos'}</button></>;
   const avisos = <>
     {message && <p role="status" className="text-green-800 bg-green-50 p-3 rounded-lg">{message}</p>}
     {error && <p role="alert" className="text-red-800 bg-red-50 p-3 rounded-lg">{error}</p>}
@@ -148,12 +148,12 @@ export default function PanelMarcadores({onLockedChange, embebido}:{onLockedChan
       <fieldset disabled={busy || !!pending} className="space-y-4 disabled:opacity-60">{campos}</fieldset>
     </form>
   </div>;
-  return <section className="bg-white/70 backdrop-blur-2xl rounded-[2rem] border border-white/80 p-5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-5">
-    <h2 className="text-xl font-bold">Resultado del partido</h2>
+  return <section className="vidrio rounded-[2rem] p-5 sm:p-8 space-y-5">
+    <h2 className="text-xl font-extrabold tracking-tight">Resultado del partido</h2>
     <p className="text-sm text-slate-500">Registra el marcador y, al finalizar, los puntos que decida el profesor para cada House.</p>
     {avisos}
     {copiaGuardada && !error && <p role="status" className="text-amber-900 bg-amber-50 p-3 rounded-lg">Google no respondió a tiempo. Se muestra la programación leída el {new Date(copiaGuardada).toLocaleString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}; puede no incluir los últimos cambios. Si un encuentro cambió, el guardado lo detectará y te pedirá recargar. Pulsa «Recargar partidos» para intentar leer la versión actual.</p>}
-    <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); setError(''); void load(); }} className="text-blue-700 underline disabled:opacity-50">{loading ? 'Leyendo partidos…' : 'Recargar partidos'}</button>
+    <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); setError(''); void load(); }} className="font-semibold text-indigo-600 underline underline-offset-2 disabled:opacity-50">{loading ? 'Leyendo partidos…' : 'Recargar partidos'}</button>
     <form onSubmit={e => {e.preventDefault(); void save();}} className="space-y-4">
       <fieldset disabled={busy || loading || !!pending} className="space-y-4 disabled:opacity-60">
         <label className="block text-sm font-medium">Encuentro

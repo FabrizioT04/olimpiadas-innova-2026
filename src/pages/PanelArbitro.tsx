@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, ShieldCheck, UserCheck, LogOut, Trophy, Medal, Images, ListOrdered } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, LogOut, Trophy, Medal, Images, ListOrdered, CheckCircle2, Plus, Minus } from 'lucide-react';
 import { HOUSES, useArbitraje } from '../features/arbitraje/hooks/useArbitraje';
 import PanelMarcadores from '../features/marcadores/PanelMarcadores';
 import PanelClasificacion from '../features/clasificacion/PanelClasificacion';
@@ -12,6 +12,8 @@ import { ACTIVIDADES, CATEGORIAS } from '../../shared/olimpiadas';
 
 // Grupos del selector de actividades, en el orden en que aparecen.
 const GRUPOS_ACTIVIDAD = [...new Set(ACTIVIDADES.map(a => a.grupo))];
+// Anillo del color de cada House en la tarjeta elegida. Nombres completos para que Tailwind los conserve.
+const ANILLO: Record<string, string> = { blue: 'ring-blue-500', white: 'ring-slate-300', green: 'ring-green-500', orange: 'ring-orange-500' };
 
 export default function PanelArbitro() {
   const { mascotas, cargado } = useContenido();
@@ -50,240 +52,165 @@ export default function PanelArbitro() {
   } = useArbitraje();
 
   if (!correoAutorizado) {
-    return <div className="max-w-lg mx-auto p-8 bg-white rounded-2xl text-center">
-      <h1 className="text-xl font-bold">Panel de arbitraje</h1>
-      <p className="my-4" role="status">{error || 'Verificando tu sesión…'}</p>
-      {error && <a className="text-blue-700 underline" href="/arbitraje">Volver a ingresar</a>}
+    return <div className="vidrio mx-auto max-w-lg space-y-3 rounded-3xl p-8 text-center">
+      <ShieldCheck className="mx-auto h-10 w-10 text-indigo-500" aria-hidden="true" />
+      <h1 className="text-xl font-extrabold tracking-tight">Panel de arbitraje</h1>
+      <p role="status" className="flex items-center justify-center gap-2 text-slate-600">
+        {!error && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}{error || 'Verificando tu sesión…'}
+      </p>
+      {error && <a className="inline-block rounded-xl bg-indigo-600 px-5 py-2.5 font-semibold text-white shadow-[0_8px_18px_-8px_rgb(79_70_229/0.7)]" href="/arbitraje">Volver a ingresar</a>}
     </div>;
   }
 
-  // 2. Si SÍ está autorizado, muestra tu bloque de código completo perfectamente
+  const listo = !!selectedHouse && !!operation;
+  // The confirm button says what will be saved, e.g. «Restar 50 puntos a Horses».
+  const resumen = !selectedHouse ? 'Elige una House' : !operation ? 'Elige sumar o restar'
+    : `${operation === 'sumar' ? 'Sumar' : 'Restar'} ${points || '…'} puntos a ${selectedHouse.name.charAt(0)}${selectedHouse.name.slice(1).toLowerCase()}`;
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden font-sans text-slate-800 p-4 md:p-8 flex flex-col items-center justify-center">
+    <div className="panel-arbitro mx-auto w-full max-w-5xl space-y-6 text-slate-800">
 
-      {/* Decoración de fondo */}
-      <div className="absolute top-0 left-10 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
-      <div className="absolute top-0 right-20 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
-      <div className="absolute -bottom-8 left-40 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 pointer-events-none"></div>
-
-      <div className="relative z-10 w-full max-w-5xl mt-4">
-
-        {/* Barra superior de sesión autorizada */}
-        <div className="flex flex-col sm:flex-row items-center justify-between bg-white/80 backdrop-blur-xl px-6 py-3.5 rounded-2xl border border-slate-200 shadow-sm mb-8 gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-              <ShieldCheck size={18} />
-            </div>
-            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <UserCheck size={15} className="text-emerald-600" />
-              Sesión activa: <span className="text-indigo-600 font-extrabold">{correoAutorizado}</span>
-            </span>
+      {/* Cabecera y sesión autorizada */}
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            <ShieldCheck className="h-7 w-7 text-indigo-500 sm:h-8 sm:w-8" aria-hidden="true" />Panel de arbitraje
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">Resultados de partidos y puntos de las Houses en un solo lugar.</p>
+        </div>
+        <div className="vidrio flex min-w-0 items-center gap-3 rounded-2xl py-2 pl-2 pr-2">
+          <span aria-hidden="true" className="esfera flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-indigo-400 to-indigo-600 text-sm font-bold uppercase text-white">{correoAutorizado.charAt(0)}</span>
+          <div className="min-w-0">
+            <p className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600"><UserCheck size={12} aria-hidden="true" />Sesión activa</p>
+            <p className="max-w-[13rem] truncate text-sm font-semibold text-slate-800">{correoAutorizado}</p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3.5 py-2 rounded-xl transition-colors border border-red-100"
-          >
-            <LogOut size={14} />
-            Cerrar Sesión
+          <button onClick={handleLogout}
+            className="flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-red-600 transition-colors hover:bg-red-50">
+            <LogOut size={14} aria-hidden="true" />Cerrar sesión
           </button>
         </div>
+      </header>
 
-        {/* Cabecera */}
-        <div className="text-center mb-8">
-          <span className="inline-block py-1.5 px-4 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold tracking-widest uppercase mb-4 shadow-sm border border-indigo-100">
-            Innova Schools • San Martín de Porres
-          </span>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 mb-4 pb-1">
-            Control de Arbitraje
-          </h1>
-          <p className="text-slate-500 font-medium text-sm md:text-base">Resultados de partidos y puntos de las Houses en un solo lugar</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 rounded-2xl border border-slate-200 bg-white/80 p-2 mb-6" role="group" aria-label="Tipo de registro">
-          {([
-            { id: 'marcadores', title: 'Resultado del partido', description: 'Marcador y puntos en una operación', Icon: Trophy },
-            { id: 'clasificacion', title: 'Clasificación por puestos', description: 'Del 1.º al 4.º con todas las Houses', Icon: ListOrdered },
-            { id: 'puntajes', title: 'Penalidades y bonos', description: 'Restar o sumar puntos a una sola House', Icon: Medal },
-            { id: 'contenido', title: 'Fotos y mascotas', description: 'Subir, revisar y publicar imágenes', Icon: Images },
-          ] as const).map(({ id, title, description, Icon }) => (
-            <button key={id} type="button" aria-pressed={registro === id} aria-controls={`panel-${id}`}
-              disabled={resultLocked || rankingLocked || isSubmitting} onClick={() => { setRegistro(id); if (id === 'clasificacion') setClasificacionAbierta(true); }}
-              className={`flex items-center gap-3 rounded-xl px-4 py-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${registro === id ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-indigo-50'}`}>
-              <Icon size={22} className="shrink-0" aria-hidden="true" />
-              <span><span className="block text-sm font-bold">{title}</span><span className={`block text-xs mt-1 ${registro === id ? 'text-indigo-100' : 'text-slate-500'}`}>{description}</span></span>
-            </button>
-          ))}
-        </div>
-
-        {/* Keep both forms mounted so switching views preserves unfinished entries and retries. */}
-        {registro === 'contenido' && <div id="panel-contenido"><AdminContenido /></div>}
-        <div id="panel-marcadores" hidden={registro !== 'marcadores'}>
-          <PanelMarcadores onLockedChange={setResultLocked} />
-        </div>
-        {clasificacionAbierta && <div id="panel-clasificacion" hidden={registro !== 'clasificacion'}>
-          <PanelClasificacion onLockedChange={setRankingLocked} />
-        </div>}
-        <section id="panel-puntajes" hidden={registro !== 'puntajes'} aria-labelledby="titulo-puntajes">
-        <div className="mb-5 px-1">
-          <h2 id="titulo-puntajes" className="text-xl font-bold">Penalidades y bonos</h2>
-          <p className="text-sm text-slate-500 mt-2">Resta o suma puntos a una sola House, fuera de partidos y clasificaciones. Los puntos de un partido se guardan en «Resultado del partido» y los de actividades con las cuatro Houses en «Clasificación por puestos».</p>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
-          {/* Columna Izquierda: Formulario */}
-          <div className="lg:col-span-7 bg-white/70 backdrop-blur-2xl p-5 sm:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/80">
-            <form onSubmit={enviarPuntaje} className="space-y-5">
-
-              {/* House Seleccionada Visual */}
-              <div className="bg-gradient-to-r from-slate-50/80 to-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 transition-all">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center flex-shrink-0">
-                  {selectedHouse ? (
-                    <MascotaHouse house={selectedHouse} mascotas={mascotas} cargado={cargado} className="w-full h-full object-contain drop-shadow-md transition-all duration-300" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-slate-100 shadow-inner flex items-center justify-center border border-slate-200 border-dashed">
-                      <span className="text-3xl text-slate-300">🎯</span>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Destinatario Oficial</p>
-                  <p className={`text-xl font-black tracking-tight ${selectedHouse ? 'text-slate-800' : 'text-slate-400'}`}>
-                    {selectedHouse ? selectedHouse.name : 'Selecciona una House...'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Operación */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1" htmlFor="operacion">Operación</label>
-                <div className="relative">
-                  <select
-                    className="w-full pl-4 pr-10 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 appearance-none shadow-sm transition-all"
-                    id="operacion" name="operacion" value={operation} onChange={(e) => setOperation(e.target.value)}
-                  >
-                    <option value="">Selecciona la operación...</option>
-                    <option value="sumar">✅ Sumar puntos (Reto / Ajuste)</option>
-                    <option value="restar">❌ Restar Puntos (Penalidad)</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Categoría y Actividad */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1" htmlFor="categoria">Categoría</label>
-                  <div className="relative">
-                    <select
-                      className="w-full pl-4 pr-10 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 appearance-none shadow-sm transition-all"
-                      id="categoria" name="categoria" value={category} onChange={(e) => setCategory(e.target.value)}
-                    >
-                      <option value="">Elige...</option>
-                      {CATEGORIAS.map(c => <option key={c.id} value={c.id}>{c.nombre} ({c.grados})</option>)}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1" htmlFor="actividad">Deporte / Reto</label>
-                  <div className="relative">
-                    <select
-                      className="w-full pl-4 pr-10 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 appearance-none shadow-sm transition-all"
-                      id="actividad" name="actividad" value={activity} onChange={(e) => setActivity(e.target.value)}
-                    >
-                      <option value="">Elige el deporte o reto...</option>
-                      {GRUPOS_ACTIVIDAD.map(grupo => <optgroup key={grupo} label={grupo}>
-                        {ACTIVIDADES.filter(a => a.grupo === grupo).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}
-                      </optgroup>)}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Puntos */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1" htmlFor="puntos">Puntos a otorgar/restar</label>
-                <input
-                  type="number"
-                  placeholder="Ej: 100"
-                  className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-sm transition-all placeholder:text-slate-300 placeholder:font-normal"
-                  id="puntos" name="puntos" value={points} onChange={(e) => setPoints(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="motivo" className="block text-sm font-bold mb-2">Motivo del registro o corrección</label>
-                <textarea id="motivo" required minLength={3} maxLength={300} value={motivo}
-                  onChange={e => setMotivo(e.target.value)} className="w-full p-3 border rounded-xl"
-                  placeholder="Ej.: victoria de futsal o corrección del acta" />
-              </div>
-              {aviso && (aviso.tipo === 'exito'
-                ? <p role="status" className="text-green-800 bg-green-50 p-3 rounded-lg">{aviso.texto}</p>
-                : <p role="alert" className="text-red-800 bg-red-50 p-3 rounded-lg">{aviso.texto}</p>)}
-              {/* Confirmar operación */}
-              <button
-                type="submit"
-                disabled={isSubmitting || !selectedHouse}
-                className={`w-full mt-4 font-bold py-4 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2
-                  ${isSubmitting || !selectedHouse
-                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
-                    : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-[0_8px_20px_rgb(79,70,229,0.25)] hover:shadow-[0_10px_25px_rgb(79,70,229,0.4)] hover:-translate-y-0.5'
-                  }
-                `}
-              >
-                <span className="flex items-center justify-center gap-2">
-                  {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-                  <span>
-                    {isSubmitting ? 'Enviando a Base de Datos...' : 'Confirmar Transacción'}
-                  </span>
-                </span>
-              </button>
-
-            </form>
-          </div>
-
-          {/* Columna Derecha: Grilla de Houses */}
-          <div className="lg:col-span-5 grid grid-cols-2 gap-4">
-            {HOUSES.map((house) => (
-              <button
-                key={house.id}
-                type="button"
-                onClick={() => setSelectedHouse(house)}
-                className={`group relative flex flex-col items-center justify-center p-6 bg-white/90 backdrop-blur-sm rounded-[2rem] transition-all duration-300 min-h-[220px]
-                  ${selectedHouse?.id === house.id
-                    ? 'border-0 ring-[3px] ring-indigo-500/40 scale-[1.03] shadow-[0_10px_30px_rgb(79,70,229,0.15)] z-10'
-                    : 'border border-slate-100 hover:border-slate-200 hover:scale-[1.02] hover:shadow-lg shadow-sm'
-                  }
-                `}
-              >
-                {selectedHouse?.id === house.id && (
-                  <div className="absolute top-4 right-4 w-2.5 h-2.5 bg-indigo-500 rounded-full shadow-[0_0_8px_rgb(99,102,241)]"></div>
-                )}
-
-                <div className={`relative mb-6 transition-transform duration-500 ease-out ${selectedHouse?.id === house.id ? 'scale-110 -translate-y-2' : 'group-hover:scale-125 group-hover:-translate-y-3'}`}>
-                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-2/3 h-4 bg-slate-900/10 blur-md rounded-full transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
-                  <MascotaHouse house={house} mascotas={mascotas} cargado={cargado} className="relative z-10 w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-2xl" />
-                </div>
-
-                <span className={`font-black tracking-widest text-sm uppercase transition-colors absolute bottom-6 ${selectedHouse?.id === house.id ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-800'}`}>
-                  {house.name}
-                </span>
-              </button>
-            ))}
-          </div>
-
-        </div>
-        </section>
+      {/* Tipo de registro */}
+      <div className="vidrio grid grid-cols-1 gap-2 rounded-3xl p-2 sm:grid-cols-2 lg:grid-cols-4" role="group" aria-label="Tipo de registro">
+        {([
+          { id: 'marcadores', title: 'Resultado del partido', description: 'Marcador y puntos en una operación', Icon: Trophy },
+          { id: 'clasificacion', title: 'Clasificación por puestos', description: 'Del 1.º al 4.º con todas las Houses', Icon: ListOrdered },
+          { id: 'puntajes', title: 'Penalidades y bonos', description: 'Restar o sumar puntos a una sola House', Icon: Medal },
+          { id: 'contenido', title: 'Fotos y mascotas', description: 'Subir, revisar y publicar imágenes', Icon: Images },
+        ] as const).map(({ id, title, description, Icon }) => (
+          <button key={id} type="button" aria-pressed={registro === id} aria-controls={`panel-${id}`}
+            disabled={resultLocked || rankingLocked || isSubmitting} onClick={() => { setRegistro(id); if (id === 'clasificacion') setClasificacionAbierta(true); }}
+            className={`group flex items-center gap-3 rounded-2xl px-3 py-3 text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-60 ${
+              registro === id ? 'bg-indigo-600 text-white shadow-[0_10px_22px_-10px_rgb(79_70_229/0.8)]' : 'text-slate-600 hover:bg-white/80 active:scale-[0.98]'}`}>
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105 ${registro === id ? 'bg-white/20' : 'bg-indigo-50 text-indigo-600'}`}>
+              <Icon size={20} aria-hidden="true" />
+            </span>
+            <span className="min-w-0"><span className="block text-sm font-bold">{title}</span><span className={`mt-0.5 block text-xs ${registro === id ? 'text-indigo-100' : 'text-slate-500'}`}>{description}</span></span>
+          </button>
+        ))}
       </div>
+
+      {/* Keep both forms mounted so switching views preserves unfinished entries and retries. */}
+      {registro === 'contenido' && <div id="panel-contenido"><AdminContenido /></div>}
+      <div id="panel-marcadores" hidden={registro !== 'marcadores'}>
+        <PanelMarcadores onLockedChange={setResultLocked} />
+      </div>
+      {clasificacionAbierta && <div id="panel-clasificacion" hidden={registro !== 'clasificacion'}>
+        <PanelClasificacion onLockedChange={setRankingLocked} />
+      </div>}
+      <section id="panel-puntajes" hidden={registro !== 'puntajes'} aria-labelledby="titulo-puntajes" className="space-y-5">
+        <div className="px-1">
+          <h2 id="titulo-puntajes" className="text-xl font-extrabold tracking-tight">Penalidades y bonos</h2>
+          <p className="mt-1 text-sm text-slate-500">Resta o suma puntos a una sola House, fuera de partidos y clasificaciones. Los puntos de un partido se guardan en «Resultado del partido» y los de actividades con las cuatro Houses en «Clasificación por puestos».</p>
+        </div>
+
+        <form onSubmit={enviarPuntaje} className="space-y-5">
+          {/* Paso 1: House */}
+          <fieldset className="space-y-3">
+            <legend className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-700"><Paso n={1} />Elige la House</legend>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {HOUSES.map(house => {
+                const elegida = selectedHouse?.id === house.id;
+                return <button key={house.id} type="button" aria-pressed={elegida} onClick={() => setSelectedHouse(house)}
+                  className={`group relative flex flex-col items-center gap-2 rounded-3xl p-4 transition-all duration-300 ${
+                    elegida ? `bg-white shadow-[0_16px_30px_-16px_rgb(51_65_85/0.6)] ring-4 ${ANILLO[house.color]}` : 'vidrio hover:-translate-y-1 active:scale-[0.98]'}`}>
+                  {elegida && <CheckCircle2 aria-hidden="true" className="absolute right-3 top-3 h-6 w-6 text-indigo-600" />}
+                  <MascotaHouse house={house} mascotas={mascotas} cargado={cargado}
+                    className={`esfera h-20 w-20 object-contain transition-transform duration-500 sm:h-24 sm:w-24 ${elegida ? 'scale-110' : 'group-hover:scale-110'}`} />
+                  <span className={`text-sm font-extrabold ${elegida ? 'text-indigo-600' : 'text-slate-600'}`}>{house.name.charAt(0)}{house.name.slice(1).toLowerCase()}</span>
+                </button>;
+              })}
+            </div>
+          </fieldset>
+
+          <div className="vidrio space-y-5 rounded-[2rem] p-5 sm:p-8">
+            {/* Paso 2: operación */}
+            <fieldset>
+              <legend className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-700"><Paso n={2} />Operación</legend>
+              <div className="grid grid-cols-2 gap-3">
+                {([['sumar', 'Sumar puntos', 'Reto o ajuste', Plus, 'bg-emerald-500 text-white shadow-[0_10px_22px_-10px_rgb(16_185_129/0.8)]'],
+                   ['restar', 'Restar puntos', 'Penalidad', Minus, 'bg-red-500 text-white shadow-[0_10px_22px_-10px_rgb(239_68_68/0.8)]']] as const).map(([valor, titulo, detalle, Icono, activo]) =>
+                  <button key={valor} type="button" aria-pressed={operation === valor} onClick={() => setOperation(valor)}
+                    className={`flex items-center gap-3 rounded-2xl p-3 text-left transition-all active:scale-[0.98] ${operation === valor ? activo : 'bg-white/80 text-slate-600 ring-1 ring-slate-200 hover:bg-white'}`}>
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${operation === valor ? 'bg-white/25' : valor === 'sumar' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}><Icono size={18} aria-hidden="true" /></span>
+                    <span><span className="block text-sm font-bold">{titulo}</span><span className={`block text-xs ${operation === valor ? 'text-white/80' : 'text-slate-500'}`}>{detalle}</span></span>
+                  </button>)}
+              </div>
+            </fieldset>
+
+            {/* Paso 3: detalle */}
+            <div className="space-y-4">
+              <p className="flex items-center gap-2 text-sm font-bold text-slate-700"><Paso n={3} />Detalle del registro</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="block text-sm font-semibold text-slate-600" htmlFor="categoria">Categoría
+                  <select className="mt-1.5 block w-full px-4 py-3" id="categoria" name="categoria" value={category} onChange={(e) => setCategory(e.target.value)}>
+                    <option value="">Elige…</option>
+                    {CATEGORIAS.map(c => <option key={c.id} value={c.id}>{c.nombre} ({c.grados})</option>)}
+                  </select>
+                </label>
+                <label className="block text-sm font-semibold text-slate-600" htmlFor="actividad">Deporte o reto
+                  <select className="mt-1.5 block w-full px-4 py-3" id="actividad" name="actividad" value={activity} onChange={(e) => setActivity(e.target.value)}>
+                    <option value="">Elige el deporte o reto…</option>
+                    {GRUPOS_ACTIVIDAD.map(grupo => <optgroup key={grupo} label={grupo}>
+                      {ACTIVIDADES.filter(a => a.grupo === grupo).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}
+                    </optgroup>)}
+                  </select>
+                </label>
+              </div>
+              <label className="block text-sm font-semibold text-slate-600" htmlFor="puntos">Puntos
+                <input type="number" placeholder="Ej.: 100" className="mt-1.5 block w-full px-4 py-3 text-lg font-bold tabular-nums"
+                  id="puntos" name="puntos" value={points} onChange={(e) => setPoints(e.target.value)} />
+              </label>
+              <label htmlFor="motivo" className="block text-sm font-semibold text-slate-600">Motivo del registro o corrección
+                <textarea id="motivo" required minLength={3} maxLength={300} value={motivo}
+                  onChange={e => setMotivo(e.target.value)} className="mt-1.5 block w-full p-3"
+                  placeholder="Ej.: victoria de futsal o corrección del acta" />
+              </label>
+            </div>
+
+            {aviso && (aviso.tipo === 'exito'
+              ? <p role="status" className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-3 text-emerald-800 ring-1 ring-emerald-100"><CheckCircle2 size={18} aria-hidden="true" />{aviso.texto}</p>
+              : <p role="alert" className="rounded-2xl bg-red-50 p-3 text-red-800 ring-1 ring-red-100">{aviso.texto}</p>)}
+
+            {/* Confirmar operación */}
+            <button type="submit" disabled={isSubmitting || !selectedHouse}
+              className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 font-bold transition-all duration-300 ${
+                isSubmitting || !selectedHouse ? 'cursor-not-allowed bg-slate-200 text-slate-500'
+                : operation === 'restar' ? 'bg-red-500 text-white shadow-[0_12px_24px_-12px_rgb(239_68_68/0.8)] hover:-translate-y-0.5 hover:bg-red-600 active:scale-[0.99]'
+                : operation === 'sumar' ? 'bg-emerald-500 text-white shadow-[0_12px_24px_-12px_rgb(16_185_129/0.8)] hover:-translate-y-0.5 hover:bg-emerald-600 active:scale-[0.99]'
+                : 'bg-indigo-600 text-white shadow-[0_12px_24px_-12px_rgb(79_70_229/0.8)] hover:-translate-y-0.5 hover:bg-indigo-500 active:scale-[0.99]'}`}>
+              {isSubmitting && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
+              {isSubmitting ? 'Guardando…' : listo ? resumen : `Confirmar · ${resumen}`}
+            </button>
+          </div>
+        </form>
+      </section>
     </div>
   );
 }
 
+// Number of a step in the penalties form.
+function Paso({ n }: { n: number }) {
+  return <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">{n}</span>;
+}
