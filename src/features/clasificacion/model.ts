@@ -60,6 +60,14 @@ export function filaSugerida(deporte: string) {
   return ALIAS_FILA.find(([re]) => re.test(t))?.[1] ?? null;
 }
 
+// Festive programme items (welcome, Bailetón, award ceremony…): no match between two Houses, no score
+// sheet row and no sport, so nothing can be scored for them.
+export function sinPuntaje(p: { deporte: string; enfrentamiento: string }) {
+  const deporte = normalizar(p.deporte).trim();
+  return !/\bVS\b/.test(normalizar(p.enfrentamiento)) && filaSugerida(p.deporte) === null
+    && !ACTIVIDADES.some(a => normalizar(a.nombre) === deporte);
+}
+
 // --- Places decided by matches between two Houses (final and 3rd-place match) ---
 export interface PartidoPuesto {
   id: string; fecha: string; hora: string; deporte: string; categoria: string; fase: string; enfrentamiento: string;

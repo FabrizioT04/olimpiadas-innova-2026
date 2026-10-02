@@ -122,3 +122,11 @@ test('each programme card gets its rankings, split by category and group, and a 
  const ambiguo=clasificacionesPorActividad([drill,otroDrill],[cDrill]);
  assert.equal(ambiguo.size,0);
 });
+test('festive programme items are marked without score; sports, races and contests are not',async()=>{
+ const {sinPuntaje}=await model;
+ for(const [deporte,enfrentamiento] of [['Bailetón','Bailetón'],['Premiación','Todas las House'],['BIENVENIDA A LOS ESTUDIANTES','Equipos por definir'],['ENCUENTRO DE PADRES','Equipos por definir']])
+  assert.equal(sinPuntaje({deporte,enfrentamiento}),true,deporte);
+ for(const [deporte,enfrentamiento] of [['Voley','AZUL VS VERDE'],['BALONMANO','Equipos por definir'],['Badminton','Equipos por definir'],['BASQUET','Blanco VS Azul'],
+  ['CARRERA DE VELOCIDAD 20 M','todas las house'],['COMELONES','todas las house'],['CONCURSO DE BARRAS','Equipos por definir'],['DRILL COREOGRÁFICO','Equipos por definir'],['Tenis de mesa','BLANCO VS AZUL']])
+  assert.equal(sinPuntaje({deporte,enfrentamiento}),false,deporte);
+});

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Calendar, Check, MapPin, RefreshCw, Trophy, Users } from 'lucide-react';
+import { Calendar, Check, MapPin, PartyPopper, RefreshCw, Trophy, Users } from 'lucide-react';
 import { STATUS_NAMES, housesDeEnfrentamiento, isMarcador, paraTodasLasHouses } from '../features/marcadores/model';
 import { useContenido } from '../features/contenido/useContenido';
 import { HouseChip, MarcadorDeportivo, Medallero, PodioCompacto, PodioMedallas } from '../components/HouseDistintivo';
@@ -7,7 +7,7 @@ import { inclinacion } from '../components/inclinacion';
 import Revelar from '../components/Revelar';
 import type { Marcador } from '../features/marcadores/model';
 import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
-import { GRUPOS_VELOCIDAD, clasificacionesPorActividad, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
+import { GRUPOS_VELOCIDAD, clasificacionesPorActividad, isClasificacion, podiosDeportivos, sinPuntaje } from '../features/clasificacion/model';
 import type { Clasificacion, Lugar } from '../features/clasificacion/model';
 import { estadosDelDia, fechaInicial, hoyLocal, minutosAhora, ordenarFechas, rangoHora } from '../features/fixture/fechas';
 import type { EstadoHorario } from '../features/fixture/fechas';
@@ -251,6 +251,7 @@ export default function Fixture() {
                   {estado === 'sigue' && <span className="rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-bold text-white">A continuación</span>}
                   {p.categoria && <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">{categoryWithGrades(p.categoria)}</span>}
                   {p.fase && <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">{p.fase}</span>}
+                  {sinPuntaje(p) && <span className="flex items-center gap-1 rounded-full bg-pink-50 px-2.5 py-0.5 text-xs font-bold text-pink-700 ring-1 ring-pink-200"><PartyPopper aria-hidden="true" className="h-3.5 w-3.5" />Festivo · no suma puntos</span>}
                 </div>
                 {/* With a registered result the scoreboard already shows both Houses. */}
                 {isMarcador(p.marcador) ? <MarcadorDeportivo marcador={p.marcador} mascotas={mascotas} cargado={cargado} />
