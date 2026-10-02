@@ -28,7 +28,7 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, { failed: boo
     if (!this.state.failed) return this.props.children;
     return <div role="alert" className="mx-auto max-w-lg rounded-2xl border border-amber-300 bg-amber-50 p-6 text-center text-amber-900">
       <p className="font-semibold">No se pudo cargar esta sección. Revisa tu conexión.</p>
-      <button onClick={() => window.location.reload()} className="mt-4 rounded-xl bg-indigo-600 px-5 py-2 font-bold text-white">Recargar la página</button>
+      <button onClick={() => window.location.reload()} className="mt-4 rounded-full bg-violet-500 px-5 py-2 font-bold text-white">Recargar la página</button>
     </div>;
   }
 }
@@ -110,7 +110,7 @@ export default function MainLayout() {
   };
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans">
+    <div className="fondo-confeti flex h-screen overflow-hidden font-sans">
       
       {/* Fondo oscuro translúcido para móviles cuando el menú está abierto */}
       {isMobileMenuOpen && (
@@ -141,7 +141,7 @@ export default function MainLayout() {
               />
             </div>
             <div className="ml-3">
-              <h1 className="text-sm font-black text-slate-800 leading-tight">Olimpiadas 360°</h1>
+              <h1 className="text-base font-extrabold text-slate-800 leading-tight">Olimpiadas 360°</h1>
               <p className="text-[10px] font-bold text-slate-400">SMP PERÚ</p>
             </div>
           </div>
@@ -162,69 +162,69 @@ export default function MainLayout() {
           <button
             onClick={() => handleTabChange('arbitraje')}
             aria-current={activeTab === 'arbitraje' ? 'page' : undefined}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-full font-bold text-sm transition-all duration-300 ${
               activeTab === 'arbitraje'
-                ? 'bg-indigo-50 text-indigo-600 shadow-sm'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                ? 'bg-violet-100 text-violet-700 shadow-sm'
+                : 'text-slate-500 hover:bg-violet-50 hover:text-violet-700'
             }`}
           >
             <LayoutDashboard className="w-5 h-5" />
             Panel de Arbitraje
-            {activeTab === 'arbitraje' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
+            {activeTab === 'arbitraje' && <span aria-hidden="true" className="ml-auto text-sm">⭐</span>}
           </button>
 
           <button
             onClick={() => handleTabChange('fixture')}
             aria-current={activeTab === 'fixture' ? 'page' : undefined}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-full font-bold text-sm transition-all duration-300 ${
               activeTab === 'fixture'
-                ? 'bg-indigo-50 text-indigo-600 shadow-sm'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                ? 'bg-violet-100 text-violet-700 shadow-sm'
+                : 'text-slate-500 hover:bg-violet-50 hover:text-violet-700'
             }`}
           >
             <CalendarDays className="w-5 h-5" />
             <span translate="no" className="notranslate">Fixture</span>
-            {activeTab === 'fixture' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
+            {activeTab === 'fixture' && <span aria-hidden="true" className="ml-auto text-sm">⭐</span>}
           </button>
 
           <button
             onClick={() => handleTabChange('medallero')}
             aria-current={activeTab === 'medallero' ? 'page' : undefined}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-full font-bold text-sm transition-all duration-300 ${
               activeTab === 'medallero'
-                ? 'bg-indigo-50 text-indigo-600 shadow-sm'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                ? 'bg-violet-100 text-violet-700 shadow-sm'
+                : 'text-slate-500 hover:bg-violet-50 hover:text-violet-700'
             }`}
           >
             <Medal className="w-5 h-5" />
             <span translate="no" className="notranslate">Puntaje Oficial</span>
-            {activeTab === 'medallero' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
+            {activeTab === 'medallero' && <span aria-hidden="true" className="ml-auto text-sm">⭐</span>}
           </button>
 
           <button
             onClick={() => handleTabChange('momentos')}
             aria-current={activeTab === 'momentos' ? 'page' : undefined}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-full font-bold text-sm transition-all duration-300 ${
               activeTab === 'momentos'
-                ? 'bg-indigo-50 text-indigo-600 shadow-sm'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                ? 'bg-violet-100 text-violet-700 shadow-sm'
+                : 'text-slate-500 hover:bg-violet-50 hover:text-violet-700'
             }`}
           >
             <ImageIcon className="w-5 h-5" />
             Momentos y Fotos
-            {activeTab === 'momentos' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
+            {activeTab === 'momentos' && <span aria-hidden="true" className="ml-auto text-sm">⭐</span>}
           </button>
         </nav>
 
         {/* Identificación del evento (texto fijo: no indica el estado de la conexión) */}
         <div className="p-4 border-t border-slate-50">
-          <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group">
+          <div className="bg-gradient-to-br from-violet-100 via-pink-50 to-amber-50 rounded-3xl p-4 border-2 border-white shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-full blur-xl opacity-50 -mr-6 -mt-6 group-hover:opacity-80 transition-opacity"></div>
             
-            <p className="text-[11px] font-black text-slate-700 uppercase tracking-widest relative z-10">
-              Olimpiadas 360° · 2026
+            <p className="text-sm font-extrabold text-violet-700 relative z-10">
+              🏆 Olimpiadas 360° · 2026
             </p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 relative z-10">
+            <p className="text-xs font-bold text-slate-500 mt-1 relative z-10">
               Innova Schools SMP
             </p>
           </div>
@@ -244,11 +244,11 @@ export default function MainLayout() {
             aria-label="Abrir menú"
             aria-expanded={isMobileMenuOpen}
             aria-controls="menu-principal"
-            className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+            className="p-2 rounded-full bg-violet-100 text-violet-700 hover:bg-violet-200 transition-colors"
           >
             <Menu className="w-6 h-6" aria-hidden="true" />
           </button>
-          <span className="font-black text-slate-800 text-sm">Olimpiadas 360°</span>
+          <span className="font-extrabold text-slate-800">Olimpiadas 360° 🎉</span>
           <div className="w-10"></div> {/* Espaciador simétrico */}
         </header>
 

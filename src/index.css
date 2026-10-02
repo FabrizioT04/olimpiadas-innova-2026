@@ -1,1 +1,18 @@
 @import "tailwindcss";
+/* Self-hosted so the CSP (font-src 'self') allows it. */
+@import "@fontsource-variable/nunito";
+
+@theme {
+  --font-sans: "Nunito Variable", ui-rounded, system-ui, sans-serif;
+}
+
+/* Festive background: soft confetti dots in the four House colours over a warm cream. */
+.fondo-confeti {
+  background-color: #fffaf3;
+  background-image:
+    radial-gradient(circle at 12px 14px, rgb(59 130 246 / 0.10) 3px, transparent 3.5px),
+    radial-gradient(circle at 58px 40px, rgb(249 115 22 / 0.10) 3px, transparent 3.5px),
+    radial-gradient(circle at 34px 76px, rgb(34 197 94 / 0.10) 3px, transparent 3.5px),
+    radial-gradient(circle at 84px 92px, rgb(168 85 247 / 0.10) 3px, transparent 3.5px);
+  background-size: 100px 110px;
+}

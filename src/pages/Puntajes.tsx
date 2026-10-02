@@ -7,14 +7,17 @@ import MascotaHouse from '../components/MascotaHouse';
 import { COLORES_HOUSE, HOUSES as HOUSES_BASE } from '../../shared/olimpiadas';
 
 // Colores de cada House para la barra, el anillo de la mascota y el brillo del líder. Nombres completos para que Tailwind los conserve.
-const COLOR_HOUSE: Record<string, { barra: string; anillo: string; brillo: string; texto: string }> = {
-  blue: { barra: 'from-blue-500 to-blue-700', anillo: 'ring-blue-500', brillo: 'bg-blue-500', texto: 'text-blue-400' },
-  white: { barra: 'from-slate-200 to-slate-400', anillo: 'ring-slate-200', brillo: 'bg-slate-300', texto: 'text-slate-200' },
-  green: { barra: 'from-green-500 to-green-700', anillo: 'ring-green-500', brillo: 'bg-green-500', texto: 'text-green-400' },
-  orange: { barra: 'from-orange-400 to-orange-600', anillo: 'ring-orange-500', brillo: 'bg-orange-500', texto: 'text-orange-400' },
+const COLOR_HOUSE: Record<string, { barra: string; anillo: string; brillo: string; fondo: string }> = {
+  blue: { barra: 'from-sky-400 to-blue-600', anillo: 'ring-blue-500', brillo: 'bg-sky-300', fondo: 'bg-blue-50' },
+  white: { barra: 'from-slate-300 to-slate-400', anillo: 'ring-slate-300', brillo: 'bg-white', fondo: 'bg-slate-100' },
+  green: { barra: 'from-lime-400 to-green-600', anillo: 'ring-green-500', brillo: 'bg-lime-300', fondo: 'bg-green-50' },
+  orange: { barra: 'from-amber-400 to-orange-500', anillo: 'ring-orange-500', brillo: 'bg-amber-300', fondo: 'bg-orange-50' },
 };
 const etiqueta = (color?: string) => HOUSES_BASE.find(h => h.color === color)?.etiqueta ?? '';
-const PUESTO_COLOR = ['text-amber-400', 'text-slate-300', 'text-orange-400', 'text-slate-500'];
+// Medallas para los tres primeros puestos; el cuarto, con su número.
+const PUESTO_EMOJI = ['🥇', '🥈', '🥉'];
+// Los nombres llegan en mayúsculas («DOLPHINS»); en este estilo se muestran como «Dolphins».
+const nombre = (n?: string) => n ? n.charAt(0) + n.slice(1).toLowerCase() : '';
 
 // Orden inicial antes de ordenar por puntos; decide cómo se muestran los empates.
 const ORDEN_EMPATE = ['horses', 'dolphins', 'eagles', 'seagulls'];
@@ -189,7 +192,7 @@ export default function Puntajes() {
       {/* Cabecera */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-3xl font-black uppercase italic tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="flex items-center gap-2 text-3xl font-extrabold text-slate-900 sm:text-4xl">
             <Trophy className="h-7 w-7 text-amber-500 sm:h-8 sm:w-8" aria-hidden="true" />Puntaje oficial
           </h1>
           <p className="mt-1 text-sm text-slate-500">Suma de todas las actividades y deportes. Se actualiza sola cada 15 segundos.</p>
@@ -198,60 +201,63 @@ export default function Puntajes() {
       </div>
 
       {/* Marcador del líder */}
-      {lider && <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-5 text-white sm:p-8">
-        {colorLider && <span aria-hidden="true" className={`absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-30 blur-3xl ${colorLider.brillo}`} />}
+      {lider && <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-violet-500 via-fuchsia-500 to-orange-400 p-5 text-white shadow-xl sm:p-8">
+        <span aria-hidden="true" className="pointer-events-none absolute left-4 top-3 text-2xl opacity-80 sm:text-3xl">🎉</span>
+        <span aria-hidden="true" className="pointer-events-none absolute bottom-3 left-1/3 text-xl opacity-70">⭐</span>
+        <span aria-hidden="true" className="pointer-events-none absolute right-6 bottom-4 text-2xl opacity-80">🎊</span>
+        {colorLider && <span aria-hidden="true" className={`absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-40 blur-3xl ${colorLider.brillo}`} />}
         {empateArriba ? <div className="relative py-4 text-center">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-amber-400">⚡ Empate en el primer lugar</p>
-          <p className="mt-3 text-6xl font-black italic tabular-nums tracking-tighter sm:text-8xl">{lider.points}<span className="ml-2 text-xl text-slate-400 sm:text-2xl">pts</span></p>
-          <p className="mt-2 text-sm font-bold uppercase italic text-slate-300">{rankings.filter(r => r.points === lider.points).map(r => r.house?.name).join(' · ')}</p>
+          <p className="text-base font-extrabold text-white">⚡ ¡Empate en el primer lugar!</p>
+          <p className="mt-3 text-6xl font-extrabold tabular-nums sm:text-8xl">{lider.points}<span className="ml-2 text-xl text-white/80 sm:text-2xl">pts</span></p>
+          <p className="mt-2 text-lg font-bold text-white">{rankings.filter(r => r.points === lider.points).map(r => nombre(r.house?.name)).join(' · ')}</p>
         </div>
         : <div className="relative flex flex-col items-center gap-5 text-center sm:flex-row sm:gap-8 sm:text-left">
-          <div className={`relative h-32 w-32 shrink-0 rounded-full bg-white p-1 ring-4 sm:h-44 sm:w-44 ${colorLider?.anillo ?? 'ring-white'}`}>
+          <div className="relative h-32 w-32 shrink-0 rounded-full bg-white p-1 shadow-xl ring-8 ring-white/40 sm:h-44 sm:w-44">
             <MascotaHouse house={lider.house} mascotas={mascotas} cargado={cargado} className="h-full w-full rounded-full object-contain" />
             <Trophy aria-hidden="true" className="absolute -right-1 -top-1 h-10 w-10 rounded-full bg-amber-400 p-2 text-slate-900 shadow-lg" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-amber-400">1.º · Lidera la tabla</p>
-            <h2 className="mt-1 text-4xl font-black uppercase italic leading-none tracking-tight sm:text-6xl">{lider.house?.name}</h2>
-            <p className={`mt-1 text-sm font-bold uppercase tracking-widest ${colorLider?.texto ?? 'text-slate-300'}`}>{etiqueta(lider.house?.color)}</p>
+            <p className="text-base font-extrabold text-white/90">🥇 ¡Va en primer lugar!</p>
+            <h2 className="mt-1 text-5xl font-extrabold leading-none sm:text-7xl">{nombre(lider.house?.name)}</h2>
+            <p className="mt-2 inline-block rounded-full bg-white/20 px-3 py-0.5 text-sm font-bold text-white">{etiqueta(lider.house?.color)}</p>
           </div>
           <div className="sm:text-right">
-            <p className="text-6xl font-black italic tabular-nums leading-none tracking-tighter sm:text-8xl">{lider.points}</p>
-            <p className="mt-1 text-sm font-bold uppercase tracking-widest text-slate-400">puntos</p>
-            {segundo && <p className="mt-3 inline-block rounded-full bg-white/10 px-3 py-1 text-sm font-bold">+{lider.points - segundo.points} sobre {segundo.house?.name}</p>}
+            <p className="text-6xl font-extrabold tabular-nums leading-none sm:text-8xl">{lider.points}</p>
+            <p className="mt-1 text-sm font-bold text-white/80">puntos</p>
+            {segundo && <p className="mt-3 inline-block rounded-full bg-white px-3 py-1 text-sm font-extrabold text-fuchsia-600 shadow">+{lider.points - segundo.points} sobre {nombre(segundo.house?.name)} 🚀</p>}
           </div>
         </div>}
       </section>}
 
       {/* Tabla de posiciones */}
       <section className="space-y-3">
-        <h2 className="text-xl font-black uppercase italic tracking-tight text-slate-900">Tabla de posiciones</h2>
+        <h2 className="text-xl font-extrabold text-slate-800">📊 Tabla de posiciones</h2>
         <ol className="space-y-3">
           <AnimatePresence>
             {rankings.map(team => {
               const color = COLOR_HOUSE[team.house?.color ?? ''];
               const diferencia = (lider?.points ?? 0) - team.points;
               return <motion.li key={team.id} layout transition={{ type: 'spring', stiffness: 250, damping: 25 }}
-                className={`grid grid-cols-[2rem_3.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-white p-3 sm:grid-cols-[3rem_4.5rem_minmax(0,1fr)_auto] sm:gap-5 sm:p-4 ${
-                  team.isTied ? 'border-amber-300 ring-4 ring-amber-400/20' : team.rank === 1 ? 'border-amber-200' : 'border-slate-200'}`}>
-                <span className={`text-center text-3xl font-black italic tabular-nums sm:text-4xl ${team.isTied ? 'text-amber-500' : PUESTO_COLOR[team.rank - 1] ?? 'text-slate-400'}`}>{team.rank}</span>
-                <div className={`h-14 w-14 rounded-full bg-white p-0.5 ring-4 sm:h-[4.5rem] sm:w-[4.5rem] ${color?.anillo ?? 'ring-slate-200'}`}>
+                className={`grid grid-cols-[2rem_3.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-3xl border-2 p-3 shadow-sm sm:grid-cols-[3rem_4.5rem_minmax(0,1fr)_auto] sm:gap-5 sm:p-4 ${color?.fondo ?? 'bg-white'} ${
+                  team.isTied ? 'border-amber-300 ring-4 ring-amber-400/20' : team.rank === 1 ? 'border-amber-300' : 'border-white'}`}>
+                <span className="text-center text-3xl font-extrabold tabular-nums text-slate-400 sm:text-4xl">{PUESTO_EMOJI[team.rank - 1] ?? team.rank}</span>
+                <div className={`h-14 w-14 rounded-full bg-white p-0.5 shadow-md ring-4 sm:h-[4.5rem] sm:w-[4.5rem] ${color?.anillo ?? 'ring-slate-200'}`}>
                   <MascotaHouse house={team.house} mascotas={mascotas} cargado={cargado} className="h-full w-full rounded-full object-contain" />
                 </div>
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-baseline gap-x-2">
-                    <h3 className="text-lg font-black uppercase italic leading-tight tracking-tight text-slate-900 sm:text-2xl">{team.house?.name}</h3>
-                    <span className="text-xs font-semibold text-slate-400">{etiqueta(team.house?.color)}</span>
+                    <h3 className="text-lg font-extrabold leading-tight text-slate-800 sm:text-2xl">{nombre(team.house?.name)}</h3>
+                    <span className="text-xs font-semibold text-slate-500">{etiqueta(team.house?.color)}</span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-3.5 overflow-hidden rounded-full bg-white shadow-inner">
                     <div className={`h-full rounded-full bg-gradient-to-r transition-all duration-1000 ease-out ${color?.barra ?? 'from-indigo-500 to-blue-500'}`}
                       style={{ width: `${Math.max(2, (team.points / maxPoints) * 100)}%` }} />
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-black italic tabular-nums leading-none tracking-tighter text-slate-900 sm:text-4xl">{team.points}<span className="ml-1 text-xs font-bold not-italic text-slate-400 sm:text-sm">pts</span></p>
-                  <p className={`mt-1 text-xs font-black uppercase tracking-wider ${team.isTied ? 'text-amber-600' : diferencia === 0 ? 'text-amber-500' : 'text-slate-400'}`}>
-                    {team.isTied ? '⚡ Empate' : diferencia === 0 ? 'Líder' : `−${diferencia}`}
+                  <p className="text-2xl font-extrabold tabular-nums leading-none text-slate-900 sm:text-4xl">{team.points}<span className="ml-1 text-xs font-bold text-slate-400 sm:text-sm">pts</span></p>
+                  <p className={`mt-1 text-xs font-extrabold ${team.isTied ? 'text-amber-600' : diferencia === 0 ? 'text-amber-500' : 'text-slate-400'}`}>
+                    {team.isTied ? '⚡ Empate' : diferencia === 0 ? '⭐ Líder' : `−${diferencia}`}
                   </p>
                 </div>
               </motion.li>;

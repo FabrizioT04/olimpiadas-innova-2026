@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 
 // Degradados basados en los 3 colores principales del logo (Azul, Verde y Naranja)
 const brandGradients = [
-  "bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950",   
-  "bg-gradient-to-r from-emerald-800 via-green-800 to-teal-900",  
-  "bg-gradient-to-r from-amber-800 via-orange-800 to-amber-950"  
+  "bg-gradient-to-r from-sky-500 via-violet-500 to-fuchsia-500",
+  "bg-gradient-to-r from-emerald-400 via-teal-500 to-sky-500",
+  "bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500"
 ];
 
 export default function BannerInnova() {
@@ -19,7 +19,7 @@ export default function BannerInnova() {
   }, []);
 
   return (
-    <div className="w-full rounded-2xl py-3 px-5 md:px-6 mb-6 text-white shadow-lg relative overflow-hidden flex items-center justify-between gap-4 border border-white/15">
+    <div className="w-full rounded-[2rem] py-3 px-5 md:px-6 mb-6 text-white shadow-lg relative overflow-hidden flex items-center justify-between gap-4 border-4 border-white">
       
       {/* Capas de fondo con fundido cruzado ultra suave */}
       {brandGradients.map((gradient, index) => (
@@ -46,11 +46,11 @@ export default function BannerInnova() {
         </div>
 
         <div>
-          <span className="bg-white/20 backdrop-blur-md text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest border border-white/25 inline-block mb-1">
+          <span className="bg-white/25 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/30 inline-block mb-1">
             Innova Schools SMP Perú
           </span>
-          <h2 className="text-lg md:text-xl font-black tracking-tight text-white leading-tight">
-            Olimpiadas 360° 2026
+          <h2 className="text-xl md:text-2xl font-extrabold text-white leading-tight drop-shadow-sm">
+            ¡Olimpiadas 360° 2026! 🎉
           </h2>
           <p className="text-[11px] md:text-xs text-white/90 font-medium">
             Plataforma oficial de gestión, cronograma y validación de resultados.
@@ -59,8 +59,8 @@ export default function BannerInnova() {
       </div>
 
       {/* Lado derecho: Insignia */}
-      <div className="relative z-10 hidden lg:flex items-center bg-white/15 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20 text-xs font-bold text-white shadow-sm">
-        <span>Olimpiadas 360° · 2026</span>
+      <div aria-hidden="true" className="relative z-10 hidden lg:flex items-center gap-2 text-3xl drop-shadow">
+        <span>🏆</span><span>⭐</span><span>🎊</span>
       </div>
 
     </div>
