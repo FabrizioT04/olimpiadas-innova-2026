@@ -51,11 +51,11 @@ function BotonMenu({ titulo, detalle, Icono, activo, onClick, sinTraducir = fals
   { id: string; titulo: string; detalle: string; Icono: LucideIcon; activo: boolean; onClick: () => void; sinTraducir?: boolean; candado?: boolean }) {
   return <button onClick={onClick} aria-current={activo ? 'page' : undefined}
     className={`group relative flex w-full items-center gap-3 rounded-2xl p-2 pr-3 text-left transition-all duration-300 active:scale-[0.98] ${
-      activo ? 'bg-white shadow-[0_10px_24px_-12px_rgb(99_102_241/0.55)]' : 'hover:bg-white/60'}`}>
+      activo ? 'bg-indigo-50/70' : 'hover:bg-slate-50'}`}>
     {activo && <span aria-hidden="true" className="absolute -left-4 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-indigo-500" />}
     <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300 ${
       activo ? 'bg-gradient-to-b from-indigo-500 to-indigo-600 text-white shadow-[0_8px_16px_-8px_rgb(79_70_229/0.8)]'
-        : 'bg-white/80 text-slate-500 ring-1 ring-white group-hover:scale-105 group-hover:text-indigo-600'}`}>
+        : 'bg-slate-100 text-slate-500 group-hover:scale-105 group-hover:text-indigo-600'}`}>
       <Icono className="h-5 w-5 transition-transform duration-300 group-hover:-rotate-6" aria-hidden="true" />
     </span>
     <span className="min-w-0 flex-1">
@@ -153,15 +153,15 @@ export default function MainLayout() {
           `md:visible` keeps it always available on wide screens without depending on JavaScript.
           Visibility changes at once when opening (so focus can move in) and after the slide when closing. */}
       <aside id="menu-principal" className={`
-        fixed inset-y-0 left-0 z-40 w-72 bg-white/90 backdrop-blur-xl md:bg-white/70 border-r border-white flex flex-col flex-shrink-0 
+        fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200/80 flex flex-col flex-shrink-0 
         shadow-[4px_0_24px_rgba(0,0,0,0.02)] duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0 visible transition-transform' : '-translate-x-full invisible transition-[transform,visibility]'} md:translate-x-0 md:relative md:visible
       `}>
         
         {/* Logo */}
-        <div className="flex h-24 items-center justify-between gap-2 border-b border-white/80 px-4">
+        <div className="flex h-24 items-center justify-between gap-2 border-b border-slate-100 px-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white p-1.5 shadow-[0_10px_20px_-12px_rgb(51_65_85/0.6)] ring-1 ring-white">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white p-1.5 shadow-[0_10px_20px_-12px_rgb(51_65_85/0.6)] ring-1 ring-slate-200/80">
               <img src="/logo-innova.png" alt="Logo Innova Schools" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
@@ -195,10 +195,9 @@ export default function MainLayout() {
         </nav>
 
         {/* Identificación del evento (texto fijo: no indica el estado de la conexión) */}
-        <div className="border-t border-white/80 p-4">
+        <div className="border-t border-slate-100 p-4">
           <div className="vidrio relative overflow-hidden rounded-2xl p-4">
-            <div aria-hidden="true" className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-indigo-200/70 blur-2xl" />
-            <p className="texto-3d relative text-sm font-extrabold">Olimpiadas 360° · 2026</p>
+                        <p className="texto-3d relative text-sm font-extrabold">Olimpiadas 360° · 2026</p>
             <div className="relative mt-2 flex items-center gap-2">
               <span aria-hidden="true" className="flex -space-x-1">
                 {['bg-blue-600', 'bg-white ring-slate-300', 'bg-green-600', 'bg-orange-500'].map(c => <span key={c} className={`esfera h-4 w-4 rounded-full ring-2 ring-white ${c}`} />)}
@@ -215,14 +214,14 @@ export default function MainLayout() {
       <div inert={isMobileMenuOpen} className="flex-1 flex flex-col h-screen overflow-hidden">
         
         {/* Cabecera superior solo visible en celulares */}
-        <header className="md:hidden h-16 bg-white/70 backdrop-blur-xl border-b border-white px-4 flex items-center justify-between flex-shrink-0 z-10">
+        <header className="md:hidden h-16 bg-white border-b border-slate-200/80 px-4 flex items-center justify-between flex-shrink-0 z-10">
           <button 
             ref={botonAbrir}
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Abrir menú"
             aria-expanded={isMobileMenuOpen}
             aria-controls="menu-principal"
-            className="p-2 rounded-xl bg-white/80 text-slate-700 shadow-sm ring-1 ring-white hover:bg-white transition-colors"
+            className="p-2 rounded-xl bg-white/80 text-slate-700 shadow-sm ring-1 ring-slate-200/80 hover:bg-white transition-colors"
           >
             <Menu className="w-6 h-6" aria-hidden="true" />
           </button>

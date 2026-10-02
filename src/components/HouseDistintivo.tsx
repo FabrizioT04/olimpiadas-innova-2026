@@ -11,7 +11,7 @@ import { useVisto } from './useVisto';
 // Colours of each House (keyed by its colour in the sheet), used wherever a House is shown.
 // Full class names so Tailwind keeps them.
 const ESTILO_HOUSE: Record<string, { nombre: string; chip: string; anillo: string; barra: string }> = {
-  white: { nombre: 'Blanco', chip: 'bg-white text-slate-900 ring-slate-300', anillo: 'ring-white', barra: 'bg-white' },
+  white: { nombre: 'Blanco', chip: 'bg-white text-slate-900 ring-slate-300', anillo: 'ring-slate-200', barra: 'bg-slate-300' },
   blue: { nombre: 'Azul', chip: 'bg-blue-600 text-white ring-blue-700', anillo: 'ring-blue-500', barra: 'bg-blue-500' },
   orange: { nombre: 'Anaranjado', chip: 'bg-orange-500 text-white ring-orange-600', anillo: 'ring-orange-500', barra: 'bg-orange-500' },
   green: { nombre: 'Verde', chip: 'bg-green-600 text-white ring-green-700', anillo: 'ring-green-500', barra: 'bg-green-500' },
@@ -55,7 +55,7 @@ export function MarcadorDeportivo({ marcador, mascotas, cargado }: { marcador: M
       <span aria-hidden="true" className={`h-1 w-10 rounded-full ${estilo.barra}`} />
     </div>;
   };
-  return <div className="rounded-3xl bg-white/80 p-4 text-slate-800 shadow-[0_14px_30px_-18px_rgb(51_65_85/0.5)] ring-1 ring-white">
+  return <div className="rounded-3xl bg-white/80 p-4 text-slate-800 shadow-[0_14px_30px_-18px_rgb(51_65_85/0.5)] ring-1 ring-slate-200/80">
     <div className="flex justify-center">
       <span className={`rounded-full px-3 py-0.5 text-[10px] font-extrabold ${ESTADO[marcador.estado]}`}>{STATUS_NAMES[marcador.estado]}</span>
     </div>
@@ -74,7 +74,7 @@ export function MarcadorDeportivo({ marcador, mascotas, cargado }: { marcador: M
 export function PodioCompacto({ titulo, clasificacion, mascotas, cargado }:
   { titulo: string; clasificacion: { puestos: Record<string, number>; puntos?: Record<string, number> } } & Contenido) {
   const orden = Object.keys(clasificacion.puestos).sort((a, b) => clasificacion.puestos[a] - clasificacion.puestos[b]);
-  return <div className="rounded-2xl bg-white/80 p-3 text-slate-800 shadow-[0_14px_30px_-18px_rgb(51_65_85/0.5)] ring-1 ring-white">
+  return <div className="rounded-2xl bg-white/80 p-3 text-slate-800 shadow-[0_14px_30px_-18px_rgb(51_65_85/0.5)] ring-1 ring-slate-200/80">
     <p className="mb-2 flex items-center gap-1.5 text-xs font-extrabold text-amber-700">
       <Trophy aria-hidden="true" className="h-3.5 w-3.5" />{titulo}
     </p>
@@ -130,7 +130,7 @@ export function PodioMedallas({ lugares, mascotas, cargado }: { lugares: Lugar[]
         </span>
       </li>;
     })}</ol>
-    {cuarto && <p style={{ animationDelay: '900ms' }} className={`flex items-center justify-between gap-2 rounded-b-xl bg-white/70 px-3 py-1.5 text-sm ring-1 ring-white ${visto ? 'motion-safe:animate-[aparecer_0.5s_ease-out_both]' : 'motion-safe:opacity-0'}`}>
+    {cuarto && <p style={{ animationDelay: '900ms' }} className={`flex items-center justify-between gap-2 rounded-b-xl bg-white/70 px-3 py-1.5 text-sm ring-1 ring-slate-200/80 ${visto ? 'motion-safe:animate-[aparecer_0.5s_ease-out_both]' : 'motion-safe:opacity-0'}`}>
       <span className="flex items-center gap-2"><Medalla puesto={4} className="h-6 w-6 text-[11px]" />
         {cuarto.house ? <HouseChip color={cuarto.house} mascotas={mascotas} cargado={cargado} /> : <span className="text-slate-400">Por definir</span>}</span>
       {cuarto.puntos !== undefined && <span className="text-xs font-semibold text-slate-500">{cuarto.puntos} pts</span>}
@@ -147,7 +147,7 @@ export function Medallero({ medallas, mascotas, cargado }: { medallas: Record<st
   return <ol ref={ref} className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">{orden.map((h, i) => {
     const estilo = ESTILO_HOUSE[h], house = HOUSES.find(x => x.color === h);
     return <li key={h} {...inclinacion} style={{ animationDelay: `${i * 120}ms` }}
-      className={`relative overflow-hidden rounded-2xl bg-white/85 p-3 text-slate-800 shadow-[0_14px_30px_-18px_rgb(51_65_85/0.5)] ring-1 ring-white transition-transform duration-200 ${
+      className={`relative overflow-hidden rounded-2xl bg-white/85 p-3 text-slate-800 shadow-[0_14px_30px_-18px_rgb(51_65_85/0.5)] ring-1 ring-slate-200/80 transition-transform duration-200 ${
         visto ? 'motion-safe:animate-[entrar_0.5s_ease-out_backwards]' : 'motion-safe:opacity-0'}`}>
       <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1.5 ${estilo.barra}`} />
       <div className="flex items-center gap-1.5 sm:gap-2">

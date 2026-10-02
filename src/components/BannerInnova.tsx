@@ -1,32 +1,36 @@
-// Cabecera del evento: una tarjeta de vidrio claro con el logo, en el mismo estilo que el resto de la web.
+import { HOUSES } from '../features/arbitraje/hooks/useArbitraje';
+import { useContenido } from '../features/contenido/useContenido';
+import MascotaHouse from './MascotaHouse';
+
+// Anillo del color de cada House alrededor de su mascota. Nombres completos para que Tailwind los conserve.
+const ANILLO: Record<string, string> = { blue: 'ring-blue-500', white: 'ring-slate-300', green: 'ring-green-500', orange: 'ring-orange-500' };
+
+// Cabecera del evento: tarjeta blanca y sobria con el logo, el nombre y las mascotas de las cuatro Houses.
 export default function BannerInnova() {
+  const { mascotas, cargado } = useContenido();
   return (
-    <div className="vidrio relative mb-6 flex w-full items-center justify-between gap-4 overflow-hidden rounded-3xl px-5 py-3 md:px-6">
-
-      {/* Manchas de color suaves detrás del vidrio */}
-      <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-20 h-56 w-56 rounded-full bg-indigo-200/60 blur-3xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 left-1/3 h-44 w-44 rounded-full bg-pink-200/50 blur-3xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-1/5 bg-gradient-to-r from-transparent via-white/80 to-transparent opacity-0 motion-safe:animate-[brillo_7s_ease-in-out_2s_infinite]" />
-
-      <div className="relative flex items-center gap-4 text-left">
-        <img
-          src="/logo-innova.png"
-          alt="Logo Innova Schools"
-          className="h-16 w-16 flex-shrink-0 object-contain drop-shadow-md transition-transform duration-500 hover:-rotate-6 hover:scale-110 md:h-20 md:w-20"
-        />
-        <div>
-          <span className="mb-1 inline-block rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-600">
-            Innova Schools SMP Perú
-          </span>
-          <h2 className="texto-3d text-xl font-extrabold leading-tight md:text-2xl">
-            Olimpiadas 360° 2026
+    <div className="vidrio mb-6 flex w-full items-center justify-between gap-4 rounded-3xl px-4 py-4 sm:px-6">
+      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white p-2 ring-1 ring-slate-200 sm:h-16 sm:w-16">
+          <img src="/logo-innova.png" alt="Logo Innova Schools" className="h-full w-full object-contain" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold text-slate-400 sm:text-xs">Innova Schools SMP · Perú</p>
+          <h2 className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-3xl">Olimpiadas 360°</span>
+            <span className="rounded-lg bg-indigo-600 px-2 py-0.5 text-xs font-bold text-white sm:text-sm">2026</span>
           </h2>
-          <p className="text-[11px] text-slate-500 md:text-xs">
-            Plataforma oficial de gestión, cronograma y validación de resultados.
-          </p>
+          <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">Plataforma oficial de gestión, cronograma y validación de resultados.</p>
         </div>
       </div>
 
+      {/* Las cuatro Houses, quietas */}
+      <ul aria-label="Las cuatro Houses" className="hidden shrink-0 items-center -space-x-2 pr-1 sm:flex">
+        {HOUSES.map(house => <li key={house.id} title={house.name.charAt(0) + house.name.slice(1).toLowerCase()}>
+          <MascotaHouse house={house} mascotas={mascotas} cargado={cargado}
+            className={`relative h-11 w-11 rounded-full bg-white object-contain p-0.5 ring-[3px] lg:h-12 lg:w-12 ${ANILLO[house.color]}`} />
+        </li>)}
+      </ul>
     </div>
   );
 }

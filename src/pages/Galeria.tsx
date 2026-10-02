@@ -11,7 +11,7 @@ const carpetasEco = [{ id: 'asamblea', titulo: 'Asamblea' }, { id: 'mariquitas',
 // does not look uniform. grid-flow-dense fills the gaps they leave.
 const TAMANO = ['', 'row-span-2', '', 'md:col-span-2', '', '', 'row-span-2', ''];
 const tamanoDe = (i: number) => i === 0 ? 'col-span-2 row-span-2' : TAMANO[(i - 1) % TAMANO.length];
-const chip = (activo: boolean) => `shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-95 ${activo ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`;
+const chip = (activo: boolean) => `shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-95 ${activo ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-slate-200/80 hover:bg-white'}`;
 const sinTraducir = (album: string) => album === 'convivencia' ? { translate: 'no' as const, className: 'notranslate' } : { className: '' };
 
 function Imagen({ foto, ampliada = false }: { foto: FotoGaleria; ampliada?: boolean }) {
@@ -55,7 +55,7 @@ export default function Galeria() {
         <h1 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl"><Camera className="h-7 w-7 text-indigo-500 sm:h-8 sm:w-8" aria-hidden="true" />Momentos y fotos</h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-500">Cada equipo, cada esfuerzo y cada celebración de nuestras olimpiadas, para recordarlos juntos.</p>
       </div>
-      <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-indigo-600 shadow-sm ring-1 ring-white"><Images size={16} aria-hidden="true" />
+      <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-indigo-600 shadow-sm ring-1 ring-slate-200/80"><Images size={16} aria-hidden="true" />
         {fotosGaleria.length ? `${totalFotos} fotos${totalVideos ? ` y ${totalVideos} ${totalVideos === 1 ? 'video' : 'videos'}` : ''}` : 'Estamos preparando los primeros álbumes'}</p>
     </header>
 
@@ -68,7 +68,7 @@ export default function Galeria() {
           </button>)}
         </div>
         <div className="relative shrink-0"><label htmlFor="buscar-foto" className="sr-only">Buscar fotos por título o descripción</label><Search aria-hidden="true" size={18} className="absolute left-3 top-3 text-slate-400"/>
-          <input id="buscar-foto" type="search" value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar un momento…" className="w-full rounded-xl border border-white bg-white/80 py-2.5 pl-10 shadow-sm backdrop-blur-xl pr-3 text-sm lg:w-64" /></div>
+          <input id="buscar-foto" type="search" value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar un momento…" className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 shadow-sm pr-3 text-sm lg:w-64" /></div>
       </div>
       {album === 'eco-house' && <div role="group" aria-label="Carpeta de Eco House" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         <button onClick={() => setSubseccion(null)} aria-pressed={!subseccion} className={`${chip(!subseccion)} !rounded-full !py-1.5`}>Todas las carpetas</button>
@@ -88,7 +88,7 @@ export default function Galeria() {
       </div> : <div className="grid grid-flow-dense auto-rows-[8.5rem] grid-cols-2 gap-2 sm:auto-rows-[10rem] sm:gap-3 md:grid-cols-4 lg:auto-rows-[12rem]">
         {/* The tiles appear in a cascade with a slight zoom as they scroll into view. */}
         {fotos.map((f, i) => <Revelar key={f.id} animacion="zoom" retraso={(i % 8) * 60} className={tamanoDe(i)}><button onClick={() => setSeleccionada(f)} aria-label={`${f.tipo === 'video' ? 'Reproducir video' : 'Ampliar foto'}: ${f.titulo}`}
-          className="group relative h-full w-full overflow-hidden rounded-2xl bg-slate-200 text-left shadow-[0_18px_34px_-18px_rgb(15_23_42/0.55)] ring-1 ring-white transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+          className="group relative h-full w-full overflow-hidden rounded-2xl bg-slate-200 text-left shadow-[0_18px_34px_-18px_rgb(15_23_42/0.55)] ring-1 ring-slate-200/80 transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
           <Imagen foto={f}/>
           {f.tipo === 'video' && <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center"><span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-950/70 text-white ring-4 ring-white/30 transition-transform group-hover:scale-110"><Play className="ml-1 h-6 w-6" fill="currentColor" /></span></span>}
           {/* The featured photo always shows its title; the others on hover (or always on touch screens, which have no hover). */}

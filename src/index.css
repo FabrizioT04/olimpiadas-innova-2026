@@ -6,21 +6,16 @@
   --font-sans: "Plus Jakarta Sans Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-/* Light background with soft pastel patches that the glass cards blur. */
+/* Plain white page: calm, without colour patches. */
 .fondo-cristal {
-  background:
-    radial-gradient(circle at 12% 15%, #dbeafe 0, transparent 38%),
-    radial-gradient(circle at 88% 10%, #fce7f3 0, transparent 35%),
-    radial-gradient(circle at 70% 92%, #dcfce7 0, transparent 40%),
-    #f8fafc;
+  background: #fff;
 }
 
-/* Frosted glass card. */
+/* White card with a soft grey edge and a light shadow, so it stands out on the white page. */
 @utility vidrio {
-  background-color: rgb(255 255 255 / 0.72);
-  backdrop-filter: blur(18px);
-  border: 1px solid #fff;
-  box-shadow: 0 20px 40px -20px rgb(51 65 85 / 0.35), inset 0 1px 0 #fff;
+  background-color: #fff;
+  border: 1px solid rgb(226 232 240 / 0.9);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 12px 32px -20px rgb(15 23 42 / 0.22);
 }
 
 /* Round objects (mascots, medals) floating with a soft shadow. A filter, not box-shadow, so it keeps
@@ -29,13 +24,10 @@
   filter: drop-shadow(0 8px 8px rgb(15 23 42 / 0.28));
 }
 
-/* Big numbers and titles with a blue gradient and depth. */
+/* Big numbers and titles: solid dark grey with a slight depth. */
 @utility texto-3d {
-  background-image: linear-gradient(180deg, #6366f1, #2563eb);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 6px 6px rgb(37 99 235 / 0.27));
+  color: #1e293b;
+  text-shadow: 0 2px 0 rgb(15 23 42 / 0.06);
 }
 
 /* Podium effects (see PodioMedallas): steps rising, mascots dropping in, the winner floating with

@@ -189,7 +189,7 @@ export default function Fixture() {
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div><h1 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2"><Calendar className="text-indigo-500"/><span><span translate="no" className="notranslate">Fixture</span> oficial</span></h1>
         <p className="text-sm text-slate-500">Programación de las hojas oficiales. Se consulta cada 30 segundos mientras esta página está abierta.</p></div>
-      <button onClick={() => refresh.current()} disabled={loading} className="flex items-center gap-2 rounded-xl bg-white/80 font-semibold text-indigo-600 px-4 py-2 shadow-[0_6px_18px_-8px_rgb(99_102_241/0.45)] ring-1 ring-white transition-all hover:-translate-y-0.5 hover:bg-white active:scale-95 disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>{loading ? 'Consultando…' : 'Actualizar'}</button>
+      <button onClick={() => refresh.current()} disabled={loading} className="flex items-center gap-2 rounded-xl bg-white/80 font-semibold text-indigo-600 px-4 py-2 shadow-[0_6px_18px_-8px_rgb(99_102_241/0.45)] ring-1 ring-slate-200/80 transition-all hover:-translate-y-0.5 hover:bg-white active:scale-95 disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>{loading ? 'Consultando…' : 'Actualizar'}</button>
     </div>
     {error && <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">{error}{data && <p className="mt-1 font-semibold">Se conserva la última consulta; puede haber cambios todavía no reflejados.</p>}</div>}
     {data && stale && !error && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Mostrando la última programación disponible. Se está intentando actualizar; los resultados pueden haber cambiado. Revisa la fecha de última lectura.</p>}
@@ -201,7 +201,7 @@ export default function Fixture() {
     </div>
     {data && view === 'programacion' && <div ref={fechasRef} role="group" aria-label="Fecha" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
       {['todos', ...days].map(day => <button key={day || 'sin-fecha'} onClick={() => setFilter(day)} aria-pressed={selected === day}
-        className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-95 ${selected === day ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`}>
+        className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-95 ${selected === day ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-slate-200/80 hover:bg-white'}`}>
         <span className="inline-block first-letter:uppercase">{day === 'todos' ? 'Todas' : etiquetaDia(day)}</span>
         {day === hoy && <span className="ml-1.5 rounded-md bg-indigo-600 px-1.5 text-[10px] font-bold text-white">Hoy</span>}
       </button>)}
@@ -239,7 +239,7 @@ export default function Fixture() {
                 </span>
               </div>
               <Revelar className="min-w-0"><article title={`${p.origen} · fila ${p.fila}`} className={`relative mb-3 space-y-2.5 overflow-hidden rounded-2xl border bg-white/75 p-3 pl-5 shadow-[0_14px_30px_-20px_rgb(51_65_85/0.5)] backdrop-blur-xl transition-transform duration-200 hover:-translate-y-0.5 sm:p-4 sm:pl-6 ${
-                estado === 'en-curso' ? 'border-red-300 shadow-lg shadow-red-500/10 ring-2 ring-red-500/20' : estado === 'sigue' ? 'border-indigo-200' : 'border-white'} ${
+                estado === 'en-curso' ? 'border-red-300 shadow-lg shadow-red-500/10 ring-2 ring-red-500/20' : estado === 'sigue' ? 'border-indigo-200' : 'border-slate-200/80'} ${
                 estado === 'pasada' && !resultado ? 'opacity-70' : ''}`}>
                 <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${acentoDe(p.deporte)}`} />
                 <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
@@ -278,7 +278,7 @@ export default function Fixture() {
             return !!lista.length && <div key={estado} className="space-y-1.5">
               <p className="flex items-center gap-2 text-xs font-bold text-slate-500"><span className={`h-2 w-2 rounded-full ${punto}`} />{titulo}</p>
               <ul className="space-y-1">{lista.map(p => { const rango = rangoHora(p.hora); return <li key={p.id}>
-                <button onClick={() => irA(p.id)} className="w-full rounded-xl bg-white/80 px-2.5 py-1.5 text-left shadow-sm ring-1 ring-white transition-colors hover:bg-white">
+                <button onClick={() => irA(p.id)} className="w-full rounded-xl bg-white/80 px-2.5 py-1.5 text-left shadow-sm ring-1 ring-slate-200/80 transition-colors hover:bg-white">
                   <span className="block text-sm font-extrabold leading-tight">{p.deporte}</span>
                   <span className="block text-xs text-slate-500">{rango ? `${hhmm(rango.inicio)}–${hhmm(rango.fin)}` : p.hora}{p.categoria && ` · ${p.categoria}`}</span>
                 </button>
@@ -301,7 +301,7 @@ export default function Fixture() {
     {data && view === 'puestos' && <div className="space-y-8">
       {!!categoriasResultado.length && <div role="group" aria-label="Categoría" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
         {['todas', ...categoriasResultado.map(c => c.id)].map(id => <button key={id} onClick={() => setCategoriaResultados(id)} aria-pressed={categoriaResultados === id}
-          className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-95 ${categoriaResultados === id ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`}>
+          className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-95 ${categoriaResultados === id ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-slate-200/80 hover:bg-white'}`}>
           {id === 'todas' ? 'Todas las categorías' : nombreCategoria(id)}
         </button>)}
       </div>}
