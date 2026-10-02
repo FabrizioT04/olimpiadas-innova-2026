@@ -2,6 +2,7 @@ import { Trophy } from 'lucide-react';
 import { HOUSES } from '../features/arbitraje/hooks/useArbitraje';
 import { STATUS_NAMES } from '../features/marcadores/model';
 import type { Marcador } from '../features/marcadores/model';
+import type { Lugar } from '../features/clasificacion/model';
 import MascotaHouse from './MascotaHouse';
 
 // Colours of each House (keyed by its colour in the sheet), used wherever a House is shown.
@@ -76,4 +77,57 @@ export function PodioCompacto({ titulo, clasificacion, mascotas, cargado }:
       </li>)}
     </ol>
   </div>;
+}
+
+// Gold, silver and bronze, as podium steps and as the medal counts.
+const MEDALLA = ['from-amber-300 to-amber-500 text-amber-950', 'from-slate-200 to-slate-400 text-slate-800', 'from-orange-300 to-orange-500 text-orange-950'];
+const ALTURA_PODIO = ['h-16', 'h-11', 'h-8'];
+
+// 1st in the middle and highest, 2nd and 3rd at its sides, 4th on a line below. A place still to be
+// decided (a sports match without result) shows «Por definir».
+export function PodioMedallas({ lugares, mascotas, cargado }: { lugares: Lugar[] } & Contenido) {
+  const de = (puesto: number) => lugares.find(l => l.puesto === puesto);
+  const cuarto = de(4);
+  return <div>
+    <ol className="grid grid-cols-3 items-end gap-2">{[2, 1, 3].map(puesto => {
+      const lugar = de(puesto), estilo = lugar?.house ? ESTILO_HOUSE[lugar.house] : undefined, house = HOUSES.find(h => h.color === lugar?.house);
+      return <li key={puesto} className="flex min-w-0 flex-col items-center gap-1 text-center">
+        <div className={`relative rounded-full bg-white p-0.5 ring-4 ${puesto === 1 ? 'h-16 w-16' : 'h-12 w-12'} ${estilo?.anillo ?? 'ring-slate-200'}`}>
+          {estilo ? <MascotaHouse house={house} mascotas={mascotas} cargado={cargado} className="h-full w-full rounded-full object-contain" />
+            : <span className="flex h-full w-full items-center justify-center rounded-full bg-slate-100 font-black text-slate-300">?</span>}
+          {puesto === 1 && estilo && <Trophy aria-hidden="true" className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-amber-400 p-1 text-slate-900" />}
+        </div>
+        <span className={`max-w-full truncate text-xs font-black uppercase italic tracking-wide ${estilo ? 'text-slate-900' : 'text-slate-400'}`}>{estilo?.nombre ?? 'Por definir'}</span>
+        <span className="text-[11px] font-semibold text-slate-500">{lugar?.puntos !== undefined ? `${lugar.puntos} pts` : '\u00a0'}</span>
+        <span className={`flex w-full items-start justify-center rounded-t-lg bg-gradient-to-b pt-1 text-base font-black italic ${MEDALLA[puesto - 1]} ${ALTURA_PODIO[puesto - 1]}`}>{puesto}.º</span>
+      </li>;
+    })}</ol>
+    {cuarto && <p className="flex items-center justify-between gap-2 rounded-b-lg border-t-2 border-slate-200 bg-slate-50 px-3 py-1.5 text-sm">
+      <span className="flex items-center gap-2"><span className="font-black italic text-slate-400">4.º</span>
+        {cuarto.house ? <HouseChip color={cuarto.house} mascotas={mascotas} cargado={cargado} /> : <span className="text-slate-400">Por definir</span>}</span>
+      {cuarto.puntos !== undefined && <span className="text-xs font-semibold text-slate-500">{cuarto.puntos} pts</span>}
+    </p>}
+  </div>;
+}
+
+// Medals of each House (1st, 2nd and 3rd places), ordered by golds, then silvers, then bronzes.
+export function Medallero({ medallas, mascotas, cargado }: { medallas: Record<string, number[]> } & Contenido) {
+  const orden = Object.keys(medallas).filter(h => ESTILO_HOUSE[h]).sort((a, b) =>
+    medallas[b][0] - medallas[a][0] || medallas[b][1] - medallas[a][1] || medallas[b][2] - medallas[a][2]);
+  return <ol className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">{orden.map((h, i) => {
+    const estilo = ESTILO_HOUSE[h], house = HOUSES.find(x => x.color === h);
+    return <li key={h} className="relative overflow-hidden rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+      <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1 ${estilo.barra}`} />
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        <span className="hidden text-lg font-black italic text-slate-500 sm:inline">{i + 1}</span>
+        <MascotaHouse house={house} mascotas={mascotas} cargado={cargado} className={`h-8 w-8 shrink-0 rounded-full bg-white object-contain ring-2 sm:h-9 sm:w-9 ${estilo.anillo}`} />
+        <span className="min-w-0 whitespace-nowrap text-[11px] font-black uppercase italic tracking-tight sm:text-sm sm:tracking-wide">{estilo.nombre}</span>
+      </div>
+      <p className="mt-2.5 flex gap-3" aria-label={`${medallas[h][0]} de oro, ${medallas[h][1]} de plata, ${medallas[h][2]} de bronce`}>
+        {medallas[h].map((n, m) => <span key={m} aria-hidden="true" className="flex items-center gap-1 text-sm font-black tabular-nums">
+          <span className={`h-4 w-4 rounded-full bg-gradient-to-b ring-2 ring-white/20 ${MEDALLA[m]}`} />{n}
+        </span>)}
+      </p>
+    </li>;
+  })}</ol>;
 }

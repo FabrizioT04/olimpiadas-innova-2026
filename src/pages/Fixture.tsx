@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Calendar, Check, MapPin, RefreshCw, Trophy, Users } from 'lucide-react';
 import { STATUS_NAMES, housesDeEnfrentamiento, isMarcador, paraTodasLasHouses } from '../features/marcadores/model';
 import { useContenido } from '../features/contenido/useContenido';
-import { HouseChip, MarcadorDeportivo, PodioCompacto } from '../components/HouseDistintivo';
+import { HouseChip, MarcadorDeportivo, Medallero, PodioCompacto, PodioMedallas } from '../components/HouseDistintivo';
 import type { Marcador } from '../features/marcadores/model';
 import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
-import { GRUPOS_VELOCIDAD, LUGARES, clasificacionesPorActividad, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
-import type { Clasificacion } from '../features/clasificacion/model';
+import { GRUPOS_VELOCIDAD, clasificacionesPorActividad, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
+import type { Clasificacion, Lugar } from '../features/clasificacion/model';
 import { estadosDelDia, fechaInicial, hoyLocal, minutosAhora, ordenarFechas, rangoHora } from '../features/fixture/fechas';
 import type { EstadoHorario } from '../features/fixture/fechas';
 
@@ -98,6 +98,7 @@ export default function Fixture() {
   const [filter, setFilter] = useState<string | null>(null);
   const fechasRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<'programacion' | 'puestos'>('programacion');
+  const [categoriaResultados, setCategoriaResultados] = useState('todas');
   const refresh = useRef<() => void>(() => {});
   // Today's activities in progress and next follow the clock, not only each read of the programme.
   const [ahora, setAhora] = useState(minutosAhora);
@@ -172,6 +173,15 @@ export default function Fixture() {
   // Rankings registered for each activity, shown in its card instead of «Equipos por definir».
   const porActividad = clasificacionesPorActividad(data?.partidos || [], clasificaciones);
   const podios = podiosDeportivos((data?.partidos || []).map(p => ({ ...p, marcador: isMarcador(p.marcador) ? p.marcador : null })));
+  // Results of the chosen category, and the medals (1st to 3rd) the Houses won in them.
+  const categoriasResultado = CATEGORIAS.filter(c => clasificaciones.some(x => x.categoria === c.id) || podios.some(x => x.categoria === c.id));
+  const enCategoria = (categoria: string) => categoriaResultados === 'todas' || categoria === categoriaResultados;
+  const actividadesFiltradas = [...clasificaciones].sort(ordenClasificacion).filter(c => enCategoria(c.categoria));
+  const podiosFiltrados = podios.filter(p => enCategoria(p.categoria));
+  const lugaresDe = (c: Clasificacion): Lugar[] => COLORES_HOUSE.map(h => ({ puesto: c.puestos[h], house: h, ...(Number.isSafeInteger(c.puntos?.[h]) ? { puntos: c.puntos![h] } : {}) }));
+  const medallas: Record<string, number[]> = Object.fromEntries(COLORES_HOUSE.map(h => [h, [0, 0, 0]]));
+  for (const l of [...actividadesFiltradas.flatMap(lugaresDe), ...podiosFiltrados.flatMap(p => p.lugares)]) if (l.house && l.puesto <= 3) medallas[l.house][l.puesto - 1]++;
+  const nombreCategoria = (id: string) => CATEGORIAS.find(c => c.id === id)?.nombre || id;
 
   return <div className="space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-4">
@@ -284,24 +294,46 @@ export default function Fixture() {
       </aside>
       </div>}
     </>}
-    {data && view === 'puestos' && <div className="space-y-8"><section className="space-y-4">
-        <h2 className="font-bold text-lg text-slate-800">Actividades con todas las Houses</h2>
-        <p className="text-sm text-slate-500">Carreras, gymkana, retos académicos y concursos, registrados por los árbitros.</p>
-        {!clasificaciones.length && <p className="py-6 text-center text-slate-500">Todavía no hay puestos registrados.</p>}
-        <div className="grid md:grid-cols-2 gap-4">{[...clasificaciones].sort(ordenClasificacion).map(c => <article key={`${c.fila}:${c.detalle}:${c.actualizado}`} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{ACTIVIDADES.find(a => a.fila === c.fila)?.etiqueta}</h3>
-          {c.detalle && <p className="text-sm text-slate-600">{c.detalle}</p>}
-          <ol className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">{[...COLORES_HOUSE].sort((a,b) => c.puestos[a] - c.puestos[b]).map(h => <li key={h} className="rounded bg-slate-50 p-2 flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="font-black italic text-slate-500">{LUGARES[c.puestos[h]-1]}</span><HouseChip color={h} mascotas={mascotas} cargado={cargado} /></span>{Number.isSafeInteger(c.puntos?.[h]) && <span className="font-semibold text-slate-800 whitespace-nowrap">{c.puntos?.[h]} pts</span>}</li>)}</ol>
-          <p className="text-xs text-slate-400">Registrada: {new Date(c.actualizado).toLocaleString('es-PE')}</p>
+    {data && view === 'puestos' && <div className="space-y-8">
+      {!!categoriasResultado.length && <div role="group" aria-label="Categoría" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
+        {['todas', ...categoriasResultado.map(c => c.id)].map(id => <button key={id} onClick={() => setCategoriaResultados(id)} aria-pressed={categoriaResultados === id}
+          className={`shrink-0 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${categoriaResultados === id ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>
+          {id === 'todas' ? 'Todas las categorías' : nombreCategoria(id)}
+        </button>)}
+      </div>}
+      {(!!actividadesFiltradas.length || !!podiosFiltrados.length) && <section className="space-y-3 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-white sm:p-5">
+        <h2 className="flex flex-wrap items-baseline gap-x-3 text-lg font-black uppercase italic tracking-tight"><span className="flex items-center gap-2"><Trophy aria-hidden="true" className="h-5 w-5 text-amber-400" />Medallero</span>
+          <span className="text-xs font-semibold normal-case not-italic tracking-normal text-slate-400">{categoriaResultados === 'todas' ? 'Todas las categorías' : nombreCategoria(categoriaResultados)} · 1.º oro, 2.º plata, 3.º bronce</span></h2>
+        <Medallero medallas={medallas} mascotas={mascotas} cargado={cargado} />
+      </section>}
+      <section className="space-y-4">
+        <div><h2 className="text-xl font-black uppercase italic tracking-tight text-slate-900">Actividades con todas las Houses</h2>
+          <p className="text-sm text-slate-500">Carreras, gymkana, retos académicos y concursos, registrados por los árbitros. Primero los más recientes.</p></div>
+        {!actividadesFiltradas.length && <p className="py-6 text-center text-slate-500">Todavía no hay puestos registrados{categoriaResultados === 'todas' ? '' : ' en esta categoría'}.</p>}
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">{actividadesFiltradas.map(c => <article key={`${c.fila}:${c.detalle}:${c.actualizado}`} className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400" />
+          <div className="space-y-1.5">
+            <h3 className="text-base font-black uppercase italic leading-tight tracking-wide text-slate-900">{ACTIVIDADES.find(a => a.fila === c.fila)?.etiqueta}</h3>
+            <p className="flex flex-wrap gap-1.5"><span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">{nombreCategoria(c.categoria)}</span></p>
+            {c.detalle && <p className="text-xs text-slate-500">{c.detalle}</p>}
+          </div>
+          <div className="mt-auto"><PodioMedallas lugares={lugaresDe(c)} mascotas={mascotas} cargado={cargado} /></div>
+          <p className="text-[11px] text-slate-400">Registrada: {new Date(c.actualizado).toLocaleString('es-PE')}</p>
         </article>)}</div>
       </section>
-      {!!podios.length && <section className="space-y-4">
-        <h2 className="font-bold text-lg text-slate-800">Deportes</h2>
-        <p className="text-sm text-slate-500">El ganador del partido por el 1.º y 2.º puesto queda 1.º y el perdedor 2.º; lo mismo con el partido por el 3.º y 4.º. Se completa con los resultados registrados.</p>
-        <div className="grid md:grid-cols-2 gap-4">{podios.map(p => <article key={p.clave} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="font-bold flex items-center gap-2"><Trophy size={18} className="text-amber-500"/>{p.deporte} · {CATEGORIAS.find(c => c.id === p.categoria)?.nombre}</h3>
-          {([['1.º y 2.º', p.final], ['3.º y 4.º', p.tercero]] as const).map(([titulo, m]) => m && <p key={titulo} className="text-xs text-slate-500">{titulo} ({m.fecha.slice(8,10)}/{m.fecha.slice(5,7)}): {m.enfrentamiento}{m.marcador ? ` · ${m.marcador.a} – ${m.marcador.b} · ${STATUS_NAMES[m.marcador.estado as keyof typeof STATUS_NAMES] || ''}` : ''}</p>)}
-          <ol className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">{p.lugares.map(l => <li key={l.puesto} className="rounded bg-slate-50 p-2 flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="font-black italic text-slate-500">{LUGARES[l.puesto-1]}</span>{l.house ? <HouseChip color={l.house} mascotas={mascotas} cargado={cargado} /> : <span className="text-slate-500">Por definir</span>}</span>{l.puntos !== undefined && <span className="font-semibold text-slate-800 whitespace-nowrap">{l.puntos} pts</span>}</li>)}</ol>
+      {!!podiosFiltrados.length && <section className="space-y-4">
+        <div><h2 className="text-xl font-black uppercase italic tracking-tight text-slate-900">Deportes</h2>
+          <p className="text-sm text-slate-500">El ganador del partido por el 1.º y 2.º puesto queda 1.º y el perdedor 2.º; lo mismo con el partido por el 3.º y 4.º. Se completa con los resultados registrados.</p></div>
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">{podiosFiltrados.map(p => <article key={p.clave} className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+          <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1.5 ${acentoDe(p.deporte)}`} />
+          <div className="space-y-1.5">
+            <h3 className="text-base font-black uppercase italic leading-tight tracking-wide text-slate-900">{p.deporte}</h3>
+            <p className="flex flex-wrap gap-1.5"><span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">{nombreCategoria(p.categoria)}</span></p>
+            {([['1.º y 2.º', p.final], ['3.º y 4.º', p.tercero]] as const).map(([titulo, m]) => m && <p key={titulo} className="text-xs text-slate-500"><span className="font-semibold text-slate-600">{titulo}</span> ({m.fecha.slice(8,10)}/{m.fecha.slice(5,7)}): {m.enfrentamiento}{m.marcador ? ` · ${m.marcador.a} – ${m.marcador.b} · ${STATUS_NAMES[m.marcador.estado as keyof typeof STATUS_NAMES] || ''}` : ''}</p>)}
+          </div>
+          {/* Until a match has a result its places are unknown: a short note instead of an empty podium. */}
+          {p.lugares.some(l => l.house) ? <div className="mt-auto"><PodioMedallas lugares={p.lugares} mascotas={mascotas} cargado={cargado} /></div>
+            : <p className="mt-auto rounded-lg bg-slate-50 px-3 py-2 text-center text-sm font-semibold text-slate-400">Podio por definir: falta registrar los partidos.</p>}
         </article>)}</div>
       </section>}
     </div>}
