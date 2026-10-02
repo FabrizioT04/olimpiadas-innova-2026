@@ -3,6 +3,7 @@ import { Calendar, Check, MapPin, RefreshCw, Trophy, Users } from 'lucide-react'
 import { STATUS_NAMES, housesDeEnfrentamiento, isMarcador, paraTodasLasHouses } from '../features/marcadores/model';
 import { useContenido } from '../features/contenido/useContenido';
 import { HouseChip, MarcadorDeportivo, Medallero, PodioCompacto, PodioMedallas } from '../components/HouseDistintivo';
+import { inclinacion } from '../components/inclinacion';
 import type { Marcador } from '../features/marcadores/model';
 import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
 import { GRUPOS_VELOCIDAD, clasificacionesPorActividad, isClasificacion, podiosDeportivos } from '../features/clasificacion/model';
@@ -71,7 +72,7 @@ const tituloPodio = (r: { categoria: string; grupo: string }) => r.categoria
 
 // Each sport keeps the same accent colour in every card, so the day reads at a glance.
 // Full class names so Tailwind keeps them.
-const ACENTOS = ['bg-sky-500', 'bg-violet-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-400', 'bg-cyan-500', 'bg-fuchsia-500', 'bg-lime-500'];
+const ACENTOS = ['bg-sky-400', 'bg-indigo-400', 'bg-emerald-400', 'bg-rose-400', 'bg-amber-400', 'bg-cyan-400', 'bg-pink-400', 'bg-lime-400'];
 // Sheets writes some sports in different case or spacing («COMELONES», «Comelones»): they are the same sport.
 const nombreDeporte = (deporte: string) => deporte.trim().replace(/\s+/g, ' ').toUpperCase();
 const acentoDe = (deporte: string) => ACENTOS[[...nombreDeporte(deporte)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % ACENTOS.length];
@@ -185,23 +186,23 @@ export default function Fixture() {
 
   return <div className="space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <div><h1 className="text-3xl font-extrabold text-slate-800 flex items-center gap-2"><Calendar className="text-violet-500"/><span><span translate="no" className="notranslate">Fixture</span> oficial</span></h1>
+      <div><h1 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2"><Calendar className="text-indigo-500"/><span><span translate="no" className="notranslate">Fixture</span> oficial</span></h1>
         <p className="text-sm text-slate-500">Programación de las hojas oficiales. Se consulta cada 30 segundos mientras esta página está abierta.</p></div>
-      <button onClick={() => refresh.current()} disabled={loading} className="flex items-center gap-2 rounded-full bg-violet-100 font-bold text-violet-700 px-4 py-2 transition-colors hover:bg-violet-200 disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>{loading ? 'Consultando…' : 'Actualizar'}</button>
+      <button onClick={() => refresh.current()} disabled={loading} className="flex items-center gap-2 rounded-xl bg-white/80 font-semibold text-indigo-600 px-4 py-2 shadow-[0_6px_18px_-8px_rgb(99_102_241/0.45)] ring-1 ring-white transition-colors hover:bg-white disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>{loading ? 'Consultando…' : 'Actualizar'}</button>
     </div>
     {error && <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">{error}{data && <p className="mt-1 font-semibold">Se conserva la última consulta; puede haber cambios todavía no reflejados.</p>}</div>}
     {data && stale && !error && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Mostrando la última programación disponible. Se está intentando actualizar; los resultados pueden haber cambiado. Revisa la fecha de última lectura.</p>}
     {data && <p className="text-xs text-slate-500">Última lectura: {new Date(data.actualizado).toLocaleString('es-PE')} · <a className="underline" href={`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`} target="_blank" rel="noreferrer">Ver hojas oficiales</a></p>}
     {data?.avisos.map(message => <p key={message} className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{message}</p>)}
-    <div className="flex w-fit flex-wrap items-center gap-1 rounded-full border-2 border-violet-100 bg-white p-1.5 shadow-sm">
-      <button onClick={() => setView('programacion')} aria-pressed={view === 'programacion'} className={`rounded-full px-5 py-2 font-bold transition-colors ${view === 'programacion' ? 'bg-violet-500 text-white shadow-sm' : 'text-slate-600 hover:bg-violet-50'}`}>📅 Programación</button>
-      <button onClick={() => setView('puestos')} aria-pressed={view === 'puestos'} className={`rounded-full px-5 py-2 font-bold transition-colors ${view === 'puestos' ? 'bg-violet-500 text-white shadow-sm' : 'text-slate-600 hover:bg-violet-50'}`}>🏆 Resultados</button>
+    <div className="vidrio flex w-fit flex-wrap items-center gap-1 rounded-2xl p-1.5">
+      <button onClick={() => setView('programacion')} aria-pressed={view === 'programacion'} className={`rounded-xl px-5 py-2 font-semibold transition-colors ${view === 'programacion' ? 'bg-indigo-600 text-white shadow-[0_8px_18px_-8px_rgb(79_70_229/0.7)]' : 'text-slate-600 hover:bg-white'}`}>Programación</button>
+      <button onClick={() => setView('puestos')} aria-pressed={view === 'puestos'} className={`rounded-xl px-5 py-2 font-semibold transition-colors ${view === 'puestos' ? 'bg-indigo-600 text-white shadow-[0_8px_18px_-8px_rgb(79_70_229/0.7)]' : 'text-slate-600 hover:bg-white'}`}>Resultados</button>
     </div>
     {data && view === 'programacion' && <div ref={fechasRef} role="group" aria-label="Fecha" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
       {['todos', ...days].map(day => <button key={day || 'sin-fecha'} onClick={() => setFilter(day)} aria-pressed={selected === day}
-        className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors ${selected === day ? 'bg-violet-500 text-white shadow-sm' : 'border-2 border-violet-100 bg-white text-slate-600 hover:border-violet-300'}`}>
+        className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors ${selected === day ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`}>
         <span className="inline-block first-letter:uppercase">{day === 'todos' ? 'Todas' : etiquetaDia(day)}</span>
-        {day === hoy && <span className="ml-1.5 rounded-full bg-amber-300 px-1.5 text-[10px] font-extrabold text-slate-900">Hoy</span>}
+        {day === hoy && <span className="ml-1.5 rounded-md bg-indigo-600 px-1.5 text-[10px] font-bold text-white">Hoy</span>}
       </button>)}
     </div>}
     {!data && <p className="py-12 text-center text-slate-500">{loading ? 'Leyendo la programación oficial…' : 'La programación no está disponible en este momento.'}</p>}
@@ -214,15 +215,15 @@ export default function Fixture() {
         const estados = date === hoy ? estadosHoy : delDia.map(() => null);
         return <section key={date} className="space-y-4">
           <h2 className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            {date === hoy && <span className="rounded-full bg-amber-300 px-3 py-0.5 text-sm font-extrabold text-slate-900">🎉 Hoy</span>}
-            <span className="text-2xl font-extrabold text-slate-800 first-letter:uppercase">{displayDate(date)}</span>
+            {date === hoy && <span className="rounded-lg bg-indigo-600 px-2.5 py-0.5 text-sm font-bold text-white shadow-[0_6px_14px_-6px_rgb(79_70_229/0.7)]">Hoy</span>}
+            <span className="text-2xl font-extrabold tracking-tight text-slate-900 first-letter:uppercase">{displayDate(date)}</span>
             <span className="text-sm font-semibold text-slate-400">{delDia.length} {delDia.length === 1 ? 'actividad' : 'actividades'}</span>
           </h2>
           <ol>{delDia.map((p, i) => {
             const rango = rangoHora(p.hora), estado = estados[i];
             const resultado = isMarcador(p.marcador) || (!!p.encuentroId && porActividad.has(p.encuentroId));
             return <li key={p.id} id={`actividad-${p.id}`} className="grid grid-cols-[3rem_1.25rem_minmax(0,1fr)] gap-x-2 sm:grid-cols-[4.5rem_1.5rem_minmax(0,1fr)] sm:gap-x-3">
-              <div className={`pt-3 text-right tabular-nums sm:pt-4 ${estado === 'pasada' ? 'text-slate-400' : 'text-violet-700'}`}>
+              <div className={`pt-3 text-right tabular-nums sm:pt-4 ${estado === 'pasada' ? 'text-slate-400' : 'text-indigo-600'}`}>
                 {rango ? <><p className="text-sm font-extrabold sm:text-lg">{hhmm(rango.inicio)}</p>
                   {rango.fin > rango.inicio && <p className="text-[11px] font-semibold text-slate-400 sm:text-xs">{hhmm(rango.fin)}</p>}</>
                   : <p className="text-[11px] font-semibold text-slate-400">{p.hora || 'Por definir'}</p>}
@@ -234,17 +235,17 @@ export default function Fixture() {
                   {estado === 'pasada' && <Check className="h-2.5 w-2.5" strokeWidth={4} />}
                 </span>
               </div>
-              <article title={`${p.origen} · fila ${p.fila}`} className={`relative mb-3 space-y-2.5 overflow-hidden rounded-3xl border-2 bg-white p-3 pl-5 shadow-sm sm:p-4 sm:pl-6 ${
-                estado === 'en-curso' ? 'border-red-300 shadow-lg shadow-red-500/10 ring-2 ring-red-500/20' : estado === 'sigue' ? 'border-violet-200' : 'border-slate-100'} ${
+              <article title={`${p.origen} · fila ${p.fila}`} className={`relative mb-3 space-y-2.5 overflow-hidden rounded-2xl border bg-white/75 p-3 pl-5 shadow-[0_14px_30px_-20px_rgb(51_65_85/0.5)] backdrop-blur-xl sm:p-4 sm:pl-6 ${
+                estado === 'en-curso' ? 'border-red-300 shadow-lg shadow-red-500/10 ring-2 ring-red-500/20' : estado === 'sigue' ? 'border-indigo-200' : 'border-white'} ${
                 estado === 'pasada' && !resultado ? 'opacity-70' : ''}`}>
-                <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-2 ${acentoDe(p.deporte)}`} />
+                <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${acentoDe(p.deporte)}`} />
                 <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
                   <h3 className="text-[15px] font-extrabold leading-tight text-slate-900 sm:text-base">{p.deporte}</h3>
                   {p.lugar && <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-slate-500"><MapPin aria-hidden="true" className="h-3.5 w-3.5" />Lugar {p.lugar}</span>}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {estado === 'en-curso' && <span className="flex items-center gap-1.5 rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-extrabold text-white"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />¡En curso!</span>}
-                  {estado === 'sigue' && <span className="rounded-full bg-violet-500 px-2.5 py-0.5 text-xs font-extrabold text-white">⏳ A continuación</span>}
+                  {estado === 'en-curso' && <span className="flex items-center gap-1.5 rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-[0_6px_14px_-6px_rgb(239_68_68/0.8)]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />En curso</span>}
+                  {estado === 'sigue' && <span className="rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-bold text-white">A continuación</span>}
                   {p.categoria && <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">{categoryWithGrades(p.categoria)}</span>}
                   {p.fase && <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">{p.fase}</span>}
                 </div>
@@ -263,30 +264,30 @@ export default function Fixture() {
       })}</div>
       {/* On wide screens the side stays in view: what is on now, what comes next and the sport colours. */}
       <aside className="sticky top-4 hidden space-y-4 lg:block">
-        {!!deHoy.length && <section className="space-y-4 rounded-3xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-orange-400 p-4 text-white shadow-lg">
+        {!!deHoy.length && <section className="vidrio space-y-4 rounded-3xl p-4 text-slate-800">
           <div>
-            <p className="flex items-baseline justify-between text-sm font-extrabold text-white">🎉 Hoy
-              <span className="font-semibold text-white/90">{conEstado('pasada').length} de {deHoy.length} terminadas</span></p>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/30"><div className="h-full rounded-full bg-white transition-all" style={{ width: `${conEstado('pasada').length / deHoy.length * 100}%` }} /></div>
+            <p className="flex items-baseline justify-between text-sm font-extrabold text-slate-900">Hoy
+              <span className="font-semibold text-slate-500">{conEstado('pasada').length} de {deHoy.length} terminadas</span></p>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200/70 shadow-inner"><div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all" style={{ width: `${conEstado('pasada').length / deHoy.length * 100}%` }} /></div>
           </div>
-          {([['en-curso', '¡En curso!', 'bg-white animate-pulse'], ['sigue', 'A continuación', 'bg-white/60']] as const).map(([estado, titulo, punto]) => {
+          {([['en-curso', 'En curso', 'bg-red-500 animate-pulse'], ['sigue', 'A continuación', 'bg-indigo-500']] as const).map(([estado, titulo, punto]) => {
             const lista = conEstado(estado);
             return !!lista.length && <div key={estado} className="space-y-1.5">
-              <p className="flex items-center gap-2 text-xs font-extrabold text-white"><span className={`h-2 w-2 rounded-full ${punto}`} />{titulo}</p>
+              <p className="flex items-center gap-2 text-xs font-bold text-slate-500"><span className={`h-2 w-2 rounded-full ${punto}`} />{titulo}</p>
               <ul className="space-y-1">{lista.map(p => { const rango = rangoHora(p.hora); return <li key={p.id}>
-                <button onClick={() => irA(p.id)} className="w-full rounded-2xl bg-white/15 px-2.5 py-1.5 text-left transition-colors hover:bg-white/25">
+                <button onClick={() => irA(p.id)} className="w-full rounded-xl bg-white/80 px-2.5 py-1.5 text-left shadow-sm ring-1 ring-white transition-colors hover:bg-white">
                   <span className="block text-sm font-extrabold leading-tight">{p.deporte}</span>
-                  <span className="block text-xs text-white/80">{rango ? `${hhmm(rango.inicio)}–${hhmm(rango.fin)}` : p.hora}{p.categoria && ` · ${p.categoria}`}</span>
+                  <span className="block text-xs text-slate-500">{rango ? `${hhmm(rango.inicio)}–${hhmm(rango.fin)}` : p.hora}{p.categoria && ` · ${p.categoria}`}</span>
                 </button>
               </li>; })}</ul>
             </div>;
           })}
-          {!conEstado('en-curso').length && !conEstado('sigue').length && <p className="text-sm text-white/90">{conEstado('pasada').length ? 'La jornada de hoy terminó.' : 'Las actividades de hoy no tienen hora publicada.'}</p>}
+          {!conEstado('en-curso').length && !conEstado('sigue').length && <p className="text-sm text-slate-500">{conEstado('pasada').length ? 'La jornada de hoy terminó.' : 'Las actividades de hoy no tienen hora publicada.'}</p>}
         </section>}
-        <section className="rounded-3xl border-2 border-violet-100 bg-white p-4 shadow-sm">
-          <p className="mb-2 text-[11px] font-extrabold text-slate-500">🏅 Deportes</p>
+        <section className="vidrio rounded-3xl p-4">
+          <p className="mb-2 text-xs font-bold text-slate-500">Deportes</p>
           <ul className="space-y-1.5">{deportes.map(([deporte, total]) => <li key={deporte} className="flex items-center gap-2 text-sm">
-            <span aria-hidden="true" className={`h-3 w-3 shrink-0 rounded-full ${acentoDe(deporte)}`} />
+            <span aria-hidden="true" className={`esfera h-3 w-3 shrink-0 rounded-full ${acentoDe(deporte)}`} />
             <span className="min-w-0 flex-1 truncate font-semibold text-slate-700">{deporte}</span>
             <span className="text-xs font-semibold text-slate-400">{total}</span>
           </li>)}</ul>
@@ -297,21 +298,21 @@ export default function Fixture() {
     {data && view === 'puestos' && <div className="space-y-8">
       {!!categoriasResultado.length && <div role="group" aria-label="Categoría" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
         {['todas', ...categoriasResultado.map(c => c.id)].map(id => <button key={id} onClick={() => setCategoriaResultados(id)} aria-pressed={categoriaResultados === id}
-          className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors ${categoriaResultados === id ? 'bg-violet-500 text-white shadow-sm' : 'border-2 border-violet-100 bg-white text-slate-600 hover:border-violet-300'}`}>
+          className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors ${categoriaResultados === id ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`}>
           {id === 'todas' ? 'Todas las categorías' : nombreCategoria(id)}
         </button>)}
       </div>}
-      {(!!actividadesFiltradas.length || !!podiosFiltrados.length) && <section className="space-y-3 rounded-3xl bg-gradient-to-br from-amber-100 via-orange-50 to-pink-100 p-4 text-slate-800 ring-2 ring-amber-200 sm:p-5">
-        <h2 className="flex flex-wrap items-baseline gap-x-3 text-lg font-extrabold "><span className="flex items-center gap-2"><Trophy aria-hidden="true" className="h-5 w-5 text-amber-500" />Medallero</span>
+      {(!!actividadesFiltradas.length || !!podiosFiltrados.length) && <section className="vidrio space-y-3 rounded-3xl p-4 text-slate-800 sm:p-5">
+        <h2 className="flex flex-wrap items-baseline gap-x-3 text-lg font-extrabold"><span className="flex items-center gap-2"><Trophy aria-hidden="true" className="h-5 w-5 text-amber-500" />Medallero</span>
           <span className="text-xs font-semibold text-slate-500">{categoriaResultados === 'todas' ? 'Todas las categorías' : nombreCategoria(categoriaResultados)} · 1.º oro, 2.º plata, 3.º bronce</span></h2>
         <Medallero medallas={medallas} mascotas={mascotas} cargado={cargado} />
       </section>}
       <section className="space-y-4">
-        <div><h2 className="text-xl font-extrabold text-slate-800">🎯 Actividades con todas las Houses</h2>
+        <div><h2 className="text-xl font-extrabold tracking-tight text-slate-900">Actividades con todas las Houses</h2>
           <p className="text-sm text-slate-500">Carreras, gymkana, retos académicos y concursos, registrados por los árbitros. Primero los más recientes.</p></div>
         {!actividadesFiltradas.length && <p className="py-6 text-center text-slate-500">Todavía no hay puestos registrados{categoriaResultados === 'todas' ? '' : ' en esta categoría'}.</p>}
-        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">{actividadesFiltradas.map(c => <article key={`${c.fila}:${c.detalle}:${c.actualizado}`} className="relative flex flex-col gap-4 overflow-hidden rounded-3xl border-2 border-slate-100 bg-white p-4 shadow-sm sm:p-5">
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400" />
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">{actividadesFiltradas.map(c => <article key={`${c.fila}:${c.detalle}:${c.actualizado}`} {...inclinacion} className="vidrio relative flex flex-col gap-4 overflow-hidden rounded-3xl p-4 transition-transform duration-200 sm:p-5">
+          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-indigo-400 via-blue-400 to-sky-400" />
           <div className="space-y-1.5">
             <h3 className="text-base font-extrabold leading-tight text-slate-900">{ACTIVIDADES.find(a => a.fila === c.fila)?.etiqueta}</h3>
             <p className="flex flex-wrap gap-1.5"><span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">{nombreCategoria(c.categoria)}</span></p>
@@ -322,10 +323,10 @@ export default function Fixture() {
         </article>)}</div>
       </section>
       {!!podiosFiltrados.length && <section className="space-y-4">
-        <div><h2 className="text-xl font-extrabold text-slate-800">⚽ Deportes</h2>
+        <div><h2 className="text-xl font-extrabold tracking-tight text-slate-900">Deportes</h2>
           <p className="text-sm text-slate-500">El ganador del partido por el 1.º y 2.º puesto queda 1.º y el perdedor 2.º; lo mismo con el partido por el 3.º y 4.º. Se completa con los resultados registrados.</p></div>
-        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">{podiosFiltrados.map(p => <article key={p.clave} className="relative flex flex-col gap-4 overflow-hidden rounded-3xl border-2 border-slate-100 bg-white p-4 shadow-sm sm:p-5">
-          <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-2 ${acentoDe(p.deporte)}`} />
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">{podiosFiltrados.map(p => <article key={p.clave} {...inclinacion} className="vidrio relative flex flex-col gap-4 overflow-hidden rounded-3xl p-4 transition-transform duration-200 sm:p-5">
+          <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1.5 ${acentoDe(p.deporte)}`} />
           <div className="space-y-1.5">
             <h3 className="text-base font-extrabold leading-tight text-slate-900">{p.deporte}</h3>
             <p className="flex flex-wrap gap-1.5"><span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">{nombreCategoria(p.categoria)}</span></p>
@@ -333,7 +334,7 @@ export default function Fixture() {
           </div>
           {/* Until a match has a result its places are unknown: a short note instead of an empty podium. */}
           {p.lugares.some(l => l.house) ? <div className="mt-auto"><PodioMedallas lugares={p.lugares} mascotas={mascotas} cargado={cargado} /></div>
-            : <p className="mt-auto rounded-2xl bg-slate-50 px-3 py-2 text-center text-sm font-semibold text-slate-400">⏳ Podio por definir: falta registrar los partidos.</p>}
+            : <p className="mt-auto rounded-2xl bg-white/60 px-3 py-2 text-center text-sm font-semibold text-slate-400">Podio por definir: falta registrar los partidos.</p>}
         </article>)}</div>
       </section>}
     </div>}

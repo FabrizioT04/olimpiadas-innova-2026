@@ -1,18 +1,39 @@
 @import "tailwindcss";
 /* Self-hosted so the CSP (font-src 'self') allows it. */
-@import "@fontsource-variable/nunito";
+@import "@fontsource-variable/plus-jakarta-sans";
 
 @theme {
-  --font-sans: "Nunito Variable", ui-rounded, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-/* Festive background: soft confetti dots in the four House colours over a warm cream. */
-.fondo-confeti {
-  background-color: #fffaf3;
-  background-image:
-    radial-gradient(circle at 12px 14px, rgb(59 130 246 / 0.10) 3px, transparent 3.5px),
-    radial-gradient(circle at 58px 40px, rgb(249 115 22 / 0.10) 3px, transparent 3.5px),
-    radial-gradient(circle at 34px 76px, rgb(34 197 94 / 0.10) 3px, transparent 3.5px),
-    radial-gradient(circle at 84px 92px, rgb(168 85 247 / 0.10) 3px, transparent 3.5px);
-  background-size: 100px 110px;
+/* Light background with soft pastel patches that the glass cards blur. */
+.fondo-cristal {
+  background:
+    radial-gradient(circle at 12% 15%, #dbeafe 0, transparent 38%),
+    radial-gradient(circle at 88% 10%, #fce7f3 0, transparent 35%),
+    radial-gradient(circle at 70% 92%, #dcfce7 0, transparent 40%),
+    #f8fafc;
+}
+
+/* Frosted glass card. */
+@utility vidrio {
+  background-color: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(18px);
+  border: 1px solid #fff;
+  box-shadow: 0 20px 40px -20px rgb(51 65 85 / 0.35), inset 0 1px 0 #fff;
+}
+
+/* Round objects (mascots, medals) floating with a soft shadow. A filter, not box-shadow, so it keeps
+   the House colour rings (Tailwind rings are box-shadows). */
+@utility esfera {
+  filter: drop-shadow(0 8px 8px rgb(15 23 42 / 0.28));
+}
+
+/* Big numbers and titles with a blue gradient and depth. */
+@utility texto-3d {
+  background-image: linear-gradient(180deg, #6366f1, #2563eb);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 6px 6px rgb(37 99 235 / 0.27));
 }

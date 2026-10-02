@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HOUSES, type House } from '../features/arbitraje/hooks/useArbitraje';
 import MascotaHouse from '../components/MascotaHouse';
+import { Medalla } from '../components/HouseDistintivo';
+import { inclinacion } from '../components/inclinacion';
 import { COLORES_HOUSE, HOUSES as HOUSES_BASE } from '../../shared/olimpiadas';
 
 // Colores de cada House para la barra, el anillo de la mascota y el brillo del líder. Nombres completos para que Tailwind los conserve.
@@ -14,8 +16,6 @@ const COLOR_HOUSE: Record<string, { barra: string; anillo: string; brillo: strin
   orange: { barra: 'from-amber-400 to-orange-500', anillo: 'ring-orange-500', brillo: 'bg-amber-300', fondo: 'bg-orange-50' },
 };
 const etiqueta = (color?: string) => HOUSES_BASE.find(h => h.color === color)?.etiqueta ?? '';
-// Medallas para los tres primeros puestos; el cuarto, con su número.
-const PUESTO_EMOJI = ['🥇', '🥈', '🥉'];
 // Los nombres llegan en mayúsculas («DOLPHINS»); en este estilo se muestran como «Dolphins».
 const nombre = (n?: string) => n ? n.charAt(0) + n.slice(1).toLowerCase() : '';
 
@@ -201,63 +201,60 @@ export default function Puntajes() {
       </div>
 
       {/* Marcador del líder */}
-      {lider && <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-violet-500 via-fuchsia-500 to-orange-400 p-5 text-white shadow-xl sm:p-8">
-        <span aria-hidden="true" className="pointer-events-none absolute left-4 top-3 text-2xl opacity-80 sm:text-3xl">🎉</span>
-        <span aria-hidden="true" className="pointer-events-none absolute bottom-3 left-1/3 text-xl opacity-70">⭐</span>
-        <span aria-hidden="true" className="pointer-events-none absolute right-6 bottom-4 text-2xl opacity-80">🎊</span>
-        {colorLider && <span aria-hidden="true" className={`absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-40 blur-3xl ${colorLider.brillo}`} />}
+      {lider && <section {...inclinacion} className="vidrio relative overflow-hidden rounded-[2rem] p-5 text-slate-900 transition-transform duration-200 sm:p-8">
+        {colorLider && <span aria-hidden="true" className={`pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-50 blur-3xl ${colorLider.brillo}`} />}
         {empateArriba ? <div className="relative py-4 text-center">
-          <p className="text-base font-extrabold text-white">⚡ ¡Empate en el primer lugar!</p>
-          <p className="mt-3 text-6xl font-extrabold tabular-nums sm:text-8xl">{lider.points}<span className="ml-2 text-xl text-white/80 sm:text-2xl">pts</span></p>
-          <p className="mt-2 text-lg font-bold text-white">{rankings.filter(r => r.points === lider.points).map(r => nombre(r.house?.name)).join(' · ')}</p>
+          <p className="text-sm font-bold text-amber-600">Empate en el primer lugar</p>
+          <p className="mt-3 text-6xl font-extrabold tabular-nums sm:text-8xl"><span className="texto-3d">{lider.points}</span><span className="ml-2 text-xl text-slate-400 sm:text-2xl">pts</span></p>
+          <p className="mt-2 text-lg font-bold text-slate-700">{rankings.filter(r => r.points === lider.points).map(r => nombre(r.house?.name)).join(' · ')}</p>
         </div>
         : <div className="relative flex flex-col items-center gap-5 text-center sm:flex-row sm:gap-8 sm:text-left">
-          <div className="relative h-32 w-32 shrink-0 rounded-full bg-white p-1 shadow-xl ring-8 ring-white/40 sm:h-44 sm:w-44">
+          <div className={`esfera relative h-32 w-32 shrink-0 rounded-full bg-white p-1 ring-4 sm:h-44 sm:w-44 ${colorLider?.anillo ?? 'ring-white'}`}>
             <MascotaHouse house={lider.house} mascotas={mascotas} cargado={cargado} className="h-full w-full rounded-full object-contain" />
-            <Trophy aria-hidden="true" className="absolute -right-1 -top-1 h-10 w-10 rounded-full bg-amber-400 p-2 text-slate-900 shadow-lg" />
+            <Trophy aria-hidden="true" className="esfera absolute -right-1 -top-1 h-10 w-10 rounded-full bg-gradient-to-b from-amber-200 to-amber-500 p-2 text-amber-950" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-base font-extrabold text-white/90">🥇 ¡Va en primer lugar!</p>
-            <h2 className="mt-1 text-5xl font-extrabold leading-none sm:text-7xl">{nombre(lider.house?.name)}</h2>
-            <p className="mt-2 inline-block rounded-full bg-white/20 px-3 py-0.5 text-sm font-bold text-white">{etiqueta(lider.house?.color)}</p>
+            <p className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500 sm:justify-start"><Medalla puesto={1} className="h-5 w-5 text-[10px]" />Primer lugar</p>
+            <h2 className="mt-1 text-5xl font-extrabold leading-none tracking-tight text-slate-900 sm:text-7xl">{nombre(lider.house?.name)}</h2>
+            <p className="mt-2 inline-block rounded-full bg-white/80 px-3 py-0.5 text-sm font-semibold text-slate-600 ring-1 ring-white">{etiqueta(lider.house?.color)}</p>
           </div>
           <div className="sm:text-right">
-            <p className="text-6xl font-extrabold tabular-nums leading-none sm:text-8xl">{lider.points}</p>
-            <p className="mt-1 text-sm font-bold text-white/80">puntos</p>
-            {segundo && <p className="mt-3 inline-block rounded-full bg-white px-3 py-1 text-sm font-extrabold text-fuchsia-600 shadow">+{lider.points - segundo.points} sobre {nombre(segundo.house?.name)} 🚀</p>}
+            <p className="texto-3d text-6xl font-extrabold tabular-nums leading-none sm:text-8xl">{lider.points}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-400">puntos</p>
+            {segundo && <p className="mt-3 inline-block rounded-full bg-indigo-50 px-3 py-1 text-sm font-bold text-indigo-600">+{lider.points - segundo.points} sobre {nombre(segundo.house?.name)}</p>}
           </div>
         </div>}
       </section>}
 
       {/* Tabla de posiciones */}
       <section className="space-y-3">
-        <h2 className="text-xl font-extrabold text-slate-800">📊 Tabla de posiciones</h2>
+        <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Tabla de posiciones</h2>
         <ol className="space-y-3">
           <AnimatePresence>
             {rankings.map(team => {
               const color = COLOR_HOUSE[team.house?.color ?? ''];
               const diferencia = (lider?.points ?? 0) - team.points;
               return <motion.li key={team.id} layout transition={{ type: 'spring', stiffness: 250, damping: 25 }}
-                className={`grid grid-cols-[2rem_3.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-3xl border-2 p-3 shadow-sm sm:grid-cols-[3rem_4.5rem_minmax(0,1fr)_auto] sm:gap-5 sm:p-4 ${color?.fondo ?? 'bg-white'} ${
-                  team.isTied ? 'border-amber-300 ring-4 ring-amber-400/20' : team.rank === 1 ? 'border-amber-300' : 'border-white'}`}>
-                <span className="text-center text-3xl font-extrabold tabular-nums text-slate-400 sm:text-4xl">{PUESTO_EMOJI[team.rank - 1] ?? team.rank}</span>
-                <div className={`h-14 w-14 rounded-full bg-white p-0.5 shadow-md ring-4 sm:h-[4.5rem] sm:w-[4.5rem] ${color?.anillo ?? 'ring-slate-200'}`}>
+                className={`grid grid-cols-[2rem_3.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-white/75 p-3 shadow-[0_14px_30px_-20px_rgb(51_65_85/0.5)] backdrop-blur-xl sm:grid-cols-[3rem_4.5rem_minmax(0,1fr)_auto] sm:gap-5 sm:p-4 ${
+                  team.isTied ? 'border-amber-300 ring-4 ring-amber-400/20' : team.rank === 1 ? 'border-indigo-200' : 'border-white'}`}>
+                <span className="flex justify-center"><Medalla puesto={team.rank} className="h-8 w-8 text-sm sm:h-10 sm:w-10 sm:text-base" /></span>
+                <div className={`esfera h-14 w-14 rounded-full bg-white p-0.5 ring-4 sm:h-[4.5rem] sm:w-[4.5rem] ${color?.anillo ?? 'ring-slate-200'}`}>
                   <MascotaHouse house={team.house} mascotas={mascotas} cargado={cargado} className="h-full w-full rounded-full object-contain" />
                 </div>
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-baseline gap-x-2">
-                    <h3 className="text-lg font-extrabold leading-tight text-slate-800 sm:text-2xl">{nombre(team.house?.name)}</h3>
+                    <h3 className="text-lg font-extrabold leading-tight tracking-tight text-slate-900 sm:text-2xl">{nombre(team.house?.name)}</h3>
                     <span className="text-xs font-semibold text-slate-500">{etiqueta(team.house?.color)}</span>
                   </div>
-                  <div className="h-3.5 overflow-hidden rounded-full bg-white shadow-inner">
-                    <div className={`h-full rounded-full bg-gradient-to-r transition-all duration-1000 ease-out ${color?.barra ?? 'from-indigo-500 to-blue-500'}`}
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-200/60 shadow-inner">
+                    <div className={`h-full rounded-full bg-gradient-to-r shadow-[inset_0_1px_0_rgb(255_255_255/0.6)] transition-all duration-1000 ease-out ${color?.barra ?? 'from-indigo-500 to-blue-500'}`}
                       style={{ width: `${Math.max(2, (team.points / maxPoints) * 100)}%` }} />
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-extrabold tabular-nums leading-none text-slate-900 sm:text-4xl">{team.points}<span className="ml-1 text-xs font-bold text-slate-400 sm:text-sm">pts</span></p>
-                  <p className={`mt-1 text-xs font-extrabold ${team.isTied ? 'text-amber-600' : diferencia === 0 ? 'text-amber-500' : 'text-slate-400'}`}>
-                    {team.isTied ? '⚡ Empate' : diferencia === 0 ? '⭐ Líder' : `−${diferencia}`}
+                  <p className={`mt-1 text-xs font-extrabold ${team.isTied ? 'text-amber-600' : diferencia === 0 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                    {team.isTied ? 'Empate' : diferencia === 0 ? 'Líder' : `−${diferencia}`}
                   </p>
                 </div>
               </motion.li>;
