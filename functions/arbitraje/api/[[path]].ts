@@ -1,6 +1,6 @@
 import { manageContent } from '../../_lib/content';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-import { COLORES_HOUSE, FILAS_ACTIVIDAD, FILAS_CLASIFICACION, FIXTURE_FUENTE, IDS_CATEGORIA } from '../../../shared/olimpiadas';
+import { COLORES_HOUSE, FILA_BONOS, FILA_PENALIDADES, FILAS_ACTIVIDAD, FILAS_CLASIFICACION, FIXTURE_FUENTE, IDS_CATEGORIA } from '../../../shared/olimpiadas';
 
 interface Env {
   CONTENT_BUCKET?: R2Bucket;
@@ -128,12 +128,11 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'Revisa la actividad, la categoría, los puestos (1.º a 4.º, sin repetir), los puntos (0–10000) y el motivo.' }, 400);
   }
   if (!isMarker && !isRanking && (!data || !COLORES_HOUSE.includes(data.house) ||
-      !IDS_CATEGORIA.includes(data.categoria) ||
-      !['sumar', 'restar'].includes(data.operacion) || !FILAS_ACTIVIDAD.includes(data.fila) ||
+      !['sumar', 'restar'].includes(data.operacion) ||
       !Number.isSafeInteger(data.puntos) || data.puntos < 1 || data.puntos > 10000 ||
       typeof data.motivo !== 'string' || data.motivo.trim().length < 3 || data.motivo.length > 300 ||
       typeof data.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(data.id))) {
-    return json({ error: 'Revisa la actividad, los puntos y el motivo (3–300 caracteres).' }, 400);
+    return json({ error: 'Revisa la House, la operación, los puntos y el motivo (3–300 caracteres).' }, 400);
   }
   const payload = JSON.stringify(isMarker
     ? { action: 'resultado', id: data.id, email, encuentroId: data.encuentroId, version: data.version,
@@ -144,8 +143,10 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     ? { action: 'clasificacion', id: data.id, email, fila: data.fila, categoria: data.categoria,
         actividad: data.actividad, detalle: data.detalle.trim(),
         version: data.version, puestos, puntos, motivo: data.motivo.trim() }
-    : { id: data.id, email, house: data.house, categoria: data.categoria,
-        operacion: data.operacion, fila: data.fila, puntos: data.puntos, motivo: data.motivo.trim() });
+    // Bonuses and penalties apply to the whole House, not to an activity or category.
+    : { id: data.id, email, house: data.house, categoria: 'general',
+        operacion: data.operacion, fila: data.operacion === 'sumar' ? FILA_BONOS : FILA_PENALIDADES,
+        puntos: data.puntos, motivo: data.motivo.trim() });
   const timestamp = Date.now();
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.ARBITRAJE_SECRET),
     { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);

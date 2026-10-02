@@ -58,6 +58,9 @@ export const ACTIVIDADES = [
   { fila: 37, nombre: 'Eco House', etiqueta: 'Reconocimiento: Eco House', grupo: 'Eventos Especiales y Reconocimientos' },
 ] as const;
 export const FILAS_ACTIVIDAD: readonly number[] = ACTIVIDADES.map(a => a.fila);
+// Filas de la «Sábana» con los bonos y las penalidades de toda la House, en su columna «Puntaje».
+export const FILA_BONOS = 32;
+export const FILA_PENALIDADES = 33;
 // Reto que juega cada categoría en los retos académicos, según los PDF de bases de cada área
 // (archive/bases y la guía de Inglés). Cada categoría compite aparte y suma en su columna de la
 // fila del área.

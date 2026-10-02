@@ -49,6 +49,8 @@ Sheets no ofrece una transacción entre celdas. Si queda PENDIENTE tras un fallo
 El navegador conserva el ID de reintento mientras el formulario siga abierto y los datos no cambien. Si se recarga tras una respuesta incierta, comprobar el historial antes de registrar de nuevo.
 Límite inicial: 1–10000 puntos enteros por operación. Revisarlo con las reglas del evento. Actividades válidas: filas 8–31 y 34–37; fórmulas y celdas negras se rechazan.
 
+«Penalidades y bonos» afecta a toda la House, sin categoría ni actividad. Los bonos se acumulan en la fila 32 y las penalidades, en negativo, en la fila 33 de la `Sábana`, en la columna «Puntaje» de cada House (I, O, U y AA). Esas celdas deben ser valores, no fórmulas: antes de publicar, borra las fórmulas `=SUM(...)` de I32, O32, U32, AA32, I33, O33, U33 y AA33. Ambas filas ya entran en el total de cada House. Para anular una penalidad, registra un bono con el mismo motivo.
+
 ## Referencias
 
 - https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/google/

@@ -73,3 +73,20 @@ test('pendiente no se reaplica y resta no baja de cero',()=>{
   s.rows[1][11]='PENDIENTE';const result=s.send({...s.base,operacion:'restar',puntos:50});
   assert.equal(result.pending,true);assert.equal(s.stats().writes,1);
 });
+test('bonos y penalidades de toda la House van a su columna «Puntaje» en las filas 32 y 33',()=>{
+  const totals={white:'I',blue:'O',orange:'U',green:'AA'};
+  for(const [house,letter] of Object.entries(totals)) for(const [operacion,fila] of [['sumar',32],['restar',33]]){
+    // The mock cell starts at 10; an empty penalty cell is simulated by first taking it down to 0.
+    const s=setup();if(operacion==='restar') s.send({...s.base,id:crypto.randomUUID(),operacion,puntos:10});
+    assert.equal(s.send({...s.base,house,categoria:'general',fila,operacion}).success,true);
+    assert.equal(s.destination(),letter+fila);assert.equal(s.rows.at(-1)[4],'general');
+  }
+});
+test('las penalidades se acumulan en negativo y no aceptan otra fila',()=>{
+  const s=setup(),pen={...s.base,categoria:'general',fila:33,operacion:'restar',puntos:5};
+  assert.equal(s.send(pen,()=>{}).success,false,'la celda de penalidades no puede tener un valor positivo');
+  const t=setup();t.send({...t.base,operacion:'restar',puntos:10});
+  assert.equal(t.send({...pen,id:crypto.randomUUID()}).success,true);assert.equal(t.stats().value,-5);
+  assert.equal(t.send({...pen,id:crypto.randomUUID(),puntos:3}).success,true);assert.equal(t.stats().value,-8);
+  for(const update of [{fila:32},{fila:8},{operacion:'sumar'}]) assert.equal(t.send({...pen,id:crypto.randomUUID(),...update}).success,false);
+});

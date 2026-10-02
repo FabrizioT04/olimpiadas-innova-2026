@@ -20,7 +20,7 @@ test('programme names propose their score sheet row and unknown names propose no
  for(const [nombre,fila] of Object.entries(esperado))assert.equal(filaSugerida(nombre),fila,nombre);
  for(const nombre of ['BIENVENIDA A LOS ESTUDIANTES','DESFILE DE LAS HOUSE','ENCUENTRO DE PADRES','Premiación','Bailetón'])assert.equal(filaSugerida(nombre),null,nombre);
 });
-test('every academic area has one challenge per competing category (Promesas does not compete in DPSC)',async()=>{
+test('every academic area has one challenge per competing category',async()=>{
  const fs=require('node:fs'),ts=require('typescript');
  const code=ts.transpileModule(fs.readFileSync('shared/olimpiadas.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
  const {RETOS_ACADEMICOS,IDS_CATEGORIA,ACTIVIDADES}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));

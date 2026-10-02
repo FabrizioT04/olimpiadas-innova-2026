@@ -22,19 +22,16 @@ export const HOUSES: House[] = HOUSES_BASE.map(h => ({ id: h.animal, name: h.nom
 export const useArbitraje = () => {
   const [selectedHouse, setSelectedHouse] = useState<House | null>(null);
   const [operation, setOperation] = useState('');
-  const [category, setCategory] = useState('');
   const [points, setPoints] = useState('');
   const [motivo, setMotivo] = useState('');
   const pending = useRef<{ body: string; id: string } | null>(null);
   const sending = useRef(false);
-  const [activity, setActivity] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Mensaje mostrado dentro del formulario en lugar de ventanas alert() del navegador.
   const [aviso, setAviso] = useState<{ tipo: 'error' | 'exito'; texto: string } | null>(null);
   const resetForm = () => {
     setSelectedHouse(null);
     setPoints('');
-    setActivity('');
     setMotivo('');
   };
 
@@ -42,8 +39,8 @@ export const useArbitraje = () => {
     e.preventDefault();
     if (sending.current) return;
     setAviso(null);
-    if (!selectedHouse || !points || !operation || !category || !activity) {
-      setAviso({ tipo: 'error', texto: 'Completa la House, la operación, la categoría, la actividad y los puntos.' });
+    if (!selectedHouse || !points || !operation) {
+      setAviso({ tipo: 'error', texto: 'Completa la House, la operación y los puntos.' });
       return;
     }
 
@@ -53,12 +50,10 @@ export const useArbitraje = () => {
     }
     sending.current = true;
     setIsSubmitting(true);
-    // Construimos el Payload EXACTO que espera tu Apps Script
+    // Bonos y penalidades afectan a toda la House: el servidor elige su fila en la «Sábana».
     const payload = {
       house: selectedHouse.color,                  // Color de la House en la hoja (ej: 'orange')
       operacion: operation.toLowerCase(),          // 'sumar' o 'restar'
-      categoria: category.toLowerCase(),           // 'promesas', 'infantil', etc.
-      fila: parseInt(activity, 10),                // El número de fila del Excel (ej: 8)
       motivo: motivo.trim(),
       puntos: Number(points)
     };
@@ -90,9 +85,7 @@ export const useArbitraje = () => {
   return {
     selectedHouse, setSelectedHouse,
     operation, setOperation,
-    category, setCategory,
     points, setPoints,
-    activity, setActivity,
     motivo, setMotivo,
     isSubmitting,
     aviso,

@@ -8,10 +8,6 @@ import { hayClasificacionPendiente } from '../features/clasificacion/model';
 import AdminContenido from '../features/contenido/AdminContenido';
 import { useContenido } from '../features/contenido/useContenido';
 import MascotaHouse from '../components/MascotaHouse';
-import { ACTIVIDADES, CATEGORIAS } from '../../shared/olimpiadas';
-
-// Grupos del selector de actividades, en el orden en que aparecen.
-const GRUPOS_ACTIVIDAD = [...new Set(ACTIVIDADES.map(a => a.grupo))];
 // Anillo del color de cada House en la tarjeta elegida. Nombres completos para que Tailwind los conserve.
 const ANILLO: Record<string, string> = { blue: 'ring-blue-500', white: 'ring-slate-300', green: 'ring-green-500', orange: 'ring-orange-500' };
 
@@ -42,9 +38,7 @@ export default function PanelArbitro() {
   const {
     selectedHouse, setSelectedHouse,
     operation, setOperation,
-    category, setCategory,
     points, setPoints,
-    activity, setActivity,
     motivo, setMotivo,
     isSubmitting,
     aviso,
@@ -96,7 +90,7 @@ export default function PanelArbitro() {
         {([
           { id: 'marcadores', title: 'Resultado del partido', description: 'Marcador y puntos en una operación', Icon: Trophy },
           { id: 'clasificacion', title: 'Clasificación por puestos', description: 'Del 1.º al 4.º con todas las Houses', Icon: ListOrdered },
-          { id: 'puntajes', title: 'Penalidades y bonos', description: 'Restar o sumar puntos a una sola House', Icon: Medal },
+          { id: 'puntajes', title: 'Penalidades y bonos', description: 'Restar o sumar puntos a toda una House', Icon: Medal },
           { id: 'contenido', title: 'Fotos y mascotas', description: 'Subir, revisar y publicar imágenes', Icon: Images },
         ] as const).map(({ id, title, description, Icon }) => (
           <button key={id} type="button" aria-pressed={registro === id} aria-controls={`panel-${id}`}
@@ -122,7 +116,7 @@ export default function PanelArbitro() {
       <section id="panel-puntajes" hidden={registro !== 'puntajes'} aria-labelledby="titulo-puntajes" className="space-y-5">
         <div className="px-1">
           <h2 id="titulo-puntajes" className="text-xl font-extrabold tracking-tight">Penalidades y bonos</h2>
-          <p className="mt-1 text-sm text-slate-500">Resta o suma puntos a una sola House, fuera de partidos y clasificaciones. Los puntos de un partido se guardan en «Resultado del partido» y los de actividades con las cuatro Houses en «Clasificación por puestos».</p>
+          <p className="mt-1 text-sm text-slate-500">Resta o suma puntos al total de una House, sin categoría ni actividad, fuera de partidos y clasificaciones. Los puntos de un partido se guardan en «Resultado del partido» y los de actividades con las cuatro Houses en «Clasificación por puestos».</p>
         </div>
 
         <form onSubmit={enviarPuntaje} className="space-y-5">
@@ -149,7 +143,7 @@ export default function PanelArbitro() {
             <fieldset>
               <legend className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-700"><Paso n={2} />Operación</legend>
               <div className="grid grid-cols-2 gap-3">
-                {([['sumar', 'Sumar puntos', 'Reto o ajuste', Plus, 'bg-emerald-500 text-white shadow-[0_10px_22px_-10px_rgb(16_185_129/0.8)]'],
+                {([['sumar', 'Sumar puntos', 'Bono', Plus, 'bg-emerald-500 text-white shadow-[0_10px_22px_-10px_rgb(16_185_129/0.8)]'],
                    ['restar', 'Restar puntos', 'Penalidad', Minus, 'bg-red-500 text-white shadow-[0_10px_22px_-10px_rgb(239_68_68/0.8)]']] as const).map(([valor, titulo, detalle, Icono, activo]) =>
                   <button key={valor} type="button" aria-pressed={operation === valor} onClick={() => setOperation(valor)}
                     className={`flex items-center gap-3 rounded-2xl p-3 text-left transition-all active:scale-[0.98] ${operation === valor ? activo : 'bg-white/80 text-slate-600 ring-1 ring-slate-200 hover:bg-white'}`}>
@@ -162,22 +156,6 @@ export default function PanelArbitro() {
             {/* Paso 3: detalle */}
             <div className="space-y-4">
               <p className="flex items-center gap-2 text-sm font-bold text-slate-700"><Paso n={3} />Detalle del registro</p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="block text-sm font-semibold text-slate-600" htmlFor="categoria">Categoría
-                  <select className="mt-1.5 block w-full px-4 py-3" id="categoria" name="categoria" value={category} onChange={(e) => setCategory(e.target.value)}>
-                    <option value="">Elige…</option>
-                    {CATEGORIAS.map(c => <option key={c.id} value={c.id}>{c.nombre} ({c.grados})</option>)}
-                  </select>
-                </label>
-                <label className="block text-sm font-semibold text-slate-600" htmlFor="actividad">Deporte o reto
-                  <select className="mt-1.5 block w-full px-4 py-3" id="actividad" name="actividad" value={activity} onChange={(e) => setActivity(e.target.value)}>
-                    <option value="">Elige el deporte o reto…</option>
-                    {GRUPOS_ACTIVIDAD.map(grupo => <optgroup key={grupo} label={grupo}>
-                      {ACTIVIDADES.filter(a => a.grupo === grupo).map(a => <option key={a.fila} value={a.fila}>{a.etiqueta}</option>)}
-                    </optgroup>)}
-                  </select>
-                </label>
-              </div>
               <label className="block text-sm font-semibold text-slate-600" htmlFor="puntos">Puntos
                 <input type="number" placeholder="Ej.: 100" className="mt-1.5 block w-full px-4 py-3 text-lg font-bold tabular-nums"
                   id="puntos" name="puntos" value={points} onChange={(e) => setPoints(e.target.value)} />
@@ -185,7 +163,7 @@ export default function PanelArbitro() {
               <label htmlFor="motivo" className="block text-sm font-semibold text-slate-600">Motivo del registro o corrección
                 <textarea id="motivo" required minLength={3} maxLength={300} value={motivo}
                   onChange={e => setMotivo(e.target.value)} className="mt-1.5 block w-full p-3"
-                  placeholder="Ej.: victoria de futsal o corrección del acta" />
+                  placeholder="Ej.: conducta antideportiva o bono por orden y limpieza" />
               </label>
             </div>
 
