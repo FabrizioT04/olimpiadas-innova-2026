@@ -28,8 +28,7 @@ test('every academic area has one challenge per competing category (Promesas doe
  assert.deepEqual(areas,[27,28,29,30,31]);
  for(const fila of areas){
   const cats=RETOS_ACADEMICOS.filter(r=>r.fila===fila).flatMap(r=>r.categorias);
-  const esperadas=IDS_CATEGORIA.filter(c=>!(fila===29&&c==='promesas'));
-  assert.deepEqual([...cats].sort(),[...esperadas].sort(),'fila '+fila);
+  assert.deepEqual([...cats].sort(),[...IDS_CATEGORIA].sort(),'fila '+fila);
  }
 });
 test('sport podiums join the final and the 3rd-place match by sport and category',async()=>{

@@ -60,7 +60,7 @@ export const ACTIVIDADES = [
 export const FILAS_ACTIVIDAD: readonly number[] = ACTIVIDADES.map(a => a.fila);
 // Reto que juega cada categoría en los retos académicos, según los PDF de bases de cada área
 // (archive/bases y la guía de Inglés). Cada categoría compite aparte y suma en su columna de la
-// fila del área. Promesas no compite en DPSC.
+// fila del área.
 export const RETOS_ACADEMICOS = [
   { fila: 27, reto: 'Replicando figuras con pattern blocks', categorias: ['promesas'] },
   { fila: 27, reto: 'Resolviendo retos computacionales', categorias: ['infantil', 'junior', 'juvenila'] },
@@ -68,6 +68,7 @@ export const RETOS_ACADEMICOS = [
   { fila: 28, reto: '¡Cuenta Cuentos!', categorias: ['promesas'] },
   { fila: 28, reto: 'Lucha Libro', categorias: ['infantil', 'junior'] },
   { fila: 28, reto: 'Juego de Debate', categorias: ['juvenila', 'juvenilb'] },
+  { fila: 29, reto: 'Reto DPSC', categorias: ['promesas'] },
   { fila: 29, reto: 'Rayuela en quechua', categorias: ['infantil'] },
   { fila: 29, reto: 'Mensajes para convivir mejor', categorias: ['junior'] },
   { fila: 29, reto: 'El ajedrez andino', categorias: ['juvenila', 'juvenilb'] },
