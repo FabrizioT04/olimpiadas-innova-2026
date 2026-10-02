@@ -38,7 +38,8 @@ test('shared snapshot serves a new visitor without Google and stale snapshot sur
     const fresh=await onRequest({request,env:{...env,FIXTURE_CACHE:cache},waitUntil:p=>background.push(p)});
     assert.equal(fresh.status,200);assert.equal((await fresh.json()).desactualizado,false);assert.equal(calls,0);
     savedAt-=60000;
-    const stale=await onRequest({request,env:{...env,FIXTURE_CACHE:cache},waitUntil:p=>background.push(p)});
+    // Another new instance: each instance reads the shared copy only when it starts.
+    const stale=await(await load()).onRequest({request,env:{...env,FIXTURE_CACHE:cache},waitUntil:p=>background.push(p)});
     const data=await stale.json();assert.equal(stale.status,200);assert.equal(data.desactualizado,true);
     assert.equal(data.actualizado,fixture.actualizado);assert.equal(data.partidos[0].marcador.a,3);
     await Promise.all(background);assert.equal(calls,1);
@@ -136,4 +137,28 @@ test('public rankings show complete places and won points, never private data',a
 test('scripts without rankings publish an empty list',async()=>{
  const {onRequest}=await load(),original=global.fetch;global.fetch=async()=>Response.json(fixture);
  try {assert.deepEqual((await(await onRequest({request:new Request('https://example.com/api/fixture'),env})).json()).clasificaciones,[]);}finally{global.fetch=original;}
+});
+test('an instance reads KV once, and saves only changes that the shared copy lacks, at most every five minutes',async()=>{
+ const {onRequest}=await load(),original=global.fetch,originalNow=Date.now;let now=originalNow(),reads=0,writes=0,live=fixture;Date.now=()=>now;
+ let shared={savedAt:now,fixture};
+ const cache={get:async()=>{reads++;return shared;},put:async(k,v)=>{writes++;shared=JSON.parse(v);}};
+ global.fetch=async()=>Response.json(live);
+ const ask=()=>onRequest({request:new Request('https://example.com/api/fixture'),env:{...env,FIXTURE_CACHE:cache},waitUntil:()=>{}});
+ try{
+  for(let i=0;i<5;i++) await ask();
+  assert.equal(reads,1);assert.equal(writes,0);
+  // Unchanged programme from Google: nothing to save, no extra reads.
+  now+=31000;await ask();await new Promise(r=>setImmediate(r));assert.equal(reads,1);assert.equal(writes,0);
+  // A change is saved once; another change within five minutes waits.
+  live={...fixture,partidos:[{id:'one',marcador:{version:2,a:1,b:0}}]};now+=31000;await ask();await new Promise(r=>setTimeout(r,5));
+  assert.equal(writes,1);assert.equal(shared.fixture.partidos[0].marcador.version,2);
+  live={...fixture,partidos:[{id:'one',marcador:{version:3,a:2,b:0}}]};now+=31000;await ask();await new Promise(r=>setTimeout(r,5));
+  assert.equal(writes,1);
+  now+=300000;await ask();await new Promise(r=>setTimeout(r,5));assert.equal(writes,2);
+  // Another instance already saved the same change: its read spares the write.
+  const other=await load();live={...fixture,partidos:[{id:'one',marcador:{version:4,a:3,b:0}}]};
+  shared={savedAt:now,fixture:live};now+=1;
+  await other.onRequest({request:new Request('https://example.com/api/fixture?actualizar=1'),env:{...env,FIXTURE_CACHE:{...cache,get:async()=>({...shared,savedAt:now-20000})}},waitUntil:()=>{}});
+  assert.equal(writes,2);
+ }finally{global.fetch=original;Date.now=originalNow;}
 });

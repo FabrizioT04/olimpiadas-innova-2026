@@ -5,15 +5,18 @@ const CACHE_KEY = 'fixture-publico-v1';
 const FRESH_MS = 30000;
 const MIN_REFRESH_MS = 10000;
 const FAILURE_COOLDOWN_MS = 30000;
-// KV's free tier allows only 1,000 writes a day: save a snapshot when the programme changes, and an
-// unchanged one at most every ten minutes so new instances still find a reasonably recent copy.
-const SNAPSHOT_REFRESH_MS = 600000;
+// KV's free tier allows 100,000 reads and 1,000 writes a day. Each instance reads the shared copy only
+// when it starts, and saves the programme only when it changed, at most every five minutes; an older
+// copy just makes a new instance ask Google straight away.
+const WRITE_INTERVAL_MS = 300000;
 type Snapshot = { savedAt:number; fixture:ReturnType<typeof publicFixture> };
 // Per-instance protection complements the shared KV snapshot; not a global rate limiter.
 const recent = new Map<string, Snapshot>();
 const retryAfter = new Map<string, number>();
 const refreshes = new Map<string, Promise<ReturnType<typeof publicFixture>>>();
-const stored = new Map<string, {content:string; savedAt:number}>();
+const sharedRead = new Set<string>();
+const stored = new Map<string, string>();
+const lastWrite = new Map<string, number>();
 // Apps Script stamps every answer with the read time, so it does not count as a change.
 const contentOf = (fixture: ReturnType<typeof publicFixture>) => JSON.stringify({...fixture, actualizado:''});
 const pick = (value: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.map(key => [key, value[key]]));
@@ -66,12 +69,14 @@ async function refreshFixture(env: Env) {
       recent.set(env.FIXTURE_SCRIPT_URL!, {savedAt:Date.now(), fixture});
       retryAfter.delete(env.FIXTURE_SCRIPT_URL!);
       // KV failure must not discard a valid live response; snapshots never expire.
-      const content = contentOf(fixture), saved = stored.get(env.FIXTURE_SCRIPT_URL!);
-      if (env.FIXTURE_CACHE && (saved?.content !== content || Date.now() - saved.savedAt >= SNAPSHOT_REFRESH_MS)) {
+      const key = env.FIXTURE_SCRIPT_URL!, content = contentOf(fixture), now = Date.now();
+      if (env.FIXTURE_CACHE && stored.get(key) !== content && now - (lastWrite.get(key) || 0) >= WRITE_INTERVAL_MS) {
+        lastWrite.set(key, now);
         try {
-          const savedAt = Date.now();
-          await env.FIXTURE_CACHE.put(CACHE_KEY, JSON.stringify({savedAt, fixture}));
-          stored.set(env.FIXTURE_SCRIPT_URL!, {content, savedAt});
+          // Every instance sees the same change: one read spares a write when another already saved it.
+          const shared = await env.FIXTURE_CACHE.get<{fixture:unknown}>(CACHE_KEY, 'json');
+          if (!shared || contentOf(publicFixture(shared.fixture)) !== content) await env.FIXTURE_CACHE.put(CACHE_KEY, JSON.stringify({savedAt:now, fixture}));
+          stored.set(key, content);
         } catch { console.warn('Fixture snapshot could not be saved'); }
       }
       return fixture;
@@ -86,18 +91,20 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, waitUntil })
   const freshRequested = new URL(request.url).searchParams.get('actualizar') === '1';
   if (request.method !== 'GET') return Response.json({error:'Método no permitido.'}, {status:405, headers:{...headers, Allow:'GET'}});
   if (!env.FIXTURE_SCRIPT_URL) return Response.json({error:'La programación no está configurada.'}, {status:503, headers});
-  let cached: Snapshot | null = null;
   const refreshKey = env.FIXTURE_SCRIPT_URL;
-  const local = recent.get(refreshKey);
-  // A recent local read already answers this request, so it costs no KV read.
-  if (!local || Date.now() - local.savedAt >= FRESH_MS) try {
-    const snapshot = await env.FIXTURE_CACHE?.get<{savedAt:number; fixture:unknown}>(CACHE_KEY, {type:'json', cacheTtl:30});
-    if (snapshot && Number.isFinite(snapshot.savedAt) && snapshot.savedAt <= Date.now()) {
-      cached = {savedAt:snapshot.savedAt, fixture:publicFixture(snapshot.fixture)};
-      if (!stored.has(refreshKey)) stored.set(refreshKey, {content:contentOf(cached.fixture), savedAt:cached.savedAt});
-    }
-  } catch { /* A missing or damaged snapshot must not prevent a live read. */ }
-  if (local && (!cached || local.savedAt > cached.savedAt)) cached = local;
+  // Only a new instance reads the shared copy; afterwards its own reads answer, even while refreshing.
+  if (!recent.has(refreshKey) && !sharedRead.has(refreshKey)) {
+    sharedRead.add(refreshKey);
+    try {
+      const snapshot = await env.FIXTURE_CACHE?.get<{savedAt:number; fixture:unknown}>(CACHE_KEY, 'json');
+      if (snapshot && Number.isFinite(snapshot.savedAt) && snapshot.savedAt <= Date.now()) {
+        const fixture = publicFixture(snapshot.fixture);
+        recent.set(refreshKey, {savedAt:snapshot.savedAt, fixture});
+        stored.set(refreshKey, contentOf(fixture));
+      }
+    } catch { /* A missing or damaged snapshot must not prevent a live read. */ }
+  }
+  const cached = recent.get(refreshKey) ?? null;
   const cooldown = Math.max(0, (retryAfter.get(refreshKey) || 0) - Date.now());
   if (cooldown > 0) {
     if (cached) return Response.json({...cached.fixture, copiaCompartida:true, desactualizado:true}, {headers});

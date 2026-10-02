@@ -47,3 +47,14 @@ test('stale shared snapshot is served while Google fails',async()=>{
     await Promise.all(background);
   }finally{global.fetch=original;}
 });
+
+test('an instance reads KV once and does not rewrite totals that are already shared',async()=>{
+  const {onRequest}=await load(),original=global.fetch,originalNow=Date.now;let now=originalNow(),reads=0,writes=0;Date.now=()=>now;
+  const cache={get:async()=>{reads++;return {savedAt:now-60000,puntajes:{white:12,blue:7,orange:0,green:9}};},put:async()=>{writes++;}};
+  global.fetch=async()=>jsonp(scores);
+  const background=[];
+  try {
+    for(let i=0;i<4;i++){await onRequest({request,env:{...env,FIXTURE_CACHE:cache},waitUntil:p=>background.push(p)});await Promise.all(background);now+=11000;}
+    assert.equal(reads,1);assert.equal(writes,0);
+  }finally{global.fetch=original;Date.now=originalNow;}
+});

@@ -20,8 +20,10 @@ const keySets = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 // through this authenticated route. Saving stays safe with an old copy: Apps Script re-reads the
 // fixture and rejects results whose match version changed (CONFLICT / FIXTURE_CHANGED).
 const FIXTURE_ARBITRAJE_KEY = 'fixture-arbitraje-v1';
-const COPY_INTERVAL_MS = 60000;
+// Saved only when the programme changed, at most every ten minutes per instance (KV allows 1,000 writes a day).
+const COPY_INTERVAL_MS = 600000;
 let lastCopySaved = 0;
+let lastCopy = '';
 type FixtureArbitraje = { fuente?: string; partidos?: unknown[]; error?: string };
 // Exactly the four Houses, each with a whole number in range; any other key is rejected.
 function porHouse(value: unknown, min: number, max: number) {
@@ -66,11 +68,13 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       if (!upstream.ok) throw new Error('upstream');
       const result = await upstream.json() as FixtureArbitraje;
       if (result.error || result.fuente !== FIXTURE_FUENTE || !Array.isArray(result.partidos)) throw new Error('fixture');
-      // At most one KV write per minute per instance; a copy that cannot be saved must not block the live answer.
-      if (env.FIXTURE_CACHE && Date.now() - lastCopySaved >= COPY_INTERVAL_MS) {
+      // A copy that cannot be saved must not block the live answer.
+      const copy = JSON.stringify(result.partidos);
+      if (env.FIXTURE_CACHE && copy !== lastCopy && Date.now() - lastCopySaved >= COPY_INTERVAL_MS) {
+        lastCopySaved = Date.now();
         try {
           await env.FIXTURE_CACHE.put(FIXTURE_ARBITRAJE_KEY, JSON.stringify({ savedAt: Date.now(), fixture: result }));
-          lastCopySaved = Date.now();
+          lastCopy = copy;
         } catch { console.warn('Referee fixture copy could not be saved'); }
       }
       return json(result);
