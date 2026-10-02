@@ -6,6 +6,7 @@ import type { Marcador } from '../features/marcadores/model';
 import type { Lugar } from '../features/clasificacion/model';
 import MascotaHouse from './MascotaHouse';
 import { inclinacion } from './inclinacion';
+import NumeroAnimado from './NumeroAnimado';
 
 // Colours of each House (keyed by its colour in the sheet), used wherever a House is shown.
 // Full class names so Tailwind keeps them.
@@ -152,22 +153,27 @@ export function PodioMedallas({ lugares, mascotas, cargado }: { lugares: Lugar[]
   </div>;
 }
 
-// Medals of each House (1st, 2nd and 3rd places), ordered by golds, then silvers, then bronzes.
+// Medals of each House (1st, 2nd and 3rd places), ordered by golds, then silvers, then bronzes. Once on
+// screen the cards enter one after another, the medals drop in and the counts rise from 0.
 export function Medallero({ medallas, mascotas, cargado }: { medallas: Record<string, number[]> } & Contenido) {
+  const [ref, visto] = useVisto<HTMLOListElement>();
   const orden = Object.keys(medallas).filter(h => ESTILO_HOUSE[h]).sort((a, b) =>
     medallas[b][0] - medallas[a][0] || medallas[b][1] - medallas[a][1] || medallas[b][2] - medallas[a][2]);
-  return <ol className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">{orden.map((h, i) => {
+  return <ol ref={ref} className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">{orden.map((h, i) => {
     const estilo = ESTILO_HOUSE[h], house = HOUSES.find(x => x.color === h);
-    return <li key={h} {...inclinacion} className="relative overflow-hidden rounded-2xl bg-white/85 p-3 text-slate-800 shadow-[0_14px_30px_-18px_rgb(51_65_85/0.5)] ring-1 ring-white transition-transform duration-200">
+    return <li key={h} {...inclinacion} style={{ animationDelay: `${i * 120}ms` }}
+      className={`relative overflow-hidden rounded-2xl bg-white/85 p-3 text-slate-800 shadow-[0_14px_30px_-18px_rgb(51_65_85/0.5)] ring-1 ring-white transition-transform duration-200 ${
+        visto ? 'motion-safe:animate-[entrar_0.5s_ease-out_backwards]' : 'motion-safe:opacity-0'}`}>
       <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1.5 ${estilo.barra}`} />
       <div className="flex items-center gap-1.5 sm:gap-2">
         <span className="hidden text-lg font-extrabold text-slate-300 sm:inline">{i + 1}</span>
         <MascotaHouse house={house} mascotas={mascotas} cargado={cargado} className={`esfera h-8 w-8 shrink-0 rounded-full bg-white object-contain ring-2 sm:h-9 sm:w-9 ${estilo.anillo}`} />
-        <span className="min-w-0 whitespace-nowrap text-[11px] font-extrabold sm:text-sm ">{estilo.nombre}</span>
+        <span className="min-w-0 whitespace-nowrap text-[11px] font-extrabold sm:text-sm">{estilo.nombre}</span>
       </div>
       <p className="mt-2.5 flex gap-3" aria-label={`${medallas[h][0]} de oro, ${medallas[h][1]} de plata, ${medallas[h][2]} de bronce`}>
         {medallas[h].map((n, m) => <span key={m} aria-hidden="true" className="flex items-center gap-1 text-sm font-extrabold tabular-nums">
-          <Medalla puesto={m + 1} sinNumero className="h-4 w-4" />{n}
+          <span style={{ animationDelay: `${300 + i * 120 + m * 110}ms` }} className={`inline-flex ${visto ? 'motion-safe:animate-[aparecer_0.5s_ease-out_backwards]' : ''}`}><Medalla puesto={m + 1} sinNumero className="h-4 w-4" /></span>
+          {visto ? <NumeroAnimado valor={n} /> : n}
         </span>)}
       </p>
     </li>;

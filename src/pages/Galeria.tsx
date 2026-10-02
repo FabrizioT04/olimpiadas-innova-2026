@@ -10,7 +10,7 @@ const carpetasEco = [{ id: 'asamblea', titulo: 'Asamblea' }, { id: 'mariquitas',
 // does not look uniform. grid-flow-dense fills the gaps they leave.
 const TAMANO = ['', 'row-span-2', '', 'md:col-span-2', '', '', 'row-span-2', ''];
 const tamanoDe = (i: number) => i === 0 ? 'col-span-2 row-span-2' : TAMANO[(i - 1) % TAMANO.length];
-const chip = (activo: boolean) => `shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors ${activo ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`;
+const chip = (activo: boolean) => `shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-95 ${activo ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`;
 const sinTraducir = (album: string) => album === 'convivencia' ? { translate: 'no' as const, className: 'notranslate' } : { className: '' };
 
 function Imagen({ foto, ampliada = false }: { foto: FotoGaleria; ampliada?: boolean }) {

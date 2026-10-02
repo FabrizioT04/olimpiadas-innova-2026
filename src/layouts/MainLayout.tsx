@@ -162,13 +162,13 @@ export default function MainLayout() {
           <button
             onClick={() => handleTabChange('arbitraje')}
             aria-current={activeTab === 'arbitraje' ? 'page' : undefined}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 group active:scale-[0.98] ${
               activeTab === 'arbitraje'
                 ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)]'
                 : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'
             }`}
           >
-            <LayoutDashboard className="w-5 h-5" />
+            <LayoutDashboard className="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
             Panel de Arbitraje
             {activeTab === 'arbitraje' && <span aria-hidden="true" className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-500"></span>}
           </button>
@@ -176,13 +176,13 @@ export default function MainLayout() {
           <button
             onClick={() => handleTabChange('fixture')}
             aria-current={activeTab === 'fixture' ? 'page' : undefined}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 group active:scale-[0.98] ${
               activeTab === 'fixture'
                 ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)]'
                 : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'
             }`}
           >
-            <CalendarDays className="w-5 h-5" />
+            <CalendarDays className="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
             <span translate="no" className="notranslate">Fixture</span>
             {activeTab === 'fixture' && <span aria-hidden="true" className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-500"></span>}
           </button>
@@ -190,13 +190,13 @@ export default function MainLayout() {
           <button
             onClick={() => handleTabChange('medallero')}
             aria-current={activeTab === 'medallero' ? 'page' : undefined}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 group active:scale-[0.98] ${
               activeTab === 'medallero'
                 ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)]'
                 : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'
             }`}
           >
-            <Medal className="w-5 h-5" />
+            <Medal className="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
             <span translate="no" className="notranslate">Puntaje Oficial</span>
             {activeTab === 'medallero' && <span aria-hidden="true" className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-500"></span>}
           </button>
@@ -204,13 +204,13 @@ export default function MainLayout() {
           <button
             onClick={() => handleTabChange('momentos')}
             aria-current={activeTab === 'momentos' ? 'page' : undefined}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 group active:scale-[0.98] ${
               activeTab === 'momentos'
                 ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)]'
                 : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'
             }`}
           >
-            <ImageIcon className="w-5 h-5" />
+            <ImageIcon className="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
             Momentos y Fotos
             {activeTab === 'momentos' && <span aria-hidden="true" className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-500"></span>}
           </button>
@@ -256,11 +256,14 @@ export default function MainLayout() {
         <main className="flex-1 overflow-y-auto relative p-4 md:p-8">
           <BannerInnova />
           {/* The key resets the error when switching tabs, so one failed page doesn't block the rest. */}
+          {/* Each section enters softly when chosen in the menu. */}
+          <div key={activeTab} className="motion-safe:animate-[entrar_0.45s_ease-out_backwards]">
           <PageErrorBoundary key={activeTab}>
             <Suspense fallback={<p role="status" className="py-12 text-center text-slate-500">Cargando…</p>}>
               {renderContent()}
             </Suspense>
           </PageErrorBoundary>
+          </div>
         </main>
 
       </div>

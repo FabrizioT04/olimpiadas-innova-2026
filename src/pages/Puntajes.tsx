@@ -6,6 +6,7 @@ import { HOUSES, type House } from '../features/arbitraje/hooks/useArbitraje';
 import MascotaHouse from '../components/MascotaHouse';
 import { Medalla } from '../components/HouseDistintivo';
 import { inclinacion } from '../components/inclinacion';
+import NumeroAnimado from '../components/NumeroAnimado';
 import { COLORES_HOUSE, HOUSES as HOUSES_BASE } from '../../shared/olimpiadas';
 
 // Colores de cada House para la barra, el anillo de la mascota y el brillo del líder. Nombres completos para que Tailwind los conserve.
@@ -68,26 +69,6 @@ function EstadoActualizacion({ actualizado, renovando }: { actualizado: number |
     <span className="w-2 h-2 rounded-full bg-green-500" aria-hidden="true"></span>
     Actualizado {hace(antiguedad, actualizado)}
   </p>;
-}
-
-// Un número que cuenta desde su valor anterior (0 la primera vez) hasta el nuevo; quieto con «reducir movimiento».
-function NumeroAnimado({ valor }: { valor: number }) {
-  const quieto = useReducedMotion();
-  const [mostrado, setMostrado] = useState(quieto ? valor : 0);
-  const desde = useRef(quieto ? valor : 0);
-  useEffect(() => {
-    if (quieto) { setMostrado(valor); desde.current = valor; return; }
-    const inicio = performance.now(), origen = desde.current;
-    let marco = 0;
-    const paso = (t: number) => {
-      const k = Math.min(1, (t - inicio) / 1200), v = Math.round(origen + (valor - origen) * (1 - (1 - k) ** 3));
-      setMostrado(v); desde.current = v;
-      if (k < 1) marco = requestAnimationFrame(paso);
-    };
-    marco = requestAnimationFrame(paso);
-    return () => cancelAnimationFrame(marco);
-  }, [valor, quieto]);
-  return <>{mostrado}</>;
 }
 
 // Posiciones de los destellos alrededor de la mascota del líder.
@@ -252,7 +233,7 @@ export default function Puntajes() {
       </div>
 
       {/* Marcador del líder */}
-      {lider && <section key={empateArriba ? 'empate' : lider.id} {...inclinacion} className="vidrio relative overflow-hidden rounded-[2rem] p-5 text-slate-900 transition-transform duration-200 motion-safe:animate-[entrar_0.7s_ease-out_both] sm:p-8">
+      {lider && <section key={empateArriba ? 'empate' : lider.id} {...inclinacion} className="vidrio relative overflow-hidden rounded-[2rem] p-5 text-slate-900 transition-transform duration-200 motion-safe:animate-[entrar_0.7s_ease-out_backwards] sm:p-8">
         <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0 motion-safe:animate-[brillo_6s_ease-in-out_1.5s_infinite]" />
         {colorLider && <span aria-hidden="true" className={`pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-50 blur-3xl ${colorLider.brillo}`} />}
         {empateArriba ? <div className="relative py-4 text-center">

@@ -188,19 +188,19 @@ export default function Fixture() {
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div><h1 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2"><Calendar className="text-indigo-500"/><span><span translate="no" className="notranslate">Fixture</span> oficial</span></h1>
         <p className="text-sm text-slate-500">Programación de las hojas oficiales. Se consulta cada 30 segundos mientras esta página está abierta.</p></div>
-      <button onClick={() => refresh.current()} disabled={loading} className="flex items-center gap-2 rounded-xl bg-white/80 font-semibold text-indigo-600 px-4 py-2 shadow-[0_6px_18px_-8px_rgb(99_102_241/0.45)] ring-1 ring-white transition-colors hover:bg-white disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>{loading ? 'Consultando…' : 'Actualizar'}</button>
+      <button onClick={() => refresh.current()} disabled={loading} className="flex items-center gap-2 rounded-xl bg-white/80 font-semibold text-indigo-600 px-4 py-2 shadow-[0_6px_18px_-8px_rgb(99_102_241/0.45)] ring-1 ring-white transition-all hover:-translate-y-0.5 hover:bg-white active:scale-95 disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>{loading ? 'Consultando…' : 'Actualizar'}</button>
     </div>
     {error && <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">{error}{data && <p className="mt-1 font-semibold">Se conserva la última consulta; puede haber cambios todavía no reflejados.</p>}</div>}
     {data && stale && !error && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Mostrando la última programación disponible. Se está intentando actualizar; los resultados pueden haber cambiado. Revisa la fecha de última lectura.</p>}
     {data && <p className="text-xs text-slate-500">Última lectura: {new Date(data.actualizado).toLocaleString('es-PE')} · <a className="underline" href={`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`} target="_blank" rel="noreferrer">Ver hojas oficiales</a></p>}
     {data?.avisos.map(message => <p key={message} className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{message}</p>)}
     <div className="vidrio flex w-fit flex-wrap items-center gap-1 rounded-2xl p-1.5">
-      <button onClick={() => setView('programacion')} aria-pressed={view === 'programacion'} className={`rounded-xl px-5 py-2 font-semibold transition-colors ${view === 'programacion' ? 'bg-indigo-600 text-white shadow-[0_8px_18px_-8px_rgb(79_70_229/0.7)]' : 'text-slate-600 hover:bg-white'}`}>Programación</button>
-      <button onClick={() => setView('puestos')} aria-pressed={view === 'puestos'} className={`rounded-xl px-5 py-2 font-semibold transition-colors ${view === 'puestos' ? 'bg-indigo-600 text-white shadow-[0_8px_18px_-8px_rgb(79_70_229/0.7)]' : 'text-slate-600 hover:bg-white'}`}>Resultados</button>
+      <button onClick={() => setView('programacion')} aria-pressed={view === 'programacion'} className={`rounded-xl px-5 py-2 font-semibold transition-all active:scale-95 ${view === 'programacion' ? 'bg-indigo-600 text-white shadow-[0_8px_18px_-8px_rgb(79_70_229/0.7)]' : 'text-slate-600 hover:bg-white'}`}>Programación</button>
+      <button onClick={() => setView('puestos')} aria-pressed={view === 'puestos'} className={`rounded-xl px-5 py-2 font-semibold transition-all active:scale-95 ${view === 'puestos' ? 'bg-indigo-600 text-white shadow-[0_8px_18px_-8px_rgb(79_70_229/0.7)]' : 'text-slate-600 hover:bg-white'}`}>Resultados</button>
     </div>
     {data && view === 'programacion' && <div ref={fechasRef} role="group" aria-label="Fecha" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
       {['todos', ...days].map(day => <button key={day || 'sin-fecha'} onClick={() => setFilter(day)} aria-pressed={selected === day}
-        className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors ${selected === day ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`}>
+        className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-95 ${selected === day ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`}>
         <span className="inline-block first-letter:uppercase">{day === 'todos' ? 'Todas' : etiquetaDia(day)}</span>
         {day === hoy && <span className="ml-1.5 rounded-md bg-indigo-600 px-1.5 text-[10px] font-bold text-white">Hoy</span>}
       </button>)}
@@ -298,7 +298,7 @@ export default function Fixture() {
     {data && view === 'puestos' && <div className="space-y-8">
       {!!categoriasResultado.length && <div role="group" aria-label="Categoría" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
         {['todas', ...categoriasResultado.map(c => c.id)].map(id => <button key={id} onClick={() => setCategoriaResultados(id)} aria-pressed={categoriaResultados === id}
-          className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors ${categoriaResultados === id ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`}>
+          className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-95 ${categoriaResultados === id ? 'bg-white text-indigo-600 shadow-[0_6px_18px_-6px_rgb(99_102_241/0.45)] ring-1 ring-indigo-100' : 'bg-white/60 text-slate-600 ring-1 ring-white hover:bg-white'}`}>
           {id === 'todas' ? 'Todas las categorías' : nombreCategoria(id)}
         </button>)}
       </div>}
