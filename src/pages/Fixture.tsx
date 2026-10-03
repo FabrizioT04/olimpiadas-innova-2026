@@ -6,7 +6,7 @@ import { HouseChip, MarcadorDeportivo, Medallero, PodioCompacto, PodioMedallas }
 import { inclinacion } from '../components/inclinacion';
 import Revelar from '../components/Revelar';
 import type { Marcador } from '../features/marcadores/model';
-import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID } from '../../shared/olimpiadas';
+import { ACTIVIDADES, CATEGORIAS, COLORES_HOUSE, FIXTURE_FUENTE as SHEET_ID, OLIMPIADAS_FINALIZADAS } from '../../shared/olimpiadas';
 import { GRUPOS_VELOCIDAD, clasificacionesPorActividad, isClasificacion, podiosDeportivos, sinPuntaje } from '../features/clasificacion/model';
 import type { Clasificacion, Lugar } from '../features/clasificacion/model';
 import { estadosDelDia, fechaInicial, hoyLocal, minutosAhora, ordenarFechas, rangoHora } from '../features/fixture/fechas';
@@ -154,7 +154,8 @@ export default function Fixture() {
 
   const days = ordenarFechas((data?.partidos || []).map(p => p.fecha));
   const hoy = hoyLocal();
-  const selected = filter === null ? fechaInicial(days, hoy) : days.includes(filter) ? filter : 'todos';
+  // Once the event is over the programme opens on every date, as a summary of the whole event.
+  const selected = filter === null ? (OLIMPIADAS_FINALIZADAS ? 'todos' : fechaInicial(days, hoy)) : days.includes(filter) ? filter : 'todos';
   const hayDatos = !!data;
   // On phones the chosen date may be off screen: scroll the row of dates (not the page) to show it.
   useEffect(() => {

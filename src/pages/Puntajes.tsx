@@ -7,7 +7,7 @@ import MascotaHouse from '../components/MascotaHouse';
 import { Medalla } from '../components/HouseDistintivo';
 import { inclinacion } from '../components/inclinacion';
 import NumeroAnimado from '../components/NumeroAnimado';
-import { COLORES_HOUSE, HOUSES as HOUSES_BASE } from '../../shared/olimpiadas';
+import { COLORES_HOUSE, HOUSES as HOUSES_BASE, OLIMPIADAS_FINALIZADAS } from '../../shared/olimpiadas';
 
 // Colores de cada House para la barra, el anillo de la mascota y el fondo de su fila. Nombres completos para que Tailwind los conserve.
 const COLOR_HOUSE: Record<string, { barra: string; anillo: string; fondo: string }> = {
@@ -227,7 +227,7 @@ export default function Puntajes() {
           <h1 className="flex items-center gap-2 text-3xl font-extrabold text-slate-900 sm:text-4xl">
             <Trophy className="h-7 w-7 text-amber-500 sm:h-8 sm:w-8" aria-hidden="true" />Puntaje oficial
           </h1>
-          <p className="mt-1 text-sm text-slate-500">Suma de todas las actividades y deportes. Se actualiza sola cada 15 segundos.</p>
+          <p className="mt-1 text-sm text-slate-500">{OLIMPIADAS_FINALIZADAS ? 'Resultado final: suma de todas las actividades y deportes.' : 'Suma de todas las actividades y deportes. Se actualiza sola cada 15 segundos.'}</p>
         </div>
         <EstadoActualizacion actualizado={actualizado} renovando={renovando} />
       </div>
@@ -236,7 +236,7 @@ export default function Puntajes() {
       {lider && <section key={empateArriba ? 'empate' : lider.id} {...inclinacion} className="vidrio relative overflow-hidden rounded-[2rem] p-5 text-slate-900 transition-transform duration-200 motion-safe:animate-[entrar_0.7s_ease-out_backwards] sm:p-8">
         <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0 motion-safe:animate-[brillo_6s_ease-in-out_1.5s_infinite]" />
                 {empateArriba ? <div className="relative py-4 text-center">
-          <p className="text-sm font-bold text-amber-600">Empate en el primer lugar</p>
+          <p className="text-sm font-bold text-amber-600">{OLIMPIADAS_FINALIZADAS ? 'Empate por el campeonato' : 'Empate en el primer lugar'}</p>
           <p className="mt-3 text-6xl font-extrabold tabular-nums sm:text-8xl"><span className="texto-3d"><NumeroAnimado valor={lider.points} /></span><span className="ml-2 text-xl text-slate-400 sm:text-2xl">pts</span></p>
           <p className="mt-2 text-lg font-bold text-slate-700">{rankings.filter(r => r.points === lider.points).map(r => nombre(r.house?.name)).join(' · ')}</p>
         </div>
@@ -250,7 +250,7 @@ export default function Puntajes() {
               className={`pointer-events-none absolute text-lg text-amber-400 opacity-0 motion-safe:animate-[destello_2.4s_ease-in-out_infinite] motion-reduce:hidden ${lugar}`}>✦</span>)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500 sm:justify-start"><Medalla puesto={1} className="h-5 w-5 text-[10px]" />Primer lugar</p>
+            <p className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500 sm:justify-start"><Medalla puesto={1} className="h-5 w-5 text-[10px]" />{OLIMPIADAS_FINALIZADAS ? 'Campeón de las Olimpiadas 360° 2026' : 'Primer lugar'}</p>
             <h2 className="mt-1 text-5xl font-extrabold leading-none tracking-tight text-slate-900 sm:text-7xl">{nombre(lider.house?.name)}</h2>
             <p className="mt-2 inline-block rounded-full bg-white/80 px-3 py-0.5 text-sm font-semibold text-slate-600 ring-1 ring-slate-200/80">{etiqueta(lider.house?.color)}</p>
           </div>

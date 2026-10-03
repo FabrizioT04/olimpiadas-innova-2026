@@ -3,6 +3,10 @@
 // actualiza también apps-script/ArbitrajeSeguro.gs, CodigoCompletoDiagnostico.gs,
 // ResultadoUnificado.gs y Marcadores.gs.
 
+// Las olimpiadas 2026 terminaron el 2 de octubre: la web muestra al campeón y el fixture completo.
+// Para una nueva edición, ponerlo en false.
+export const OLIMPIADAS_FINALIZADAS = true;
+
 // Hoja oficial del fixture; las respuestas de Apps Script se aceptan solo si declaran esta fuente.
 export const FIXTURE_FUENTE = '14v7a-zlJpOlnCJ3DzvtUgt3dgj-hxPeiWZqpvpJ-eGg';
 
