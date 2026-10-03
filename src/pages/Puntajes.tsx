@@ -7,6 +7,7 @@ import MascotaHouse from '../components/MascotaHouse';
 import { Medalla } from '../components/HouseDistintivo';
 import { inclinacion } from '../components/inclinacion';
 import NumeroAnimado from '../components/NumeroAnimado';
+import Celebracion from '../components/Celebracion';
 import { COLORES_HOUSE, HOUSES as HOUSES_BASE, OLIMPIADAS_FINALIZADAS } from '../../shared/olimpiadas';
 
 // Colores de cada House para la barra, el anillo de la mascota y el fondo de su fila. Nombres completos para que Tailwind los conserve.
@@ -253,6 +254,7 @@ export default function Puntajes() {
             <p className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500 sm:justify-start"><Medalla puesto={1} className="h-5 w-5 text-[10px]" />{OLIMPIADAS_FINALIZADAS ? 'Campeón de las Olimpiadas 360° 2026' : 'Primer lugar'}</p>
             <h2 className="mt-1 text-5xl font-extrabold leading-none tracking-tight text-slate-900 sm:text-7xl">{nombre(lider.house?.name)}</h2>
             <p className="mt-2 inline-block rounded-full bg-white/80 px-3 py-0.5 text-sm font-semibold text-slate-600 ring-1 ring-slate-200/80">{etiqueta(lider.house?.color)}</p>
+            {OLIMPIADAS_FINALIZADAS && <Celebracion color={lider.house?.color ?? 'white'} />}
           </div>
           <div className="sm:text-right">
             <p className="texto-3d text-6xl font-extrabold tabular-nums leading-none sm:text-8xl"><NumeroAnimado valor={lider.points} /></p>

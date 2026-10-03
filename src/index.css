@@ -81,3 +81,10 @@
     box-shadow: 0 0 0 4px rgb(99 102 241 / 0.18);
   }
 }
+
+/* Champions: confetti falling once over the champion card (see Celebracion). */
+@keyframes confeti {
+  0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(100cqh + 2rem)) rotate(var(--giro, 360deg)); }
+}
